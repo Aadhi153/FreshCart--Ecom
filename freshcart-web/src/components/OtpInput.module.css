@@ -1,0 +1,84 @@
+.row {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.boxWrap {
+  position: relative;
+}
+
+.box {
+  width: 48px;
+  height: 48px;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 800;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-color);
+  background: var(--layer-0);
+  color: var(--text-primary);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.box:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.box:disabled {
+  opacity: 0.85;
+}
+
+.boxError {
+  border-color: #B91C1C;
+}
+
+.boxSuccess {
+  border-color: #16A34A;
+  color: #16A34A;
+}
+
+.checkOverlay {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #16A34A;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shake {
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-8px); }
+  40%, 60% { transform: translateX(8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shake {
+    animation: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .box {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .row {
+    gap: 0.4rem;
+  }
+}

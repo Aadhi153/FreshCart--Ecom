@@ -1,0 +1,471 @@
+/* ═══════════════════════════════════════════════════════════════
+   FreshCart – Unified Design Token System
+   Senior Developer Redesign – Dual Palette (Admin / Web)
+   Light + Dark mode for both apps
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─────────────────────────────────────────────
+   SHARED BASE TOKENS (never change with theme)
+───────────────────────────────────────────── */
+:root {
+  /* Typography */
+  --font-display: 'Fraunces', 'Playfair Display', Georgia, serif;
+  --font-body:    'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Consolas', monospace;
+
+  /* Spacing Scale */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
+  --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
+  --space-8: 32px;  --space-10: 40px; --space-12: 48px;
+
+  /* Border Radius */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   18px;
+  --radius-xl:   24px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ADMIN PORTAL PALETTE
+   Brand: Indigo → Violet  |  Surface: Slate gray layers
+   Light: crisp white surfaces   Dark: deep slate surfaces
+───────────────────────────────────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════
+   ADMIN – Light Theme
+   Palette: Cool Slate surfaces + Cyan/Teal brand accent
+   Feel: Clean enterprise SaaS — professional & crisp
+═══════════════════════════════════════════════════════ */
+body.theme-admin.theme-light,
+html.theme-admin .theme-light,
+.theme-admin-light {
+  /* Brand */
+  --primary:         #0D9488;  /* teal-600 */
+  --primary-hover:   #0F766E;  /* teal-700 */
+  --primary-light:   rgba(13, 148, 136, 0.12);
+  --accent:          #6366F1;  /* indigo-500 — secondary pop */
+  --success:         #10B981;
+  --danger:          #EF4444;
+  --warning:         #F59E0B;
+
+  /* Page background — cool pearl white */
+  --page-bg:         #F8FAFB;
+  --page-bg-alt:     #EEF2F6;
+
+  /* Surface layers */
+  --layer-0:         #FFFFFF;
+  --layer-1:         #F2F7F9;
+  --layer-2:         #E4EDF3;
+
+  /* Sidebar — deep slate charcoal */
+  --sidebar-bg:      #0F1923;
+  --sidebar-text:    rgba(255,255,255,0.65);
+  --sidebar-active:  #2DD4BF;   /* teal-300 — stands out on dark */
+  --sidebar-active-bg: rgba(45,212,191,0.14);
+  --sidebar-border:  rgba(255,255,255,0.07);
+
+  /* Topbar */
+  --topbar-bg:       rgba(255,255,255,0.88);
+  --topbar-border:   rgba(13,148,136,0.14);
+
+  /* Text */
+  --text-primary:    #0D1B2A;
+  --text-secondary:  #4A6070;
+  --text-muted:      #8FA3B1;
+
+  /* Borders */
+  --border-color:    rgba(13,148,136,0.16);
+  --border-subtle:   rgba(0,0,0,0.06);
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(13,148,136,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:  0 4px 16px rgba(13,148,136,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-lg:  0 12px 40px rgba(13,148,136,0.16), 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-xl:  0 24px 60px rgba(13,148,136,0.22);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #0D9488 0%, #6366F1 100%);
+  --gradient-hero:    linear-gradient(135deg, #0F766E 0%, #0D9488 40%, #6366F1 100%);
+  --gradient-card:    linear-gradient(135deg, rgba(13,148,136,0.07) 0%, rgba(99,102,241,0.07) 100%);
+  --gradient-glass:   rgba(255,255,255,0.75);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ADMIN – Dark Theme
+   Palette: Deep graphite surfaces + Rose/Coral accent
+   Feel: Modern premium dashboard — bold & sophisticated
+═══════════════════════════════════════════════════════ */
+body.theme-admin.theme-dark,
+html.theme-admin .theme-dark,
+.theme-admin-dark {
+  /* Brand */
+  --primary:         #FB7185;  /* rose-400 — vibrant on dark */
+  --primary-hover:   #F43F5E;  /* rose-500 */
+  --primary-light:   rgba(251,113,133,0.16);
+  --accent:          #38BDF8;  /* sky-400 — cool contrast */
+  --success:         #4ADE80;
+  --danger:          #F87171;
+  --warning:         #FBBF24;
+
+  /* Page background — graphite / warm charcoal */
+  --page-bg:         #141418;
+  --page-bg-alt:     #1A1A20;
+
+  /* Surface layers */
+  --layer-0:         #1C1C23;
+  --layer-1:         #242430;
+  --layer-2:         #2E2E3E;
+
+  /* Sidebar — near-black with warm tint */
+  --sidebar-bg:      #0E0E12;
+  --sidebar-text:    rgba(255,255,255,0.60);
+  --sidebar-active:  #FB7185;   /* rose accent */
+  --sidebar-active-bg: rgba(251,113,133,0.14);
+  --sidebar-border:  rgba(255,255,255,0.06);
+
+  /* Topbar */
+  --topbar-bg:       rgba(20,20,24,0.92);
+  --topbar-border:   rgba(251,113,133,0.18);
+
+  /* Text */
+  --text-primary:    #F1F0F5;
+  --text-secondary:  #A09CB0;
+  --text-muted:      #5C5870;
+
+  /* Borders */
+  --border-color:    rgba(251,113,133,0.18);
+  --border-subtle:   rgba(255,255,255,0.06);
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.40);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.55);
+  --shadow-lg:  0 12px 40px rgba(0,0,0,0.65);
+  --shadow-xl:  0 24px 60px rgba(0,0,0,0.75);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #FB7185 0%, #38BDF8 100%);
+  --gradient-hero:    linear-gradient(135deg, #BE123C 0%, #FB7185 45%, #38BDF8 100%);
+  --gradient-card:    linear-gradient(135deg, rgba(251,113,133,0.10) 0%, rgba(56,189,248,0.10) 100%);
+  --gradient-glass:   rgba(28,28,35,0.78);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   WEB STOREFRONT PALETTE
+   Brand: Emerald → Teal  |  Surface: Clean whites / deep greens
+   Light: fresh white + green hints   Dark: deep forest green
+───────────────────────────────────────────────────────────────── */
+
+/* WEB – Light Theme */
+body.theme-web.theme-light,
+html.theme-web .theme-light,
+.theme-web-light {
+  /* Brand & accent */
+  --primary:         #059669;
+  --primary-hover:   #047857;
+  --primary-light:   rgba(5, 150, 105, 0.12);
+  --accent:          #0891B2;
+  --success:         #10B981;
+  --danger:          #EF4444;
+  --warning:         #F59E0B;
+
+  /* Page background – fresh mint-white */
+  --page-bg:         #F0FDF8;
+  --page-bg-alt:     #ECFDF5;
+
+  /* Surface layers */
+  --layer-0:         #FFFFFF;
+  --layer-1:         #F7FDFB;
+  --layer-2:         #E8FBF3;
+
+  /* Navbar */
+  --sidebar-bg:      #064E3B;
+  --sidebar-text:    rgba(255,255,255,0.80);
+  --sidebar-active:  #FFFFFF;
+  --sidebar-active-bg: rgba(255,255,255,0.15);
+  --sidebar-border:  rgba(255,255,255,0.10);
+
+  /* Topbar / Navbar */
+  --topbar-bg:       rgba(255, 255, 255, 0.90);
+  --topbar-border:   rgba(5, 150, 105, 0.15);
+
+  /* Text */
+  --text-primary:    #052E16;
+  --text-secondary:  #3D7A5A;
+  --text-muted:      #86BEA3;
+
+  /* Borders */
+  --border-color:    rgba(5, 150, 105, 0.18);
+  --border-subtle:   rgba(0, 0, 0, 0.06);
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(5,150,105,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:  0 4px 16px rgba(5,150,105,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-lg:  0 12px 40px rgba(5,150,105,0.16), 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-xl:  0 24px 60px rgba(5,150,105,0.20);
+
+  /* Gradient accents */
+  --gradient-primary:  linear-gradient(135deg, #059669 0%, #0891B2 100%);
+  --gradient-hero:     linear-gradient(135deg, #059669 0%, #0EA5E9 60%, #06B6D4 100%);
+  --gradient-card:     linear-gradient(135deg, rgba(5,150,105,0.06) 0%, rgba(8,145,178,0.06) 100%);
+  --gradient-glass:    rgba(255, 255, 255, 0.75);
+}
+
+/* ═══════════════════════════════════════════════════════
+   WEB – Dark Theme
+   Palette: Deep midnight navy + Amber/Orange accent
+   Feel: Premium e-commerce — luxe & warm in the dark
+═══════════════════════════════════════════════════════ */
+body.theme-web.theme-dark,
+html.theme-web .theme-dark,
+.theme-web-dark {
+  /* Brand */
+  --primary:         #FB923C;  /* orange-400 — warm pop on navy */
+  --primary-hover:   #F97316;  /* orange-500 */
+  --primary-light:   rgba(251,146,60,0.16);
+  --accent:          #A78BFA;  /* violet-400 — elegant contrast */
+  --success:         #4ADE80;
+  --danger:          #F87171;
+  --warning:         #FBBF24;
+
+  /* Page background — rich midnight navy */
+  --page-bg:         #080E1A;
+  --page-bg-alt:     #0D1424;
+
+  /* Surface layers */
+  --layer-0:         #0F1726;
+  --layer-1:         #172033;
+  --layer-2:         #1F2B42;
+
+  /* Navbar — deep navy */
+  --sidebar-bg:      #060C16;
+  --sidebar-text:    rgba(255,255,255,0.65);
+  --sidebar-active:  #FB923C;   /* orange accent */
+  --sidebar-active-bg: rgba(251,146,60,0.14);
+  --sidebar-border:  rgba(255,255,255,0.06);
+
+  /* Topbar / Navbar */
+  --topbar-bg:       rgba(8,14,26,0.92);
+  --topbar-border:   rgba(251,146,60,0.20);
+
+  /* Text */
+  --text-primary:    #EEF2FF;
+  --text-secondary:  #94A3B8;
+  --text-muted:      #475569;
+
+  /* Borders */
+  --border-color:    rgba(251,146,60,0.18);
+  --border-subtle:   rgba(255,255,255,0.06);
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.40);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.55);
+  --shadow-lg:  0 12px 40px rgba(0,0,0,0.65);
+  --shadow-xl:  0 24px 60px rgba(0,0,0,0.75);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #FB923C 0%, #A78BFA 100%);
+  --gradient-hero:    linear-gradient(135deg, #1E3A5F 0%, #1E40AF 40%, #4338CA 100%);
+  --gradient-card:    linear-gradient(135deg, rgba(251,146,60,0.10) 0%, rgba(167,139,250,0.10) 100%);
+  --gradient-glass:   rgba(15,23,38,0.80);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   FALLBACK (no theme class applied yet)
+───────────────────────────────────────────────────────────────── */
+:root,
+body:not([class*="theme-"]) {
+  --primary:         #4F46E5;
+  --accent:          #7C3AED;
+  --page-bg:         #F1F0FF;
+  --layer-0:         #FFFFFF;
+  --layer-1:         #F8F7FF;
+  --layer-2:         #EEEDFF;
+  --sidebar-bg:      #1E1B4B;
+  --sidebar-text:    rgba(255,255,255,0.75);
+  --sidebar-active:  #FFFFFF;
+  --sidebar-active-bg: rgba(255,255,255,0.15);
+  --sidebar-border:  rgba(255,255,255,0.10);
+  --topbar-bg:       rgba(255,255,255,0.90);
+  --topbar-border:   rgba(79,70,229,0.15);
+  --text-primary:    #0F0E1A;
+  --text-secondary:  #5B5585;
+  --text-muted:      #9693B8;
+  --border-color:    rgba(79,70,229,0.15);
+  --border-subtle:   rgba(0,0,0,0.06);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.12);
+  --shadow-lg:  0 12px 40px rgba(0,0,0,0.16);
+  --shadow-xl:  0 24px 60px rgba(0,0,0,0.20);
+  --gradient-primary:  linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  --gradient-hero:     linear-gradient(135deg, #4F46E5, #7C3AED, #A855F7);
+  --gradient-card:     linear-gradient(135deg, rgba(79,70,229,0.06), rgba(124,58,237,0.06));
+  --gradient-glass:    rgba(255,255,255,0.70);
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   18px;
+  --radius-xl:   24px;
+  --radius-full: 9999px;
+  --transition-fast: 150ms cubic-bezier(0.4,0,0.2,1);
+  --transition-base: 220ms cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: 400ms cubic-bezier(0.4,0,0.2,1);
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono:    'JetBrains Mono', monospace;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   GLOBAL BASE RESETS
+───────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 0;
+  transition:
+    background-color var(--transition-slow),
+    color var(--transition-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.price, .code, code {
+  font-family: var(--font-mono);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   GLASSMORPHISM UTILITY CLASSES
+───────────────────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--gradient-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.spatial-card {
+  background-color: var(--layer-1);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.spatial-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.gradient-bg {
+  background: var(--gradient-hero);
+}
+
+.gradient-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   BUTTON SYSTEM
+───────────────────────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.65rem 1.5rem;
+  background: var(--gradient-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.65rem 1.5rem;
+  background: var(--layer-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--layer-1);
+  border-color: var(--primary);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   FORM INPUTS
+───────────────────────────────────────────────────────────────── */
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-color);
+  background-color: var(--layer-0);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+

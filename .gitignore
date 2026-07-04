@@ -1,0 +1,36 @@
+# Dependencies (each app/package has its own; this catches the root and any missed nested ones)
+node_modules/
+
+# Env files with real secrets — .env.example files are intentionally kept
+.env
+.env.local
+.env.*.local
+
+# Build output / caches
+.next/
+dist/
+dist-ssr/
+build/
+.expo/
+.turbo/
+.vercel/
+coverage/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+
+# Claude Code local tooling/config — not part of the app
+.claude/
+.agents/
+
+# Scratch screenshots dropped in the project root during development
+/{*}.png

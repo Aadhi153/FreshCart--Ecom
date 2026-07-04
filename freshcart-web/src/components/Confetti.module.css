@@ -1,0 +1,39 @@
+.container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3000;
+  overflow: hidden;
+}
+
+.piece {
+  position: absolute;
+  top: -5%;
+  width: 10px;
+  height: 10px;
+  opacity: 0.9;
+  animation: confettiFall linear forwards;
+}
+
+.rect {
+  border-radius: 2px;
+}
+
+.circle {
+  border-radius: 50%;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--drift), 105vh, 0) rotate(var(--rotate));
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container { display: none; }
+}

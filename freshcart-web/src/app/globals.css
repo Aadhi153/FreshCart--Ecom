@@ -1,0 +1,387 @@
+/* ══════════════════════════════════════════════════
+   FreshCart Web – Global Styles (Next.js)
+   Uses tokens from @freshcart/ui/tokens.css
+══════════════════════════════════════════════════ */
+@import '@freshcart/ui/tokens.css';
+
+/* ── Body ── */
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+html {
+  scroll-padding-top: 80px;
+}
+
+body {
+  padding-top: 64px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ── Navbar Links ── */
+.nav-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.8rem;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.nav-link:hover {
+  color: var(--primary);
+  background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+  transform: translateY(-2px);
+}
+
+.nav-link:active {
+  transform: translateY(1px) scale(0.95);
+  background-color: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+/* ── Dropdown Items ── */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.8rem;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dropdown-item:hover {
+  color: var(--primary);
+  background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+  transform: translateX(2px);
+}
+
+.dropdown-item:active {
+  transform: translateX(1px) scale(0.98);
+  background-color: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+/* ── Navbar breakpoints ── */
+@media (max-width: 768px) {
+  .desktop-nav { display: none !important; }
+  .mobile-menu { display: flex !important; }
+}
+
+.mobile-nav-drawer {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-nav-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1.25rem 1rem;
+    background: var(--layer-0);
+    border-top: 1px solid var(--border-color);
+  }
+
+  .mobile-nav-drawer a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.6rem 0.25rem;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  position: relative;
+  z-index: 1;
+}
+
+.account-sidebar {
+  position: sticky;
+  top: 88px;
+}
+
+.account-nav-link {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.62rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
+}
+
+.account-nav-link:hover {
+  background: var(--layer-1);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  transform: translateX(2px);
+}
+
+.account-nav-link--active,
+.account-nav-link--active:hover {
+  border-color: var(--accent);
+  background: var(--layer-1);
+  color: var(--text-primary);
+  transform: none;
+}
+
+.account-nav-link-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  transition: background var(--transition-base), color var(--transition-base);
+}
+
+.account-nav-link--active .account-nav-link-icon {
+  background: var(--gradient-primary);
+  color: #fff;
+  border: 0;
+}
+
+.account-page {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 8% 18%, color-mix(in srgb, var(--accent) 10%, transparent) 0 5rem, transparent 11rem),
+    radial-gradient(circle at 95% 72%, color-mix(in srgb, #f59e0b 8%, transparent) 0 6rem, transparent 13rem);
+}
+
+.account-floaters {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.account-floater {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 17%, transparent);
+  border-radius: 32% 68% 58% 42% / 44% 36% 64% 56%;
+  color: color-mix(in srgb, var(--accent) 48%, transparent);
+  background: color-mix(in srgb, var(--layer-0) 52%, transparent);
+  box-shadow: 0 1rem 3rem color-mix(in srgb, var(--accent) 9%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  will-change: transform;
+}
+
+.account-floater svg {
+  width: 42%;
+  height: 42%;
+  stroke-width: 1.45;
+}
+
+.account-floater--apple {
+  top: 8%;
+  left: 2.5%;
+  animation: accountFloatA 9s ease-in-out infinite;
+}
+
+.account-floater--leaf {
+  top: 14%;
+  right: 3%;
+  width: 5.5rem;
+  height: 5.5rem;
+  animation: accountFloatB 12s ease-in-out -4s infinite;
+}
+
+.account-floater--citrus {
+  top: 48%;
+  left: 5%;
+  width: 3.6rem;
+  height: 3.6rem;
+  animation: accountFloatB 10s ease-in-out -2s infinite reverse;
+}
+
+.account-floater--carrot {
+  top: 66%;
+  right: 5%;
+  animation: accountFloatA 11s ease-in-out -6s infinite reverse;
+}
+
+.account-floater--cherry {
+  bottom: 5%;
+  left: 14%;
+  width: 5rem;
+  height: 5rem;
+  animation: accountFloatC 13s ease-in-out -3s infinite;
+}
+
+.account-floater--leaf-small {
+  right: 21%;
+  bottom: 3%;
+  width: 3.2rem;
+  height: 3.2rem;
+  animation: accountFloatC 8s ease-in-out -5s infinite reverse;
+}
+
+@keyframes accountFloatA {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-7deg); }
+  50% { transform: translate3d(12px, -22px, 0) rotate(8deg); }
+}
+
+@keyframes accountFloatB {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(6deg); }
+  50% { transform: translate3d(-16px, 18px, 0) rotate(-10deg); }
+}
+
+@keyframes accountFloatC {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-3deg); }
+  35% { transform: translate3d(10px, -14px, 0) rotate(7deg); }
+  70% { transform: translate3d(-8px, -24px, 0) rotate(-9deg); }
+}
+
+@media (max-width: 820px) {
+  .account-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .account-sidebar {
+    position: static;
+  }
+
+  .account-floater {
+    opacity: 0.58;
+    scale: 0.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-floater {
+    animation: none;
+  }
+}
+
+/* ── Forms ── */
+input, select, textarea, button {
+  font-family: var(--font-body);
+  font-size: 1rem;
+}
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Navbar ── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--topbar-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition-slow);
+}
+
+/* ── Hero section ── */
+.hero-section {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-hero);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* Hide Next.js Dev Indicator */
+nextjs-portal, #next-build-indicator, [data-nextjs-toast], .__next-indicator { display: none !important; visibility: hidden !important; }
+
+/* ── Toasts ── */
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  z-index: 2000;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.85rem;
+  font-weight: 600;
+  animation: fadeIn 0.2s ease;
+  background: var(--layer-0);
+  border: 1px solid var(--border-color);
+}
+
+.toast button {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+}
+
+.toast-success { color: var(--success); border-color: var(--success); }
+.toast-error   { color: var(--danger);  border-color: var(--danger); }

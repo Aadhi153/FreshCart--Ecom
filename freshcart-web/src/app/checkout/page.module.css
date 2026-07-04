@@ -1,0 +1,1006 @@
+/* ══════════════════ Layout ══════════════════ */
+.page {
+  padding: 1.5rem 1.5rem 6rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 65% 1fr;
+  gap: 1.75rem;
+  align-items: flex-start;
+  margin-top: 1rem;
+}
+
+.stepsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+.summaryColumn {
+  position: sticky;
+  top: 5.5rem;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .summaryColumn {
+    position: static;
+  }
+}
+
+/* ══════════════════ Card / accordion ══════════════════ */
+.card {
+  background: var(--layer-0);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  cursor: pointer;
+  background: var(--layer-0);
+  transition: background var(--transition-base);
+}
+
+.cardHeaderActive {
+  background: var(--gradient-card);
+}
+
+.cardHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.cardHeaderIcon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  background: var(--layer-2);
+  color: var(--text-muted);
+  border: 2px solid var(--border-color);
+  transition: all var(--transition-base);
+}
+
+.cardHeaderIconDone {
+  background: var(--gradient-primary);
+  border-color: transparent;
+  color: #fff;
+}
+
+.cardHeaderIconActive {
+  background: var(--gradient-primary);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+.cardSummary {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.6rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.changeButton {
+  flex-shrink: 0;
+  padding: 0.45rem 1.1rem;
+  background: transparent;
+  border: 1.5px solid var(--primary);
+  color: var(--primary);
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.changeButton:hover {
+  background: var(--primary-light);
+  transform: translateY(-1px);
+}
+
+.cardBody {
+  padding: 0 1.4rem 1.4rem;
+  animation: slideDown 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardBody { animation: none; }
+}
+
+/* ══════════════════ Login step ══════════════════ */
+.loginPrompt {
+  padding-top: 0.25rem;
+}
+
+.loginButton {
+  margin-top: 0.9rem;
+  padding: 0.85rem 2.2rem;
+  background: var(--gradient-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.loginButton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ══════════════════ Address step ══════════════════ */
+.addressGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.1rem;
+}
+
+.addressCard {
+  position: relative;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem 1rem 1rem 2.6rem;
+  cursor: pointer;
+  background: var(--layer-0);
+  transition: all var(--transition-fast);
+}
+
+.addressCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.addressCardSelected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.addressRadio {
+  position: absolute;
+  top: 1.05rem;
+  left: 1rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.addressRadioSelected {
+  border-color: var(--primary);
+}
+
+.addressRadioSelected::after {
+  content: '';
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.addressCardTop {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.addressTypeBadge {
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--layer-2);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.addressLabel {
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.defaultTag {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.addressText {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.addNewCard {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  background: transparent;
+  color: var(--primary);
+  font-weight: 700;
+  min-height: 5.4rem;
+  transition: all var(--transition-fast);
+}
+
+.addNewCard:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+.addressForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  background: var(--layer-1);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.4rem;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.fieldRow3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 560px) {
+  .fieldRow, .fieldRow3 { grid-template-columns: 1fr; }
+}
+
+.floatingField {
+  position: relative;
+}
+
+.floatingField input,
+.floatingField textarea {
+  width: 100%;
+  padding: 1.15rem 0.85rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-color);
+  background: var(--layer-0);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.floatingField textarea {
+  resize: none;
+  padding-top: 1.3rem;
+}
+
+.floatingField label {
+  position: absolute;
+  left: 0.9rem;
+  top: 0.95rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  background: var(--layer-0);
+  padding: 0 0.3rem;
+  transition: all 0.15s ease;
+  border-radius: 4px;
+}
+
+.floatingField input:focus + label,
+.floatingField input:not(:placeholder-shown) + label,
+.floatingField textarea:focus + label,
+.floatingField textarea:not(:placeholder-shown) + label {
+  top: -0.55rem;
+  font-size: 0.72rem;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.floatingField input:focus,
+.floatingField textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.fieldErrorInput {
+  border-color: var(--danger) !important;
+}
+
+.fieldErrorText {
+  margin: -0.6rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.chipRow {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-color);
+  background: var(--layer-0);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.chip:hover {
+  border-color: var(--primary);
+}
+
+.chipActive {
+  background: var(--gradient-primary);
+  border-color: transparent;
+  color: #fff;
+}
+
+.deliverButton {
+  align-self: flex-start;
+  padding: 0.9rem 2.4rem;
+  background: var(--gradient-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.deliverButton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.shake {
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* ══════════════════ Order summary step ══════════════════ */
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.itemRow:last-of-type {
+  border-bottom: none;
+}
+
+.itemImage {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  background: var(--layer-2);
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.itemName {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.itemMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.variantChip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--layer-2);
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.itemPrice {
+  font-weight: 800;
+  font-size: 1.02rem;
+  white-space: nowrap;
+}
+
+.promoCard {
+  margin-top: 1.2rem;
+  padding: 1.1rem;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--layer-1);
+}
+
+.promoInputRow {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.promoInputWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.9rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--layer-0);
+  color: var(--text-muted);
+}
+
+.promoInputWrap input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.75rem 0;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.applyButton {
+  padding: 0.75rem 1.4rem;
+  border: 1.5px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.applyButton:hover {
+  background: var(--primary-light);
+}
+
+.offerChipsRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.offerChip {
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-full);
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.offerChip:hover {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.successBanner {
+  margin-top: 0.8rem;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  color: var(--success);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: fadeIn 0.25s ease;
+}
+
+.emailNote {
+  margin-top: 1.4rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--layer-1);
+  border: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.continueRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.2rem;
+}
+
+.continueButton {
+  padding: 0.9rem 2.4rem;
+  background: var(--gradient-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.continueButton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ══════════════════ Payment step ══════════════════ */
+.paymentGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.paymentCard {
+  position: relative;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.2rem;
+  cursor: pointer;
+  background: var(--layer-0);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.paymentCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.paymentCardSelected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.paymentCardDisabled {
+  cursor: not-allowed;
+}
+
+.paymentCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.paymentRadio {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paymentRadioSelected {
+  border-color: var(--primary);
+}
+
+.paymentRadioSelected::after {
+  content: '';
+  width: 0.58rem;
+  height: 0.58rem;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.paymentIcon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.paymentLabel {
+  font-weight: 800;
+  font-size: 0.95rem;
+  flex: 1;
+}
+
+.availableChip {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 14%, transparent);
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-full);
+}
+
+.codBadge {
+  margin: 0.6rem 0 0 1.9rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.paymentCardBody {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.cardNumberRow {
+  position: relative;
+}
+
+.cardTypeIcon {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.cardFieldsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+.upiAppsRow, .bankGrid {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.pillChip {
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--layer-1);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.comingSoonOverlay {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--layer-0) 68%, transparent);
+  backdrop-filter: blur(1.5px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0.7rem;
+  pointer-events: none;
+}
+
+.comingSoonBadge {
+  background: var(--text-primary);
+  color: var(--layer-0);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+/* ══════════════════ Sticky price card ══════════════════ */
+.priceCard {
+  background: var(--layer-0);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.priceHeader {
+  padding: 1rem 1.4rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.priceHeaderTitle {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.priceBody {
+  padding: 1.3rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.92rem;
+}
+
+.priceRowDiscount {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.freeTag {
+  color: var(--success);
+  font-weight: 800;
+}
+
+.priceDivider {
+  height: 2px;
+  border: none;
+  background: repeating-linear-gradient(to right, var(--border-color) 0 8px, transparent 8px 14px);
+  margin: 0;
+}
+
+.priceTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.priceTotalLabel {
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.priceTotalValue {
+  font-weight: 900;
+  font-size: 1.55rem;
+  color: var(--text-primary);
+}
+
+.progressWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.progressText {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.progressTrack {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--layer-2);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+}
+
+.secureBadgesRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.secureBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-sm);
+  background: var(--layer-1);
+  border: 1px solid var(--border-color);
+}
+
+.placeOrderButton {
+  width: 100%;
+  padding: 1.05rem;
+  background: var(--gradient-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-fast);
+}
+
+.placeOrderButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.placeOrderButton:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spinner {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.errorBanner {
+  margin: 0 1.4rem 1.2rem;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ══════════════════ Mobile sticky bottom bar ══════════════════ */
+.mobileBar {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobileBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 500;
+    padding: 0.85rem 1.1rem;
+    background: var(--layer-0);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  }
+
+  .mobileBarTotal {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobileBarLabel {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  .mobileBarValue {
+    font-size: 1.1rem;
+    font-weight: 900;
+  }
+
+  .mobileBar .placeOrderButton {
+    width: auto;
+    padding: 0.8rem 1.6rem;
+  }
+}

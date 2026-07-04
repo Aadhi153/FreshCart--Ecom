@@ -1,0 +1,45 @@
+.track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--layer-2);
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+.track:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.trackOn {
+  background: var(--gradient-primary);
+  border-color: transparent;
+}
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform var(--transition-base);
+}
+
+.thumbOn {
+  transform: translateX(20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track,
+  .thumb {
+    transition: none;
+  }
+}

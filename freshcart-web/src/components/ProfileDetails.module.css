@@ -1,0 +1,185 @@
+.tabRow {
+  display: flex;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0.2rem;
+}
+
+.tabButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.9rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transform: translateY(1px);
+}
+
+.tabButton:hover {
+  color: var(--text-primary);
+}
+
+.tabButtonActive {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.securityCard {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.dangerCard {
+  border: 1px solid color-mix(in srgb, #B91C1C 35%, var(--border-color));
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.dangerButton {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #B91C1C;
+  background: transparent;
+  color: #B91C1C;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.linkRow {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.linkRow + .linkRow {
+  margin-top: -0.15rem;
+}
+
+.linkRowHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.linkIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-light);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.linkLabel {
+  margin: 0 0 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.linkValue {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.linkActionButton {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.8rem;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.linkCancelButton {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.linkEditRow {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.phoneWrapperSmall {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  background: var(--layer-0);
+}
+
+.phoneWrapperSmall span {
+  display: flex;
+  align-items: center;
+  padding: 0 0.7rem;
+  background: var(--layer-1);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.88rem;
+  border-right: 1px solid var(--border-color);
+}
+
+.phoneWrapperSmall input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  outline: none;
+}
+
+.linkOtpBlock {
+  display: grid;
+  gap: 0.7rem;
+  justify-items: center;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.linkHint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.linkError {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #B91C1C;
+  font-weight: 700;
+}

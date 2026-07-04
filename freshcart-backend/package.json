@@ -1,0 +1,27 @@
+{
+  "name": "freshcart-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@freshcart/types": "^1.0.0",
+    "@supabase/supabase-js": "^2.108.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
+    "morgan": "^1.11.0",
+    "pg": "^8.22.0",
+    "stripe": "^22.3.0"
+  }
+}

@@ -1,0 +1,99 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 1.25rem 1rem 1.5rem;
+}
+
+.stepWrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.stepWrap:last-child {
+  flex: 0 0 auto;
+}
+
+.connector {
+  flex: 1;
+  height: 3px;
+  background: var(--border-color);
+  margin: 0 0.5rem;
+  margin-bottom: 1.7rem;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-slow);
+}
+
+.connectorFilled {
+  background: var(--gradient-primary);
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 3.5rem;
+}
+
+.circle {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  background: var(--layer-0);
+  border: 2px solid var(--border-color);
+  transition: all var(--transition-base);
+}
+
+.circleCompleted {
+  background: var(--gradient-primary);
+  border-color: transparent;
+  color: #fff;
+}
+
+.circleActive {
+  background: var(--gradient-primary);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 22%, transparent), 0 0 18px color-mix(in srgb, var(--primary) 45%, transparent);
+  animation: pulseGlow 2.2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 22%, transparent), 0 0 18px color-mix(in srgb, var(--primary) 45%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary) 14%, transparent), 0 0 26px color-mix(in srgb, var(--primary) 60%, transparent); }
+}
+
+.label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: color var(--transition-base);
+}
+
+.labelActive {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.labelCompleted {
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circleActive { animation: none; }
+}
+
+@media (max-width: 640px) {
+  .label { font-size: 0.68rem; }
+  .circle { width: 1.9rem; height: 1.9rem; font-size: 0.78rem; }
+  .step { min-width: 2.6rem; }
+}
