@@ -16,6 +16,20 @@ build/
 .vercel/
 coverage/
 *.tsbuildinfo
+next-env.d.ts
+/freshcart-web/out/
+*.pem
+
+# Mobile app signing keys/certs — must never be committed
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.kotlin/
+.metro-health-check*
+/freshcart-mobile/ios/
+/freshcart-mobile/android/
 
 # Logs
 *.log
