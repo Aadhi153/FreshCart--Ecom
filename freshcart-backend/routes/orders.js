@@ -3,6 +3,7 @@ const router = express.Router();
 const { supabaseAdmin } = require('../supabaseClient');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 const { PlaceOrderPayloadSchema } = require('@freshcart/types');
+const { sendOrderConfirmationEmail } = require('../lib/mailer');
 
 // GET /api/orders — admin sees all; user sees own
 router.get('/', requireAuth, async (req, res) => {
@@ -70,7 +71,7 @@ router.post('/', requireAuth, async (req, res) => {
     const productIds = [...new Set(items.map(item => item.product_id))];
     const { data: products, error: prodErr } = await supabaseAdmin
       .from('products')
-      .select('id, price, stock_quantity')
+      .select('id, name, price, stock_quantity')
       .in('id', productIds);
     if (prodErr) throw prodErr;
 
@@ -148,7 +149,15 @@ router.post('/', requireAuth, async (req, res) => {
       }
     }
 
-    // 4️⃣ Return the newly created order (including its ID)
+    // 4️⃣ Email the customer their confirmation — never let this delay or fail the response.
+    const emailItems = pricedItems.map(item => ({
+      name: productById.get(item.product_id).name,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+    sendOrderConfirmationEmail(order, emailItems, req.user.email);
+
+    // 5️⃣ Return the newly created order (including its ID)
     res.status(201).json(order);
   } catch (err) {
     res.status(400).json({ error: err.message });

@@ -1,0 +1,379 @@
+.filterBar {
+  position: sticky;
+  top: 64px;
+  z-index: 50;
+  margin-bottom: 1.5rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--layer-0) 78%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: none;
+  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.scrolled {
+  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--primary) 20%, var(--border-color));
+}
+
+.filterBarRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Expandable search */
+
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.searchIconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.searchIconBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.searchInput {
+  width: 0;
+  min-width: 0;
+  opacity: 0;
+  padding: 0;
+  margin-left: 0;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--layer-0);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  outline: none;
+  transition: width var(--transition-slow), opacity var(--transition-base), padding var(--transition-slow), margin-left var(--transition-slow), border-color var(--transition-fast);
+}
+
+.searchWrapOpen .searchInput {
+  width: 220px;
+  opacity: 1;
+  padding: 0 0.6rem;
+  margin-left: 0.5rem;
+  border-color: var(--border-color);
+  height: 36px;
+}
+
+.searchWrapOpen .searchInput:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.searchClearBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -32px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.searchClearBtn:hover {
+  color: var(--primary);
+}
+
+/* Active filter chips */
+
+.chipsSlot {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.chipRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chipRow::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chipRemoveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.chipClearAll {
+  flex: 0 0 auto;
+  padding: 0.35rem 0.7rem;
+  border: 1px dashed color-mix(in srgb, var(--primary) 40%, transparent);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.chipClearAll:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Dropdowns (Price / Sort) */
+
+.desktopControls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.dropdownContainer {
+  position: relative;
+}
+
+.dropdownTrigger {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--layer-0) 80%, transparent);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.dropdownTrigger:hover {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border-color));
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  transition: transform var(--transition-fast);
+}
+
+.dropdownPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  min-width: 210px;
+  padding: 0.35rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--layer-0);
+  box-shadow: var(--shadow-lg);
+  transform-origin: top right;
+}
+
+.dropdownRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-align: left;
+  white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.dropdownRowLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.dropdownRow:hover {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+.dropdownRowActive {
+  border-left-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.priceDot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--dot-color, var(--primary));
+}
+
+/* Mobile filter button + bottom sheet */
+
+.mobileFilterBtn {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--layer-0);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1rem 1.1rem 1.5rem;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background: var(--layer-0);
+  box-shadow: var(--shadow-xl);
+}
+
+.sheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.sheetHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.sheetCloseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: var(--layer-1);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.sheetSection {
+  margin-bottom: 1rem;
+}
+
+.sheetSectionLabel {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sheetDoneBtn {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .desktopControls {
+    display: none;
+  }
+
+  .mobileFilterBtn {
+    display: flex;
+  }
+
+  .chipsSlot {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchInput,
+  .dropdownTrigger,
+  .dropdownRow,
+  .filterBar,
+  .chevronOpen {
+    transition: none;
+  }
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Leaf, Loader2, Mail, Phone, User } from 'lucide-react';
@@ -26,6 +26,7 @@ export default function AuthPage() {
   const [phone, setPhone] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [sentAt, setSentAt] = useState(0);
+  const [otpCode, setOtpCode] = useState('');
 
   const usingPhone = mode === 'login' && tab === 'phone';
 
@@ -83,6 +84,10 @@ export default function AuthPage() {
       router.push('/');
     },
   });
+
+  useEffect(() => {
+    setOtpCode('');
+  }, [otp.errorKey, sentAt]);
 
   const switchMode = (nextMode: Mode) => {
     setMode(nextMode);
@@ -233,11 +238,20 @@ export default function AuthPage() {
               </p>
               <OtpInput
                 onComplete={otp.verify}
+                onChange={setOtpCode}
                 status={otp.stage === 'success' ? 'success' : otp.error ? 'error' : 'idle'}
                 errorKey={otp.errorKey}
                 disabled={otp.stage === 'verifying' || otp.stage === 'success'}
                 resetKey={sentAt}
               />
+              <button
+                type="button"
+                className={styles.submitButton}
+                disabled={otpCode.length !== 6 || otp.stage === 'verifying' || otp.stage === 'success'}
+                onClick={() => otp.verify(otpCode)}
+              >
+                {otp.stage === 'verifying' ? <Loader2 className={styles.spinner} size={18} /> : 'Enter'}
+              </button>
               <div className={styles.resendRow}>
                 {otp.canResend ? (
                   <button type="button" onClick={otp.send} className={styles.resendLink}>

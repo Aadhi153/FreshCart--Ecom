@@ -7,13 +7,14 @@ import styles from './OtpInput.module.css';
 interface OtpInputProps {
   length?: number;
   onComplete: (code: string) => void;
+  onChange?: (code: string) => void;
   status?: 'idle' | 'error' | 'success';
   errorKey?: number;
   disabled?: boolean;
   resetKey?: number | string;
 }
 
-export function OtpInput({ length = 6, onComplete, status = 'idle', errorKey = 0, disabled = false, resetKey = 0 }: OtpInputProps) {
+export function OtpInput({ length = 6, onComplete, onChange, status = 'idle', errorKey = 0, disabled = false, resetKey = 0 }: OtpInputProps) {
   const [digits, setDigits] = useState<string[]>(() => Array(length).fill(''));
   const [trackedResetKey, setTrackedResetKey] = useState(resetKey);
   const [trackedErrorKey, setTrackedErrorKey] = useState(errorKey);
@@ -59,6 +60,7 @@ export function OtpInput({ length = 6, onComplete, status = 'idle', errorKey = 0
           next[cursor] = char;
           cursor += 1;
         }
+        onChange?.(next.join(''));
         if (next.every((d) => d !== '')) onComplete(next.join(''));
         focusInput(Math.min(cursor, length - 1));
         return next;
@@ -69,6 +71,7 @@ export function OtpInput({ length = 6, onComplete, status = 'idle', errorKey = 0
     setDigits((prev) => {
       const next = [...prev];
       next[index] = digitsOnly;
+      onChange?.(next.join(''));
       if (digitsOnly && next.every((d) => d !== '')) onComplete(next.join(''));
       return next;
     });
@@ -80,15 +83,17 @@ export function OtpInput({ length = 6, onComplete, status = 'idle', errorKey = 0
     if (event.key === 'Backspace') {
       event.preventDefault();
       if (digits[index]) {
-        setDigits((prev) => { const next = [...prev]; next[index] = ''; return next; });
+        setDigits((prev) => { const next = [...prev]; next[index] = ''; onChange?.(next.join('')); return next; });
       } else if (index > 0) {
-        setDigits((prev) => { const next = [...prev]; next[index - 1] = ''; return next; });
+        setDigits((prev) => { const next = [...prev]; next[index - 1] = ''; onChange?.(next.join('')); return next; });
         focusInput(index - 1);
       }
     } else if (event.key === 'ArrowLeft' && index > 0) {
       focusInput(index - 1);
     } else if (event.key === 'ArrowRight' && index < length - 1) {
       focusInput(index + 1);
+    } else if (event.key === 'Enter' && digits.every((d) => d !== '')) {
+      onComplete(digits.join(''));
     }
   };
 
@@ -99,6 +104,7 @@ export function OtpInput({ length = 6, onComplete, status = 'idle', errorKey = 0
     const next = Array(length).fill('');
     for (let i = 0; i < pasted.length; i += 1) next[i] = pasted[i];
     setDigits(next);
+    onChange?.(next.join(''));
     if (pasted.length === length) {
       onComplete(pasted);
       focusInput(length - 1);

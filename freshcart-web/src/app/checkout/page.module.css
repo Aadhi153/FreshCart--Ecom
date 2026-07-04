@@ -660,10 +660,6 @@
   background: var(--primary-light);
 }
 
-.paymentCardDisabled {
-  cursor: not-allowed;
-}
-
 .paymentCardHeader {
   display: flex;
   align-items: center;
@@ -763,28 +759,18 @@
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.comingSoonOverlay {
-  position: absolute;
-  inset: 0;
-  background: color-mix(in srgb, var(--layer-0) 68%, transparent);
-  backdrop-filter: blur(1.5px);
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding: 0.7rem;
-  pointer-events: none;
+.pillChip:hover {
+  border-color: var(--primary);
 }
 
-.comingSoonBadge {
-  background: var(--text-primary);
-  color: var(--layer-0);
-  font-size: 0.68rem;
-  font-weight: 800;
-  padding: 0.25rem 0.7rem;
-  border-radius: var(--radius-full);
-  white-space: nowrap;
+.pillChipSelected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
 }
 
 /* ══════════════════ Sticky price card ══════════════════ */

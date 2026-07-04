@@ -38,6 +38,7 @@ const AVAILABLE_OFFERS = ['FRESH10', 'NEWUSER'];
 
 const UPI_APPS = ['GPay', 'PhonePe', 'Paytm'];
 const BANKS = ['SBI', 'HDFC', 'ICICI', 'Axis'];
+const VALID_PAYMENT_METHODS = ['cod', 'card', 'upi', 'netbanking'];
 
 const emptyAddress = (): SavedAddress => ({
   id: crypto.randomUUID(),
@@ -66,6 +67,16 @@ function formatExpiry(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 4);
   if (digits.length <= 2) return digits;
   return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+}
+
+function isExpiryValid(digits: string): boolean {
+  if (digits.length !== 4) return false;
+  const month = parseInt(digits.slice(0, 2), 10);
+  const year = 2000 + parseInt(digits.slice(2), 10);
+  if (month < 1 || month > 12) return false;
+  const now = new Date();
+  const expiry = new Date(year, month);
+  return expiry > now;
 }
 
 export default function CheckoutPage() {
@@ -116,7 +127,9 @@ export default function CheckoutPage() {
       .eq('id', session.user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (data?.preferred_payment === 'cod') setPaymentMethod(data.preferred_payment);
+        if (data?.preferred_payment && VALID_PAYMENT_METHODS.includes(data.preferred_payment)) {
+          setPaymentMethod(data.preferred_payment);
+        }
       });
   }, [session]);
 
@@ -254,7 +267,21 @@ export default function CheckoutPage() {
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
   const [upiId, setUpiId] = useState('');
+  const [selectedBank, setSelectedBank] = useState('');
   const cardType = detectCardType(cardNumber.replace(/\D/g, ''));
+
+  const validatePaymentDetails = (): string => {
+    if (paymentMethod === 'card') {
+      if (cardNumber.replace(/\D/g, '').length !== 16) return 'Enter a valid 16-digit card number.';
+      if (!isExpiryValid(cardExpiry.replace(/\D/g, ''))) return 'Enter a valid, non-expired expiry date (MM/YY).';
+      if (cardCvv.length !== 3) return 'Enter a valid 3-digit CVV.';
+    } else if (paymentMethod === 'upi') {
+      if (!/^[\w.-]+@[\w]+$/.test(upiId.trim())) return 'Enter a valid UPI ID (e.g. name@bank).';
+    } else if (paymentMethod === 'netbanking') {
+      if (!selectedBank) return 'Please select a bank.';
+    }
+    return '';
+  };
 
   const placeOrder = async () => {
     if (items.length === 0) {
@@ -263,6 +290,11 @@ export default function CheckoutPage() {
     }
     if (!selectedAddress) {
       setError('Please select a delivery address.');
+      return;
+    }
+    const paymentError = validatePaymentDetails();
+    if (paymentError) {
+      setError(paymentError);
       return;
     }
 
@@ -542,72 +574,91 @@ export default function CheckoutPage() {
           <StepCard stepNum={4} title="PAYMENT OPTIONS" isCompleted={false} onEdit={() => {}}>
             <div className={styles.paymentGrid}>
               <div
-                className={`${styles.paymentCard} ${styles.paymentCardDisabled}`}
-                onClick={() => showToast('Card payments are coming soon.', 'error')}
+                className={`${styles.paymentCard} ${paymentMethod === 'card' ? styles.paymentCardSelected : ''}`}
+                onClick={() => setPaymentMethod('card')}
               >
                 <div className={styles.paymentCardHeader}>
-                  <span className={styles.paymentRadio} />
+                  <span className={`${styles.paymentRadio} ${paymentMethod === 'card' ? styles.paymentRadioSelected : ''}`} />
                   <span className={styles.paymentIcon}>💳</span>
                   <span className={styles.paymentLabel}>Credit / Debit Card</span>
                 </div>
-                <div className={styles.paymentCardBody}>
-                  <div className={styles.cardNumberRow}>
-                    <div className={styles.floatingField}>
-                      <input placeholder=" " disabled value={formatCardNumber(cardNumber)} onChange={(e) => setCardNumber(e.target.value)} />
-                      <label>Card Number</label>
+                {paymentMethod === 'card' && (
+                  <div className={styles.paymentCardBody} onClick={(e) => e.stopPropagation()}>
+                    <div className={styles.cardNumberRow}>
+                      <div className={styles.floatingField}>
+                        <input placeholder=" " value={formatCardNumber(cardNumber)} onChange={(e) => setCardNumber(e.target.value)} />
+                        <label>Card Number</label>
+                      </div>
+                      {cardType && <span className={styles.cardTypeIcon}>{cardType}</span>}
                     </div>
-                    {cardType && <span className={styles.cardTypeIcon}>{cardType}</span>}
+                    <div className={styles.cardFieldsRow}>
+                      <div className={styles.floatingField}>
+                        <input placeholder=" " value={formatExpiry(cardExpiry)} onChange={(e) => setCardExpiry(e.target.value)} />
+                        <label>MM/YY</label>
+                      </div>
+                      <div className={styles.floatingField}>
+                        <input placeholder=" " value={cardCvv} onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 3))} />
+                        <label>CVV</label>
+                      </div>
+                    </div>
                   </div>
-                  <div className={styles.cardFieldsRow}>
-                    <div className={styles.floatingField}>
-                      <input placeholder=" " disabled value={formatExpiry(cardExpiry)} onChange={(e) => setCardExpiry(e.target.value)} />
-                      <label>MM/YY</label>
-                    </div>
-                    <div className={styles.floatingField}>
-                      <input placeholder=" " disabled value={cardCvv} onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 3))} />
-                      <label>CVV</label>
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.comingSoonOverlay}><span className={styles.comingSoonBadge}>Coming Soon</span></div>
+                )}
               </div>
 
               <div
-                className={`${styles.paymentCard} ${styles.paymentCardDisabled}`}
-                onClick={() => showToast('UPI payments are coming soon.', 'error')}
+                className={`${styles.paymentCard} ${paymentMethod === 'upi' ? styles.paymentCardSelected : ''}`}
+                onClick={() => setPaymentMethod('upi')}
               >
                 <div className={styles.paymentCardHeader}>
-                  <span className={styles.paymentRadio} />
+                  <span className={`${styles.paymentRadio} ${paymentMethod === 'upi' ? styles.paymentRadioSelected : ''}`} />
                   <span className={styles.paymentIcon}><Smartphone size={20} /></span>
                   <span className={styles.paymentLabel}>UPI</span>
                 </div>
-                <div className={styles.paymentCardBody}>
-                  <div className={styles.floatingField}>
-                    <input placeholder=" " disabled value={upiId} onChange={(e) => setUpiId(e.target.value)} />
-                    <label>UPI ID</label>
+                {paymentMethod === 'upi' && (
+                  <div className={styles.paymentCardBody} onClick={(e) => e.stopPropagation()}>
+                    <div className={styles.floatingField}>
+                      <input placeholder=" " value={upiId} onChange={(e) => setUpiId(e.target.value)} />
+                      <label>UPI ID</label>
+                    </div>
+                    <div className={styles.upiAppsRow}>
+                      {UPI_APPS.map((app) => (
+                        <span
+                          key={app}
+                          className={styles.pillChip}
+                          onClick={() => setUpiId(`${upiId.split('@')[0] || 'yourname'}@${app.toLowerCase()}`)}
+                        >
+                          {app}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div className={styles.upiAppsRow}>
-                    {UPI_APPS.map((app) => <span key={app} className={styles.pillChip}>{app}</span>)}
-                  </div>
-                </div>
-                <div className={styles.comingSoonOverlay}><span className={styles.comingSoonBadge}>Coming Soon</span></div>
+                )}
               </div>
 
               <div
-                className={`${styles.paymentCard} ${styles.paymentCardDisabled}`}
-                onClick={() => showToast('Net banking is coming soon.', 'error')}
+                className={`${styles.paymentCard} ${paymentMethod === 'netbanking' ? styles.paymentCardSelected : ''}`}
+                onClick={() => setPaymentMethod('netbanking')}
               >
                 <div className={styles.paymentCardHeader}>
-                  <span className={styles.paymentRadio} />
+                  <span className={`${styles.paymentRadio} ${paymentMethod === 'netbanking' ? styles.paymentRadioSelected : ''}`} />
                   <span className={styles.paymentIcon}><Landmark size={20} /></span>
                   <span className={styles.paymentLabel}>Net Banking</span>
                 </div>
-                <div className={styles.paymentCardBody}>
-                  <div className={styles.bankGrid}>
-                    {BANKS.map((bank) => <span key={bank} className={styles.pillChip}>{bank}</span>)}
+                {paymentMethod === 'netbanking' && (
+                  <div className={styles.paymentCardBody} onClick={(e) => e.stopPropagation()}>
+                    <div className={styles.bankGrid}>
+                      {BANKS.map((bank) => (
+                        <span
+                          key={bank}
+                          className={`${styles.pillChip} ${selectedBank === bank ? styles.pillChipSelected : ''}`}
+                          onClick={() => setSelectedBank(bank)}
+                        >
+                          {bank}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <div className={styles.comingSoonOverlay}><span className={styles.comingSoonBadge}>Coming Soon</span></div>
+                )}
               </div>
 
               <div

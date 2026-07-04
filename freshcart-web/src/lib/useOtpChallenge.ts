@@ -8,6 +8,14 @@ interface UseOtpChallengeOptions {
   cooldownSeconds?: number;
 }
 
+function describeError(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message && err.message.trim() !== '{}') {
+    return err.message;
+  }
+  console.error('OTP challenge error (no usable message from server):', err);
+  return fallback;
+}
+
 export function useOtpChallenge({ sendOtp, verifyOtp, cooldownSeconds = 30 }: UseOtpChallengeOptions) {
   const [stage, setStage] = useState<Stage>('idle');
   const [error, setError] = useState('');
@@ -29,7 +37,7 @@ export function useOtpChallenge({ sendOtp, verifyOtp, cooldownSeconds = 30 }: Us
       setSecondsLeft(cooldownSeconds);
     } catch (err) {
       setStage('idle');
-      setError(err instanceof Error ? err.message : 'Failed to send OTP. Please try again.');
+      setError(describeError(err, 'Failed to send OTP. Please try again in a few minutes.'));
     }
   };
 
@@ -41,7 +49,7 @@ export function useOtpChallenge({ sendOtp, verifyOtp, cooldownSeconds = 30 }: Us
       setStage('success');
     } catch (err) {
       setStage('sent');
-      setError(err instanceof Error ? err.message : 'Invalid OTP. Please try again.');
+      setError(describeError(err, 'Invalid OTP. Please try again.'));
       setErrorKey((k) => k + 1);
     }
   };
