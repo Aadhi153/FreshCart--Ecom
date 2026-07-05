@@ -79,6 +79,59 @@ function isExpiryValid(digits: string): boolean {
   return expiry > now;
 }
 
+function StepCard({
+  stepNum,
+  activeStep,
+  title,
+  isCompleted,
+  summary,
+  onEdit,
+  children,
+}: {
+  stepNum: number;
+  activeStep: number;
+  title: string;
+  isCompleted: boolean;
+  summary?: React.ReactNode;
+  onEdit: () => void;
+  children?: React.ReactNode;
+}) {
+  const isActive = activeStep === stepNum;
+  return (
+    <div className={styles.card}>
+      <div
+        className={`${styles.cardHeader} ${isActive ? styles.cardHeaderActive : ''}`}
+        onClick={() => isCompleted && onEdit()}
+      >
+        <div className={styles.cardHeaderLeft}>
+          <div
+            className={`${styles.cardHeaderIcon} ${isCompleted ? styles.cardHeaderIconDone : ''} ${isActive ? styles.cardHeaderIconActive : ''}`}
+          >
+            {isCompleted ? <Check size={15} strokeWidth={3} /> : stepNum}
+          </div>
+          <div>
+            <h2 className={styles.cardTitle}>{title}</h2>
+            {isCompleted && summary && <p className={styles.cardSummary}>{summary}</p>}
+          </div>
+        </div>
+        {isCompleted && !isActive && (
+          <button
+            type="button"
+            className={styles.changeButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+          >
+            CHANGE
+          </button>
+        )}
+      </div>
+      {isActive && <div className={styles.cardBody}>{children}</div>}
+    </div>
+  );
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { showToast } = useToast();
@@ -318,57 +371,6 @@ export default function CheckoutPage() {
     }
   };
 
-  const StepCard = ({
-    stepNum,
-    title,
-    isCompleted,
-    summary,
-    onEdit,
-    children,
-  }: {
-    stepNum: number;
-    title: string;
-    isCompleted: boolean;
-    summary?: React.ReactNode;
-    onEdit: () => void;
-    children?: React.ReactNode;
-  }) => {
-    const isActive = activeStep === stepNum;
-    return (
-      <div className={styles.card}>
-        <div
-          className={`${styles.cardHeader} ${isActive ? styles.cardHeaderActive : ''}`}
-          onClick={() => isCompleted && onEdit()}
-        >
-          <div className={styles.cardHeaderLeft}>
-            <div
-              className={`${styles.cardHeaderIcon} ${isCompleted ? styles.cardHeaderIconDone : ''} ${isActive ? styles.cardHeaderIconActive : ''}`}
-            >
-              {isCompleted ? <Check size={15} strokeWidth={3} /> : stepNum}
-            </div>
-            <div>
-              <h2 className={styles.cardTitle}>{title}</h2>
-              {isCompleted && summary && <p className={styles.cardSummary}>{summary}</p>}
-            </div>
-          </div>
-          {isCompleted && !isActive && (
-            <button
-              type="button"
-              className={styles.changeButton}
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-            >
-              CHANGE
-            </button>
-          )}
-        </div>
-        {isActive && <div className={styles.cardBody}>{children}</div>}
-      </div>
-    );
-  };
-
   return (
     <main className={styles.page}>
       <CheckoutStepper steps={STEP_LABELS} activeStep={activeStep} />
@@ -376,7 +378,7 @@ export default function CheckoutPage() {
       <div className={styles.grid}>
         <div className={styles.stepsColumn}>
           {/* STEP 1: LOGIN */}
-          <StepCard stepNum={1} title="LOGIN" isCompleted={!!session} summary={session && (
+          <StepCard stepNum={1} activeStep={activeStep} title="LOGIN" isCompleted={!!session} summary={session && (
             <span>
               {session.user?.email}
               <span className={styles.verifiedBadge}><ShieldCheck size={11} /> Verified</span>
@@ -395,6 +397,7 @@ export default function CheckoutPage() {
           {/* STEP 2: ADDRESS */}
           <StepCard
             stepNum={2}
+            activeStep={activeStep}
             title="DELIVERY ADDRESS"
             isCompleted={activeStep > 2}
             summary={selectedAddress ? `${selectedAddress.fullName}, ${selectedAddress.line1}, ${selectedAddress.city} - ${selectedAddress.pincode}` : ''}
@@ -514,7 +517,7 @@ export default function CheckoutPage() {
           </StepCard>
 
           {/* STEP 3: ORDER SUMMARY */}
-          <StepCard stepNum={3} title="ORDER SUMMARY" isCompleted={activeStep > 3} summary={`${items.length} item(s)`} onEdit={() => setActiveStep(3)}>
+          <StepCard stepNum={3} activeStep={activeStep} title="ORDER SUMMARY" isCompleted={activeStep > 3} summary={`${items.length} item(s)`} onEdit={() => setActiveStep(3)}>
             {items.map((item) => (
               <div key={item.id} className={styles.itemRow}>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', minWidth: 0 }}>
@@ -571,7 +574,7 @@ export default function CheckoutPage() {
           </StepCard>
 
           {/* STEP 4: PAYMENT */}
-          <StepCard stepNum={4} title="PAYMENT OPTIONS" isCompleted={false} onEdit={() => {}}>
+          <StepCard stepNum={4} activeStep={activeStep} title="PAYMENT OPTIONS" isCompleted={false} onEdit={() => {}}>
             <div className={styles.paymentGrid}>
               <div
                 className={`${styles.paymentCard} ${paymentMethod === 'card' ? styles.paymentCardSelected : ''}`}

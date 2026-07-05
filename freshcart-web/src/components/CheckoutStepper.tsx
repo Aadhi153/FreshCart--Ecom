@@ -1,5 +1,6 @@
 'use client';
 
+import { Fragment } from 'react';
 import { Check } from 'lucide-react';
 import styles from './CheckoutStepper.module.css';
 
@@ -21,11 +22,11 @@ export function CheckoutStepper({ steps, activeStep }: CheckoutStepperProps) {
         const isActive = stepNum === activeStep;
 
         return (
-          <div key={step.label} className={styles.stepWrap} role="listitem">
+          <Fragment key={step.label}>
             {index > 0 && (
-              <div className={`${styles.connector} ${stepNum <= activeStep ? styles.connectorFilled : ''}`} />
+              <div className={`${styles.connector} ${stepNum <= activeStep ? styles.connectorFilled : ''}`} aria-hidden="true" />
             )}
-            <div className={styles.step}>
+            <div className={styles.step} role="listitem">
               <div
                 className={`${styles.circle} ${isCompleted ? styles.circleCompleted : ''} ${isActive ? styles.circleActive : ''}`}
                 aria-current={isActive ? 'step' : undefined}
@@ -36,7 +37,7 @@ export function CheckoutStepper({ steps, activeStep }: CheckoutStepperProps) {
                 {step.label}
               </span>
             </div>
-          </div>
+          </Fragment>
         );
       })}
     </div>
