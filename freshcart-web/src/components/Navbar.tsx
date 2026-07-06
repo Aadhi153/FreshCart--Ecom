@@ -10,6 +10,7 @@ import { useTheme } from './ThemeProvider';
 import { useCartStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 import { cartBumpVariants } from '../lib/motion';
+import { NotificationBell } from './NotificationBell';
 
 export function Navbar() {
   const { theme, toggleTheme } = useTheme();
@@ -466,6 +467,8 @@ export function Navbar() {
               </div>
             )}
           </div>
+
+          <NotificationBell session={session} iconBtnStyle={iconBtnStyle} />
 
           {/* Cart */}
           <motion.div

@@ -70,6 +70,23 @@ export const addServerWishlistItem = (productId: string) =>
 export const removeServerWishlistItem = (productId: string) =>
   authFetch(`/api/wishlist/${productId}`, { method: 'DELETE' });
 
+export interface AppNotification {
+  id: string;
+  title: string;
+  body: string | null;
+  link: string | null;
+  read: boolean;
+  created_at: string;
+}
+
+export const getNotifications = (): Promise<AppNotification[]> => authFetch('/api/notifications');
+
+export const markNotificationRead = (id: string) =>
+  authFetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+
+export const markAllNotificationsRead = () =>
+  authFetch('/api/notifications/read-all', { method: 'PATCH' });
+
 // Path is prefixed with the user's own id (avatars/<uid>/<file>) so the storage
 // RLS policy can scope writes to "your own folder only".
 export async function uploadAvatarImage(file: File, userId: string): Promise<string> {

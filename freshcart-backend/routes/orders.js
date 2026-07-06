@@ -4,6 +4,7 @@ const { supabaseAdmin } = require('../supabaseClient');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 const { PlaceOrderPayloadSchema } = require('@freshcart/types');
 const { sendOrderConfirmationEmail } = require('../lib/mailer');
+const { notifyOrderStatus } = require('../lib/notifications');
 
 // GET /api/orders — admin sees all; user sees own
 router.get('/', requireAuth, async (req, res) => {
@@ -156,6 +157,7 @@ router.post('/', requireAuth, async (req, res) => {
       price: item.price,
     }));
     sendOrderConfirmationEmail(order, emailItems, req.user.email);
+    notifyOrderStatus(order);
 
     // 5️⃣ Return the newly created order (including its ID)
     res.status(201).json(order);
@@ -209,6 +211,7 @@ router.patch('/:id/cancel', requireAuth, async (req, res) => {
       .single();
     if (updateErr) throw updateErr;
 
+    notifyOrderStatus(updated);
     res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -240,6 +243,7 @@ router.patch('/:id/status', requireAdmin, async (req, res) => {
       .eq('id', req.params.id)
       .select().single();
     if (error) throw error;
+    notifyOrderStatus(data);
     res.json(data);
   } catch (err) {
     res.status(400).json({ error: err.message });
