@@ -7,6 +7,7 @@ import { CheckCircle2, PackageCheck, ShoppingBag, Truck } from 'lucide-react';
 import { getOrderById } from '../../../lib/api';
 import type { Order } from '@freshcart/types';
 import { Confetti } from '../../../components/Confetti';
+import { OrderTimeline } from '../../../components/OrderTimeline';
 import styles from './page.module.css';
 
 export default function OrderConfirmationPage() {
@@ -55,6 +56,7 @@ export default function OrderConfirmationPage() {
 
       {order && (
         <div className={styles.summaryCard}>
+          <OrderTimeline status={order.status} />
           <h2 className={styles.summaryTitle}><PackageCheck size={16} /> Order Summary</h2>
           {items.map((item: any, i: number) => (
             <div key={item.id || i} className={styles.itemRow}>

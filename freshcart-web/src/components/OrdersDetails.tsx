@@ -6,22 +6,20 @@ import { useRouter } from 'next/navigation';
 import {
   CheckCircle2,
   ChevronDown,
-  ClipboardList,
   Package,
   Search,
   ShoppingCart,
-  Truck,
   XCircle,
 } from 'lucide-react';
 import { cancelOrder, getMyOrders } from '../lib/api';
 import { useCartStore } from '../lib/store';
 import type { Order } from '@freshcart/types';
 import { EmptyState, Skeleton } from './Skeleton';
+import { OrderTimeline } from './OrderTimeline';
 import { useToast } from './ToastProvider';
 import styles from './OrdersDetails.module.css';
 
 const STEPS = ['placed', 'packed', 'shipped', 'delivered'] as const;
-const STEP_ICONS = { placed: ClipboardList, packed: Package, shipped: Truck, delivered: CheckCircle2 };
 const FILTERS = ['all', ...STEPS, 'cancelled'] as const;
 const CANCELLABLE_STATUSES = new Set(['placed', 'packed']);
 const PAGE_SIZE = 10;
@@ -189,7 +187,6 @@ export function OrdersDetails() {
       ) : (
         <div className={styles.list}>
           {filteredOrders.map((order) => {
-            const stepIndex = STEPS.indexOf(order.status as (typeof STEPS)[number]);
             const cancelled = order.status === 'cancelled';
             const items = order.order_items || [];
             const isOpen = expanded.has(order.id || '');
@@ -209,22 +206,7 @@ export function OrdersDetails() {
                   {order.created_at && new Date(order.created_at).toLocaleString()}
                 </p>
 
-                {!cancelled && (
-                  <div className={styles.stepper}>
-                    {STEPS.map((s, i) => {
-                      const Icon = STEP_ICONS[s];
-                      const done = i <= stepIndex;
-                      return (
-                        <div key={s} className={styles.step}>
-                          <span className={`${styles.stepIcon} ${done ? styles.stepIconDone : ''}`}>
-                            <Icon size={13} />
-                          </span>
-                          <span className={`${styles.stepLabel} ${done ? styles.stepLabelDone : ''}`}>{s}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                {!cancelled && <OrderTimeline status={order.status || ''} />}
 
                 <button
                   type="button"
