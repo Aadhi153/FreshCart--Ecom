@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-import type { Product, Order, Profile, Category } from '@freshcart/types';
+import type { Product, Order, Profile, Category, Coupon } from '@freshcart/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -124,6 +124,44 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
 
 export async function deleteProduct(id: string): Promise<boolean> {
   const { error } = await supabase.from('products').delete().eq('id', id);
+  if (error) throw error;
+  return true;
+}
+
+// ── Coupons ───────────────────────────────────────────────────────────────────
+export async function getCoupons(): Promise<Coupon[]> {
+  const { data, error } = await supabase
+    .from('coupons')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createCoupon(coupon: Partial<Coupon>): Promise<Coupon> {
+  const { data, error } = await supabase
+    .from('coupons')
+    .insert([{ ...coupon, code: coupon.code?.toUpperCase() }])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCoupon(id: string, updates: Partial<Coupon>): Promise<Coupon> {
+  const payload = updates.code ? { ...updates, code: updates.code.toUpperCase() } : updates;
+  const { data, error } = await supabase
+    .from('coupons')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCoupon(id: string): Promise<boolean> {
+  const { error } = await supabase.from('coupons').delete().eq('id', id);
   if (error) throw error;
   return true;
 }

@@ -20,6 +20,19 @@ export const CategorySchema = z.object({
 });
 export type Category = z.infer<typeof CategorySchema>;
 
+export const CouponSchema = z.object({
+  id: z.string().uuid().optional(),
+  code: z.string().min(1, "Code is required").transform(v => v.toUpperCase()),
+  discount_type: z.enum(['flat', 'percent']),
+  discount_value: z.number().positive("Discount value must be positive"),
+  min_order_amount: z.number().min(0).default(0),
+  max_discount_amount: z.number().positive().optional().nullable(),
+  active: z.boolean().default(true),
+  expires_at: z.string().optional().nullable(),
+  created_at: z.string().datetime().optional(),
+});
+export type Coupon = z.infer<typeof CouponSchema>;
+
 export const ReviewSchema = z.object({
   id: z.string().uuid().optional(),
   product_id: z.string().uuid().optional(),
