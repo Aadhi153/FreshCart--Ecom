@@ -5,6 +5,7 @@ import {
   ShoppingBag,
   Users,
   Tag,
+  Star,
   Settings,
   LogOut,
   Leaf
@@ -17,6 +18,7 @@ const navItems = [
   { path: '/orders', label: 'Orders', icon: ShoppingBag },
   { path: '/customers', label: 'Customers', icon: Users },
   { path: '/coupons', label: 'Coupons', icon: Tag },
+  { path: '/reviews', label: 'Reviews', icon: Star },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 

@@ -7,6 +7,7 @@ import { ToastProvider } from "../components/ToastProvider";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { PageTransition } from "../components/PageTransition";
+import { WishlistSync } from "../components/WishlistSync";
 
 
 const inter = Inter({
@@ -50,6 +51,7 @@ export default function RootLayout({
         </Script>
         <ThemeProvider>
           <ToastProvider>
+            <WishlistSync />
             <Navbar />
             <PageTransition>{children}</PageTransition>
             <Footer />

@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-import type { Product, Order, Profile, Category, Coupon } from '@freshcart/types';
+import type { Product, Order, Profile, Category, Coupon, Review } from '@freshcart/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -164,6 +164,35 @@ export async function deleteCoupon(id: string): Promise<boolean> {
   const { error } = await supabase.from('coupons').delete().eq('id', id);
   if (error) throw error;
   return true;
+}
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
+export type AdminReview = Review & {
+  products?: { id: string; name: string; image_url: string | null } | null;
+};
+
+async function authHeaders() {
+  const { data: session } = await supabase.auth.getSession();
+  const token = session?.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+}
+
+export async function getReviews(): Promise<AdminReview[]> {
+  const res = await fetch(`${API_URL}/api/reviews`, { headers: await authHeaders() });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch reviews');
+  }
+  return res.json();
+}
+
+export async function deleteReview(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/reviews/${id}`, { method: 'DELETE', headers: await authHeaders() });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to delete review');
+  }
 }
 
 // ── Orders ────────────────────────────────────────────────────────────────────

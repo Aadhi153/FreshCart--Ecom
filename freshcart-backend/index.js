@@ -45,6 +45,8 @@ const categoriesRouter = require('./routes/categories');
 const authRouter       = require('./routes/auth');
 const analyticsRouter  = require('./routes/analytics');
 const paymentsRouter   = require('./routes/payments');
+const reviewsRouter    = require('./routes/reviews');
+const wishlistRouter   = require('./routes/wishlist');
 
 app.use('/api/products',   productsRouter);
 app.use('/api/orders',     ordersRouter);
@@ -53,6 +55,8 @@ app.use('/api/categories', categoriesRouter);
 app.use('/api/auth',       authRouter);
 app.use('/api/analytics',  analyticsRouter);
 app.use('/api/payments',   paymentsRouter);
+app.use('/api/reviews',    reviewsRouter);
+app.use('/api/wishlist',   wishlistRouter);
 
 // ── Health Check ─────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {

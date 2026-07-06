@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { addServerWishlistItem, removeServerWishlistItem } from './api';
 
 export interface CartItem {
   id: string | number;
@@ -76,6 +77,7 @@ interface WishlistState {
   removeItem: (id: string | number) => void;
   isInWishlist: (id: string | number) => boolean;
   clearAll: () => void;
+  hydrateFromServer: (items: WishlistItem[]) => void;
 }
 
 export const useWishlistStore = create<WishlistState>()(
@@ -84,18 +86,32 @@ export const useWishlistStore = create<WishlistState>()(
       items: [],
       hasHydrated: false,
       setHasHydrated: (value) => set({ hasHydrated: value }),
-      addItem: (item) => set((state) => {
-        if (state.items.some((existing) => existing.id === item.id)) {
-          return state;
-        }
-
-        return { items: [...state.items, item] };
-      }),
-      removeItem: (id) => set((state) => ({
-        items: state.items.filter((item) => item.id !== id),
-      })),
+      addItem: (item) => {
+        set((state) => {
+          if (state.items.some((existing) => existing.id === item.id)) {
+            return state;
+          }
+          return { items: [...state.items, item] };
+        });
+        // Best-effort: persists to the account so it follows the user across devices.
+        // Silently ignored for guests (no session) — the local store above is their wishlist.
+        addServerWishlistItem(String(item.id)).catch(() => {});
+      },
+      removeItem: (id) => {
+        set((state) => ({
+          items: state.items.filter((item) => item.id !== id),
+        }));
+        removeServerWishlistItem(String(id)).catch(() => {});
+      },
       isInWishlist: (id) => get().items.some((item) => item.id === id),
       clearAll: () => set({ items: [] }),
+      // Merges items already saved on the account (fetched after sign-in) into the local
+      // store, without clobbering anything a guest already added locally this session.
+      hydrateFromServer: (items) => set((state) => {
+        const existingIds = new Set(state.items.map((i) => String(i.id)));
+        const toAdd = items.filter((i) => !existingIds.has(String(i.id)));
+        return toAdd.length > 0 ? { items: [...state.items, ...toAdd] } : state;
+      }),
     }),
     {
       name: 'freshcart-wishlist-storage',

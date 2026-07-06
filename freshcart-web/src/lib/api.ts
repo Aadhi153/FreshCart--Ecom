@@ -54,6 +54,22 @@ export const getOrderById = (orderId: string): Promise<Order> =>
 export const submitReview = (productId: string, rating: number, comment: string) =>
   authFetch(`/api/products/${productId}/reviews`, { method: 'POST', body: JSON.stringify({ rating, comment }) });
 
+interface ServerWishlistRow {
+  product_id: string;
+  created_at: string;
+  products: { id: string; name: string; price: number; image_url: string | null; categories: { name: string } | null } | null;
+}
+
+export async function getServerWishlist(): Promise<ServerWishlistRow[]> {
+  return authFetch('/api/wishlist');
+}
+
+export const addServerWishlistItem = (productId: string) =>
+  authFetch('/api/wishlist', { method: 'POST', body: JSON.stringify({ product_id: productId }) });
+
+export const removeServerWishlistItem = (productId: string) =>
+  authFetch(`/api/wishlist/${productId}`, { method: 'DELETE' });
+
 // Path is prefixed with the user's own id (avatars/<uid>/<file>) so the storage
 // RLS policy can scope writes to "your own folder only".
 export async function uploadAvatarImage(file: File, userId: string): Promise<string> {
