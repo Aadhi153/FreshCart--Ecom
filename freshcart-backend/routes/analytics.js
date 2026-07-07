@@ -3,6 +3,8 @@ const router = express.Router();
 const { supabaseAdmin } = require('../supabaseClient');
 const { requireAdmin } = require('../middleware/auth');
 
+const LOW_STOCK_THRESHOLD = 5;
+
 // GET /api/analytics/summary — admin only
 router.get('/summary', requireAdmin, async (_req, res) => {
   try {
@@ -24,7 +26,8 @@ router.get('/summary', requireAdmin, async (_req, res) => {
       supabaseAdmin.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', todayISO),
       supabaseAdmin.from('orders').select('total_amount').gte('created_at', todayISO),
       supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
-      supabaseAdmin.from('products').select('id, name').eq('in_stock', false),
+      // Anything already out of stock, or in stock but low enough to need reordering soon.
+      supabaseAdmin.from('products').select('id, name, stock_quantity, in_stock').or(`in_stock.eq.false,stock_quantity.lte.${LOW_STOCK_THRESHOLD}`),
       supabaseAdmin.from('orders').select('id, status, total_amount, created_at, profiles(full_name, email)').order('created_at', { ascending: false }).limit(5),
       supabaseAdmin.from('orders').select('created_at, total_amount').gte('created_at', weekAgoISO),
       supabaseAdmin.from('order_items').select('product_id, quantity, products(name)').limit(1000),

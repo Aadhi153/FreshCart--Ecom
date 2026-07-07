@@ -225,7 +225,7 @@ export default function Dashboard() {
               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'rgba(248,113,113,0.05)', borderRadius: 'var(--radius-sm)' }}>
                 <span style={{ fontWeight: 500 }}>{item.name}</span>
                 <span style={{ color: 'var(--danger)', fontWeight: 700, fontSize: '0.85rem' }}>
-                  {item.stock_quantity} left
+                  {!item.in_stock || !item.stock_quantity ? 'Out of stock' : `${item.stock_quantity} left`}
                 </span>
               </div>
             ))}
