@@ -257,6 +257,11 @@ export function OrdersDetails() {
                           .join(', ')}
                       </div>
                     )}
+                    {order.delivery_slot && (
+                      <div className={styles.addressBox}>
+                        Delivery slot: {order.delivery_slot}
+                      </div>
+                    )}
                   </>
                 )}
 

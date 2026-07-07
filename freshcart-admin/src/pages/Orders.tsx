@@ -89,7 +89,7 @@ export default function Orders() {
           </button>
           <button
             onClick={() => exportToCsv('orders.csv', filtered.map(o => ({
-              OrderId: o.id, Customer: o.profiles?.full_name || '', Total: o.total_amount, Status: o.status, Date: o.created_at,
+              OrderId: o.id, Customer: o.profiles?.full_name || '', Total: o.total_amount, Status: o.status, Date: o.created_at, Slot: o.delivery_slot || '',
             })))}
             style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--layer-1)', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
           >
@@ -222,6 +222,9 @@ export default function Orders() {
                               ? `${o.delivery_address?.fullName}, ${o.delivery_address?.line1}, ${o.delivery_address?.city} - ${o.delivery_address?.pincode}`
                               : String(o.delivery_address || '—')}
                           </div>
+                          {o.delivery_slot && (
+                            <div><strong>Slot:</strong> {o.delivery_slot}</div>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { supabaseAdmin } = require('../supabaseClient');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
-const { PlaceOrderPayloadSchema } = require('@freshcart/types');
+const { PlaceOrderPayloadSchema, DELIVERY_SLOT_MAX_ORDERS_PER_WINDOW } = require('@freshcart/types');
 const { sendOrderConfirmationEmail } = require('../lib/mailer');
 const { notifyOrderStatus } = require('../lib/notifications');
+const { isSlotBookable, buildSlotLabel } = require('../lib/deliverySlots');
 
 // GET /api/orders — admin sees all; user sees own
 router.get('/', requireAuth, async (req, res) => {
@@ -83,6 +84,22 @@ router.post('/', requireAuth, async (req, res) => {
       }
     }
 
+    // Never trust a client-selected slot blindly — re-check the cutoff/horizon and
+    // re-count capacity here, the same way stock is re-verified below.
+    if (!isSlotBookable(delivery_slot.date, delivery_slot.window)) {
+      return res.status(400).json({ error: 'This delivery slot is no longer available. Please choose another.' });
+    }
+    const { count: slotOrderCount, error: slotCountErr } = await supabaseAdmin
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('delivery_slot_date', delivery_slot.date)
+      .eq('delivery_slot_window', delivery_slot.window)
+      .neq('status', 'cancelled');
+    if (slotCountErr) throw slotCountErr;
+    if ((slotOrderCount ?? 0) >= DELIVERY_SLOT_MAX_ORDERS_PER_WINDOW) {
+      return res.status(409).json({ error: 'This delivery slot is fully booked. Please choose another.' });
+    }
+
     const pricedItems = items.map(item => ({
       ...item,
       price: productById.get(item.product_id).price,
@@ -115,7 +132,18 @@ router.post('/', requireAuth, async (req, res) => {
     // 1️⃣ Create the order record
     const { data: order, error: oErr } = await supabaseAdmin
       .from('orders')
-      .insert([{ user_id: req.user.id, total_amount: finalTotal, status: 'placed', delivery_address, delivery_slot, payment_method, coupon_code: appliedCouponCode, discount_amount }])
+      .insert([{
+        user_id: req.user.id,
+        total_amount: finalTotal,
+        status: 'placed',
+        delivery_address,
+        delivery_slot: buildSlotLabel(delivery_slot.date, delivery_slot.window),
+        delivery_slot_date: delivery_slot.date,
+        delivery_slot_window: delivery_slot.window,
+        payment_method,
+        coupon_code: appliedCouponCode,
+        discount_amount,
+      }])
       .select()
       .single();
     if (oErr) throw oErr;

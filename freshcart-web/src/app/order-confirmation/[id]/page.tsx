@@ -50,7 +50,7 @@ export default function OrderConfirmationPage() {
         <h1 className={styles.heading}>Order Placed Successfully! 🎉</h1>
         {order && <p className={styles.orderId}>Order #{order.id?.slice(0, 8).toUpperCase()}</p>}
         <p className={styles.estimate}>
-          <Truck size={15} /> Estimated delivery: 2-3 days
+          <Truck size={15} /> {order?.delivery_slot ? `Arriving: ${order.delivery_slot}` : 'Estimated delivery: 2-3 days'}
         </p>
       </div>
 

@@ -48,6 +48,7 @@ const paymentsRouter   = require('./routes/payments');
 const reviewsRouter    = require('./routes/reviews');
 const wishlistRouter   = require('./routes/wishlist');
 const notificationsRouter = require('./routes/notifications');
+const deliverySlotsRouter = require('./routes/deliverySlots');
 
 app.use('/api/products',   productsRouter);
 app.use('/api/orders',     ordersRouter);
@@ -59,6 +60,7 @@ app.use('/api/payments',   paymentsRouter);
 app.use('/api/reviews',    reviewsRouter);
 app.use('/api/wishlist',   wishlistRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/delivery-slots', deliverySlotsRouter);
 
 // ── Health Check ─────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {

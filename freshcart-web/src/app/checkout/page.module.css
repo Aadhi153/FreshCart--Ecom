@@ -438,6 +438,78 @@
   box-shadow: var(--shadow-md);
 }
 
+.slotSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin: 0.4rem 0 1.2rem;
+}
+
+.slotSectionTitle {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.slotDayGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.slotDayLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.slotWindowRow {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.slotChip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-color);
+  background: var(--layer-0);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.slotChip:hover:not(.slotChipDisabled) {
+  border-color: var(--primary);
+}
+
+.slotChipSelected {
+  background: var(--gradient-primary);
+  border-color: transparent;
+  color: #fff;
+}
+
+.slotChipDisabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.slotChipSubLabel {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .shake {
   animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }

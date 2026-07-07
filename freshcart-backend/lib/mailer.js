@@ -34,6 +34,7 @@ function buildOrderConfirmationEmail(order, items) {
       ${order.discount_amount ? `<p style="margin:4px 0;">Discount: −₹${Number(order.discount_amount).toFixed(2)}</p>` : ''}
       <p style="font-size:1.1em; margin:12px 0;"><strong>Total: ₹${Number(order.total_amount).toFixed(2)}</strong></p>
       <p style="margin:4px 0; color:#555;">Payment method: ${PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method || 'N/A'}</p>
+      ${order.delivery_slot ? `<p style="margin:4px 0; color:#555;">Delivery slot: ${order.delivery_slot}</p>` : ''}
       <p style="margin-top:1.5em; color:#555;">We'll notify you when your order ships. Thanks for shopping with FreshCart!</p>
     </div>`;
 

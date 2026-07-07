@@ -17,7 +17,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { placeOrder as placeOrderApi } from '../../lib/api';
+import { placeOrder as placeOrderApi, getDeliverySlots, type DeliverySlotDay } from '../../lib/api';
 import type { Session } from '@supabase/supabase-js';
 import { useAddressStore, useCartStore, type AddressType, type SavedAddress } from '../../lib/store';
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../lib/constants';
@@ -67,6 +67,22 @@ function formatExpiry(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 4);
   if (digits.length <= 2) return digits;
   return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+}
+
+function formatSlotDayLabel(dateStr: string): string {
+  const toKey = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  const now = new Date();
+  const today = toKey(now);
+  const tomorrow = toKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+  if (dateStr === today) return 'Today';
+  if (dateStr === tomorrow) return 'Tomorrow';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 function isExpiryValid(digits: string): boolean {
@@ -194,6 +210,33 @@ export default function CheckoutPage() {
   const [shakeForm, setShakeForm] = useState(false);
   const pincodeLookupRef = useRef('');
 
+  // ── Delivery slot ─────────────────────────────────────────────────────
+  const [slots, setSlots] = useState<DeliverySlotDay[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotsError, setSlotsError] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedWindow, setSelectedWindow] = useState('');
+
+  const fetchSlots = () => {
+    setSlotsLoading(true);
+    setSlotsError('');
+    getDeliverySlots()
+      .then(setSlots)
+      .catch((err) => setSlotsError(err instanceof Error ? err.message : 'Could not load delivery slots.'))
+      .finally(() => setSlotsLoading(false));
+  };
+
+  useEffect(() => {
+    if (activeStep === 2 && session && slots.length === 0 && !slotsLoading) {
+      fetchSlots();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStep, session]);
+
+  const selectedWindowLabel = slots
+    .find((day) => day.date === selectedDate)
+    ?.windows.find((w) => w.id === selectedWindow)?.label;
+
   // Address store hydrates from localStorage asynchronously after first render, so the
   // saved-address-vs-new-address-form decision has to wait for that flag instead of the
   // (still-empty) addresses array available on mount.
@@ -206,6 +249,45 @@ export default function CheckoutPage() {
   }, [addressHasHydrated]);
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
+
+  const slotPicker = (
+    <div className={styles.slotSection}>
+      <p className={styles.slotSectionTitle}>Choose a delivery slot</p>
+      {slotsLoading && (
+        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Loading available slots…</p>
+      )}
+      {slotsError && (
+        <div>
+          <p className={styles.fieldErrorText}>{slotsError}</p>
+          <button type="button" className={styles.changeButton} onClick={fetchSlots}>Retry</button>
+        </div>
+      )}
+      {!slotsLoading && !slotsError && slots.map((day) => (
+        <div key={day.date} className={styles.slotDayGroup}>
+          <span className={styles.slotDayLabel}>{formatSlotDayLabel(day.date)}</span>
+          <div className={styles.slotWindowRow}>
+            {day.windows.map((slotWindow) => {
+              const isSelected = selectedDate === day.date && selectedWindow === slotWindow.id;
+              return (
+                <button
+                  key={slotWindow.id}
+                  type="button"
+                  className={`${styles.slotChip} ${isSelected ? styles.slotChipSelected : ''} ${!slotWindow.available ? styles.slotChipDisabled : ''}`}
+                  disabled={!slotWindow.available}
+                  onClick={() => { setSelectedDate(day.date); setSelectedWindow(slotWindow.id); }}
+                >
+                  {slotWindow.label}
+                  {!slotWindow.available && (
+                    <span className={styles.slotChipSubLabel}>{slotWindow.remaining === 0 ? 'Full' : 'Unavailable'}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   useEffect(() => {
     const pincode = newAddress.pincode.trim();
@@ -244,6 +326,10 @@ export default function CheckoutPage() {
         setTimeout(() => setShakeForm(false), 400);
         return;
       }
+      if (!selectedDate || !selectedWindow) {
+        setError('Please choose a delivery slot.');
+        return;
+      }
       setAddressErrors({});
       upsertAddress(newAddress);
       setSelectedAddressId(newAddress.id);
@@ -256,6 +342,10 @@ export default function CheckoutPage() {
 
     if (!selectedAddress) {
       setError('Please select or add a delivery address.');
+      return;
+    }
+    if (!selectedDate || !selectedWindow) {
+      setError('Please choose a delivery slot.');
       return;
     }
     setError('');
@@ -345,6 +435,10 @@ export default function CheckoutPage() {
       setError('Please select a delivery address.');
       return;
     }
+    if (!selectedDate || !selectedWindow) {
+      setError('Please choose a delivery slot.');
+      return;
+    }
     const paymentError = validatePaymentDetails();
     if (paymentError) {
       setError(paymentError);
@@ -358,6 +452,7 @@ export default function CheckoutPage() {
         items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity, price: item.price })),
         total_amount: total,
         delivery_address: selectedAddress,
+        delivery_slot: { date: selectedDate, window: selectedWindow },
         payment_method: paymentMethod,
         coupon_code: appliedCoupon?.code,
       });
@@ -400,7 +495,7 @@ export default function CheckoutPage() {
             activeStep={activeStep}
             title="DELIVERY ADDRESS"
             isCompleted={activeStep > 2}
-            summary={selectedAddress ? `${selectedAddress.fullName}, ${selectedAddress.line1}, ${selectedAddress.city} - ${selectedAddress.pincode}` : ''}
+            summary={selectedAddress ? `${selectedAddress.fullName}, ${selectedAddress.line1}, ${selectedAddress.city} - ${selectedAddress.pincode}${selectedWindowLabel ? ` · ${selectedWindowLabel}` : ''}` : ''}
             onEdit={() => setActiveStep(2)}
           >
             {!showAddressForm && (
@@ -430,6 +525,7 @@ export default function CheckoutPage() {
                     <Plus size={16} /> Add New Address
                   </div>
                 </div>
+                {slotPicker}
                 {error && activeStep === 2 && <p className={styles.fieldErrorText}>{error}</p>}
                 <button type="button" className={styles.deliverButton} onClick={handleDeliverHere}>
                   DELIVER HERE
@@ -508,6 +604,9 @@ export default function CheckoutPage() {
                 {(addressErrors.pincode || addressErrors.city || addressErrors.state) && (
                   <p className={styles.fieldErrorText}>{addressErrors.pincode || addressErrors.city || addressErrors.state}</p>
                 )}
+
+                {slotPicker}
+                {error && activeStep === 2 && <p className={styles.fieldErrorText}>{error}</p>}
 
                 <button type="submit" className={styles.deliverButton}>
                   DELIVER HERE

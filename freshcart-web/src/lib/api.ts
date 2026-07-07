@@ -36,6 +36,19 @@ async function authFetch(path: string, options: RequestInit = {}) {
 export const placeOrder = (payload: PlaceOrderPayload): Promise<Order> =>
   authFetch('/api/orders', { method: 'POST', body: JSON.stringify(payload) });
 
+export interface DeliverySlotWindow {
+  id: string;
+  label: string;
+  remaining: number;
+  available: boolean;
+}
+export interface DeliverySlotDay {
+  date: string;
+  windows: DeliverySlotWindow[];
+}
+
+export const getDeliverySlots = (): Promise<DeliverySlotDay[]> => authFetch('/api/delivery-slots');
+
 export async function getMyOrders(page = 1, limit = 10, status?: string): Promise<{ orders: Order[]; total: number }> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (status && status !== 'all') params.set('status', status);
