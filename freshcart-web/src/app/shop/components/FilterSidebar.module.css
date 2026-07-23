@@ -1,0 +1,247 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: calc(64px + 1.5rem);
+  align-self: start;
+  max-height: calc(100vh - 64px - 3rem);
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--layer-0);
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.1rem;
+}
+
+.sidebarHeader h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.filterCountBadge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.filterCountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0 1.1rem 0.9rem;
+}
+
+.clearAllBtn {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.clearAllBtn:hover {
+  text-decoration: underline;
+}
+
+.section {
+  padding: 0.9rem 1.1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.sectionLabel {
+  display: block;
+  margin-bottom: 0.6rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.optionRow input {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.optionLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.optionCount {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Category search-within-filters */
+
+.categorySearchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.categorySearchIcon {
+  position: absolute;
+  left: 0.6rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.categorySearchInput {
+  width: 100%;
+  padding: 0.4rem 0.6rem 0.4rem 1.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--layer-1);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.categorySearchInput:focus {
+  border-color: var(--primary);
+}
+
+.noMatches {
+  margin: 0.3rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+/* Mobile drawer variant */
+
+.drawerBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 301;
+  width: min(320px, 85vw);
+  overflow-y: auto;
+  background: var(--layer-0);
+  box-shadow: var(--shadow-xl);
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.drawerHeader h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.drawerCloseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: var(--layer-1);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.drawerDoneBtn {
+  width: calc(100% - 2.2rem);
+  margin: 1rem 1.1rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mobileTrigger {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--layer-0);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.mobileTriggerBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 0.3rem;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+@media (max-width: 1023px) {
+  .sidebar {
+    display: none;
+  }
+
+  .mobileTrigger {
+    display: flex;
+  }
+}
+
+@media (min-width: 1024px) {
+  .drawerBackdrop,
+  .drawer {
+    display: none;
+  }
+}
