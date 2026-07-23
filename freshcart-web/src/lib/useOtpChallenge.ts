@@ -8,12 +8,29 @@ interface UseOtpChallengeOptions {
   cooldownSeconds?: number;
 }
 
+function isNetworkError(err: unknown): boolean {
+  return err instanceof TypeError && /fetch/i.test(err.message);
+}
+
 function describeError(err: unknown, fallback: string): string {
+  if (isNetworkError(err)) {
+    return 'Network error — check your connection and try again.';
+  }
   if (err instanceof Error && err.message && err.message.trim() !== '{}') {
     return err.message;
   }
   console.error('OTP challenge error (no usable message from server):', err);
   return fallback;
+}
+
+async function withNetworkRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (!isNetworkError(err)) throw err;
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    return fn();
+  }
 }
 
 export function useOtpChallenge({ sendOtp, verifyOtp, cooldownSeconds = 30 }: UseOtpChallengeOptions) {
@@ -32,7 +49,7 @@ export function useOtpChallenge({ sendOtp, verifyOtp, cooldownSeconds = 30 }: Us
     setStage('sending');
     setError('');
     try {
-      await sendOtp();
+      await withNetworkRetry(sendOtp);
       setStage('sent');
       setSecondsLeft(cooldownSeconds);
     } catch (err) {
@@ -45,7 +62,7 @@ export function useOtpChallenge({ sendOtp, verifyOtp, cooldownSeconds = 30 }: Us
     setStage('verifying');
     setError('');
     try {
-      await verifyOtp(code);
+      await withNetworkRetry(() => verifyOtp(code));
       setStage('success');
     } catch (err) {
       setStage('sent');
