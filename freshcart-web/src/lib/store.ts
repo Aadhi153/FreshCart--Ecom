@@ -1,10 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { addServerWishlistItem, removeServerWishlistItem } from './api';
+import {
+  addServerWishlistItem,
+  removeServerWishlistItem,
+  addServerCartItem,
+  updateServerCartQuantity,
+  removeServerCartItem,
+} from './api';
 
 export interface CartItem {
   id: string | number;
   productId: string;
+  variantId?: string;
   name: string;
   price: number;
   quantity: number;
@@ -20,37 +27,60 @@ interface CartState {
   removeItem: (id: string | number) => void;
   updateQuantity: (id: string | number, quantity: number) => void;
   clearCart: () => void;
+  hydrateFromServer: (items: CartItem[]) => void;
 }
 
 export const useCartStore = create<CartState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       items: [],
       hasHydrated: false,
       setHasHydrated: (value) => set({ hasHydrated: value }),
-      addItem: (item) => set((state) => {
+      addItem: (item) => {
         const qtyToAdd = item.quantity || 1;
         // Omit quantity before spreading so we don't accidentally nest it
         const { quantity, ...itemWithoutQty } = item as any;
-        const existing = state.items.find((i) => i.id === item.id);
-        if (existing) {
-          return {
-            items: state.items.map((i) => 
-              i.id === item.id ? { ...i, quantity: i.quantity + qtyToAdd } : i
-            )
-          };
-        }
-        return { items: [...state.items, { ...itemWithoutQty, quantity: qtyToAdd }] };
+        set((state) => {
+          const existing = state.items.find((i) => i.id === item.id);
+          if (existing) {
+            return {
+              items: state.items.map((i) =>
+                i.id === item.id ? { ...i, quantity: i.quantity + qtyToAdd } : i
+              )
+            };
+          }
+          return { items: [...state.items, { ...itemWithoutQty, quantity: qtyToAdd }] };
+        });
+        // Best-effort: persists to the account so it follows the user across devices/refreshes.
+        // Silently ignored for guests (no session) — the local store above is their cart.
+        const finalQty = get().items.find((i) => i.id === item.id)?.quantity ?? qtyToAdd;
+        addServerCartItem(item.productId, item.variantId ?? null, finalQty).catch(() => {});
+      },
+      removeItem: (id) => {
+        const item = get().items.find((i) => i.id === id);
+        set((state) => ({
+          items: state.items.filter((i) => i.id !== id)
+        }));
+        if (item) removeServerCartItem(item.productId, item.variantId ?? null).catch(() => {});
+      },
+      updateQuantity: (id, quantity) => {
+        const nextQty = Math.max(1, quantity);
+        set((state) => ({
+          items: state.items.map((i) =>
+            i.id === id ? { ...i, quantity: nextQty } : i
+          )
+        }));
+        const item = get().items.find((i) => i.id === id);
+        if (item) updateServerCartQuantity(item.productId, item.variantId ?? null, nextQty).catch(() => {});
+      },
+      clearCart: () => set({ items: [] }),
+      // Merges items already saved on the account (fetched after sign-in) into the local
+      // store, without clobbering anything a guest already added locally this session.
+      hydrateFromServer: (items) => set((state) => {
+        const existingIds = new Set(state.items.map((i) => String(i.id)));
+        const toAdd = items.filter((i) => !existingIds.has(String(i.id)));
+        return toAdd.length > 0 ? { items: [...state.items, ...toAdd] } : state;
       }),
-      removeItem: (id) => set((state) => ({
-        items: state.items.filter((i) => i.id !== id)
-      })),
-      updateQuantity: (id, quantity) => set((state) => ({
-        items: state.items.map((i) => 
-          i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i
-        )
-      })),
-      clearCart: () => set({ items: [] })
     }),
     {
       name: 'freshcart-storage',

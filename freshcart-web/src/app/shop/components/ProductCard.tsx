@@ -5,6 +5,7 @@ import { Heart, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { itemVariants } from '../../../lib/motion';
 import { highlightMatch } from '../../../lib/highlightMatch';
+import { formatPrice } from '../../../lib/formatPrice';
 import { ProductImage } from '../../../components/ProductImage';
 import type { ProductCard as ProductCardData } from '../filters';
 import styles from '../page.module.css';
@@ -83,7 +84,7 @@ export function ProductCard({ product, searchTerm, inWishlist, onToggleWishlist,
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 'auto' }}>
-            <span className="price" style={{ fontWeight: 'bold', fontSize: '1.05rem', color: 'var(--text-primary)' }}>₹{product.price.toFixed(2)}</span>
+            <span className="price" style={{ fontWeight: 'bold', fontSize: '1.05rem', color: 'var(--text-primary)' }}>{formatPrice(product.price)}</span>
           </div>
         </div>
       </Link>

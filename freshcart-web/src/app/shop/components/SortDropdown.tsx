@@ -22,7 +22,7 @@ export const SortDropdown = forwardRef<HTMLDivElement, SortDropdownProps>(functi
   return (
     <div className={styles.dropdownContainer} ref={ref}>
       <button type="button" className={styles.dropdownTrigger} onClick={onToggle}>
-        {value === 'popular' ? 'Sort' : selected.label}
+        Sort: {selected.label}
         <ChevronDown size={14} className={isOpen ? styles.chevronOpen : ''} />
       </button>
       <AnimatePresence>

@@ -12,6 +12,7 @@ const SKELETON_COUNT = 10;
 
 interface ProductGridProps {
   products: ProductCardData[];
+  totalCount: number;
   loading: boolean;
   isFiltering: boolean;
   fetchError: string;
@@ -21,10 +22,12 @@ interface ProductGridProps {
   onQuickAdd: (product: ProductCardData) => void;
   onClearFilters: () => void;
   onRetry: () => void;
+  onLoadMore: () => void;
 }
 
 export function ProductGrid({
   products,
+  totalCount,
   loading,
   isFiltering,
   fetchError,
@@ -34,17 +37,13 @@ export function ProductGrid({
   onQuickAdd,
   onClearFilters,
   onRetry,
+  onLoadMore,
 }: ProductGridProps) {
   const showSkeleton = loading || isFiltering;
+  const hasMore = !showSkeleton && !fetchError && products.length < totalCount;
 
   return (
     <>
-      {!loading && !fetchError && (
-        <p className={styles.resultCount}>
-          {products.length} product{products.length === 1 ? '' : 's'} found
-        </p>
-      )}
-
       <AnimatePresence mode="wait" initial={false}>
         {fetchError ? (
           <motion.div
@@ -126,6 +125,15 @@ export function ProductGrid({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {hasMore && (
+        <div className={styles.loadMoreWrap}>
+          <button type="button" className={styles.loadMoreBtn} onClick={onLoadMore}>
+            Load more products
+          </button>
+          <span className={styles.loadMoreCount}>Showing {products.length} of {totalCount}</span>
+        </div>
+      )}
     </>
   );
 }

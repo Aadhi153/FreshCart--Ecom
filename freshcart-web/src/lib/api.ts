@@ -83,6 +83,32 @@ export const addServerWishlistItem = (productId: string) =>
 export const removeServerWishlistItem = (productId: string) =>
   authFetch(`/api/wishlist/${productId}`, { method: 'DELETE' });
 
+interface ServerCartRow {
+  id: string;
+  product_id: string;
+  variant_id: string | null;
+  quantity: number;
+  created_at: string;
+  products: { id: string; name: string; price: number; image_url: string | null; categories: { name: string } | null } | null;
+  product_variants: { id: string; name: string; price_adjustment: number; image_url: string | null } | null;
+}
+
+export async function getServerCart(): Promise<ServerCartRow[]> {
+  return authFetch('/api/cart');
+}
+
+export const addServerCartItem = (productId: string, variantId: string | null, quantity: number) =>
+  authFetch('/api/cart', { method: 'POST', body: JSON.stringify({ product_id: productId, variant_id: variantId, quantity }) });
+
+export const updateServerCartQuantity = (productId: string, variantId: string | null, quantity: number) =>
+  authFetch('/api/cart', { method: 'PATCH', body: JSON.stringify({ product_id: productId, variant_id: variantId, quantity }) });
+
+export const removeServerCartItem = (productId: string, variantId: string | null) => {
+  const params = new URLSearchParams({ product_id: productId });
+  if (variantId) params.set('variant_id', variantId);
+  return authFetch(`/api/cart?${params}`, { method: 'DELETE' });
+};
+
 export interface AppNotification {
   id: string;
   title: string;
