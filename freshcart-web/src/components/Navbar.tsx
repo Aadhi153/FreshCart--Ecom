@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { Session } from '@supabase/supabase-js';
 import { Heart, LogOut, MapPin, Moon, Package, ShoppingCart, Sun, User, Leaf, Menu, Search, X } from 'lucide-react';
@@ -15,6 +15,7 @@ import { NotificationBell } from './NotificationBell';
 export function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
+  const pathname = usePathname();
   const [session, setSession] = useState<Session | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -134,6 +135,24 @@ export function Navbar() {
     router.push('/auth');
   };
 
+  // Secondary actions (search, theme toggle): unbordered, lighter-weight.
+  const secondaryIconBtnStyle: CSSProperties = {
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    color: 'var(--text-secondary)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 'var(--radius-full)',
+    transition: 'all 0.2s',
+    textDecoration: 'none',
+    position: 'relative' as const,
+  };
+
+  // Primary actions (account, notifications, cart): bordered circle.
   const iconBtnStyle: CSSProperties = {
     background: 'transparent',
     border: '1.5px solid var(--border-color)',
@@ -144,10 +163,17 @@ export function Navbar() {
     justifyContent: 'center',
     width: 36,
     height: 36,
-    borderRadius: 'var(--radius-sm)',
+    borderRadius: 'var(--radius-full)',
     transition: 'all 0.2s',
     textDecoration: 'none',
     position: 'relative' as const,
+  };
+
+  const iconDividerStyle: CSSProperties = {
+    width: 1,
+    height: 22,
+    margin: '0 0.25rem',
+    background: 'var(--border-color)',
   };
 
   return (
@@ -195,10 +221,10 @@ export function Navbar() {
           </Link>
 
           <nav className="desktop-nav" style={{ display: 'flex', gap: '1.5rem' }}>
-            <Link href="/" className="nav-link">Home</Link>
-            <Link href="/shop" className="nav-link">Shop</Link>
-            <Link href="/about" className="nav-link">About</Link>
-            <Link href="/contact" className="nav-link">Contact Us</Link>
+            <Link href="/" className={`nav-link ${pathname === '/' ? 'nav-link-active' : ''}`}>Home</Link>
+            <Link href="/shop" className={`nav-link ${pathname?.startsWith('/shop') ? 'nav-link-active' : ''}`}>Shop</Link>
+            <Link href="/about" className={`nav-link ${pathname === '/about' ? 'nav-link-active' : ''}`}>About</Link>
+            <Link href="/contact" className={`nav-link ${pathname === '/contact' ? 'nav-link-active' : ''}`}>Contact Us</Link>
           </nav>
         </div>
 
@@ -211,8 +237,8 @@ export function Navbar() {
               alignItems: 'center',
               position: 'relative',
               background: searchOpen ? 'var(--layer-1)' : 'transparent',
-              border: searchOpen ? '1.5px solid var(--primary-light)' : '1.5px solid var(--border-color)',
-              borderRadius: searchOpen ? 'var(--radius-full)' : 'var(--radius-sm)',
+              border: searchOpen ? '1.5px solid var(--primary-light)' : 'none',
+              borderRadius: 'var(--radius-full)',
               transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
               width: searchOpen ? '260px' : '36px',
               height: '36px',
@@ -233,7 +259,7 @@ export function Navbar() {
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  color: searchOpen ? 'var(--primary)' : 'var(--text-primary)',
+                  color: searchOpen ? 'var(--primary)' : 'var(--text-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -407,9 +433,11 @@ export function Navbar() {
             )}
           </div>
           {/* Theme toggle */}
-          <button onClick={toggleTheme} style={iconBtnStyle} title={theme === 'dark' ? 'Light mode' : 'Dark mode'} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          <button onClick={toggleTheme} style={secondaryIconBtnStyle} title={theme === 'dark' ? 'Light mode' : 'Dark mode'} aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
             {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           </button>
+
+          <span style={iconDividerStyle} aria-hidden="true" />
 
           {/* Auth / profile */}
           <div ref={accountRef} style={{ position: 'relative' }}>
