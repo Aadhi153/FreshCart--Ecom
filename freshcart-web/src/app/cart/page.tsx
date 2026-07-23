@@ -149,6 +149,7 @@ export default function CartPage() {
     addItem({
       id: variant ? `${product.id}-${variant.id}` : product.id,
       productId: product.id,
+      variantId: variant?.id,
       name,
       price: finalPrice,
       image: variant?.image || product.image,

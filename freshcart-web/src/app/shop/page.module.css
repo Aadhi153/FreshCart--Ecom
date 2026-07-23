@@ -1,144 +1,47 @@
 .shopMain {
   position: relative;
-  isolation: isolate;
   max-width: 1440px;
   min-height: calc(100vh - 64px);
   margin: 0 auto;
   padding: 2rem;
-  overflow: hidden;
+  background: var(--page-bg);
 }
 
-.categoryBarWrapper {
-  position: relative;
+.heroBand {
   margin-bottom: 1.5rem;
+  padding: 1.75rem 2rem;
+  border-radius: 12px;
+  background: var(--primary);
   animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.categoryBar {
-  display: flex;
-  gap: 0.6rem;
-  padding-bottom: 0.25rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  cursor: grab;
-}
-
-.categoryBar::-webkit-scrollbar {
-  display: none;
-}
-
-.categoryBar:active {
-  cursor: grabbing;
-}
-
-.fadeEdge {
-  position: absolute;
-  top: 0;
-  bottom: 0.25rem;
-  width: 60px;
-  pointer-events: none;
-  z-index: 10;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.fadeLeft {
-  left: 0;
-  background: linear-gradient(to right, var(--page-bg), transparent);
-}
-
-.fadeRight {
-  right: 0;
-  background: linear-gradient(to left, var(--page-bg), transparent);
-}
-
-.fadeVisible {
-  opacity: 1;
-}
-
-.categoryChip {
-  flex: 0 0 auto;
-  padding: 0.6rem 1.05rem;
-  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
-  border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--layer-0) 80%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 0.88rem;
+.heroEyebrow {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: color-mix(in srgb, #ffffff 85%, transparent);
+  font-size: 0.8rem;
   font-weight: 700;
-  white-space: nowrap;
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--transition-base), border-color var(--transition-base), background var(--transition-base), color var(--transition-base);
 }
 
-.categoryChip:hover {
-  color: var(--primary);
-  border-color: color-mix(in srgb, var(--primary) 42%, var(--border-color));
-  transform: translateY(-2px);
+.heroHeading {
+  margin: 0;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.8vw, 2.3rem);
+  line-height: 1.15;
 }
 
-.categoryChipActive {
-  border-color: color-mix(in srgb, var(--primary) 24%, transparent);
-  background: color-mix(in srgb, var(--primary-light) 74%, transparent);
-  color: var(--primary);
+.heroCount {
+  margin: 0.6rem 0 0;
+  color: color-mix(in srgb, #ffffff 85%, transparent);
+  font-size: 0.85rem;
 }
 
-.shopBackdrop {
-  position: fixed;
-  inset: 64px 0 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--primary-light) 22%, transparent), transparent 28rem),
-    var(--page-bg);
-}
-
-.meshOrb {
-  position: absolute;
-  width: clamp(21rem, 41vw, 43rem);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  filter: blur(3.1rem);
-  opacity: 0.78;
-  mix-blend-mode: multiply;
-  will-change: transform;
-}
-
-.meshOrbOne {
-  left: -12%;
-  top: 3rem;
-  background: color-mix(in srgb, var(--primary) 36%, transparent);
-  animation: meshDriftOne 14s ease-in-out infinite;
-}
-
-.meshOrbTwo {
-  right: -8%;
-  top: 18%;
-  background: color-mix(in srgb, var(--accent) 32%, transparent);
-  animation: meshDriftTwo 16s ease-in-out -6s infinite;
-}
-
-.meshOrbThree {
-  left: 36%;
-  bottom: -16%;
-  background: color-mix(in srgb, #38bdf8 26%, transparent);
-  animation: meshDriftThree 17s ease-in-out -10s infinite;
-}
-
-.gridGlow {
-  position: absolute;
-  inset: 0;
-  opacity: 0.33;
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--primary) 16%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--primary) 16%, transparent) 1px, transparent 1px);
-  background-size: 4.25rem 4.25rem;
-  mask-image: radial-gradient(circle at 58% 22%, #000 0 24rem, transparent 46rem);
-  animation: gridPan 17s linear infinite;
+.shopLayout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 240px;
+  gap: 1.25rem;
+  align-items: start;
 }
 
 .productSection {
@@ -146,56 +49,56 @@
   animation: fadeSlideUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
 }
 
-.shopHeader {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--layer-0) 78%, transparent);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
-
-.shopHeader span {
-  display: block;
-  margin-bottom: 0.2rem;
-  color: var(--primary);
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.shopHeader h1 {
-  margin: 0;
-  color: var(--text-primary);
-  font-family: var(--font-display);
-  font-size: clamp(1.4rem, 2.6vw, 2.1rem);
-  line-height: 1;
-  letter-spacing: 0;
-}
-
-.shopHeader p {
-  margin: 0.35rem 0 0;
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-}
-
-.resultCount {
-  margin: 0 0 0.75rem;
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-}
-
 .productGrid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.85rem;
+}
+
+@media (min-width: 1400px) {
+  .productGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.loadMoreWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.loadMoreBtn {
+  padding: 0.65rem 1.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--layer-0);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.loadMoreBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.loadMoreCount {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 1023px) {
+  .shopLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .productGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .productCard {
@@ -203,24 +106,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--layer-0) 88%, transparent);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
-}
-
-.productCard::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  opacity: 0;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 12%, transparent), transparent 42%);
-  transition: opacity var(--transition-base);
-  pointer-events: none;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--layer-0);
+  transition: transform var(--transition-base), border-color var(--transition-base);
 }
 
 .productCard>* {
@@ -229,13 +118,8 @@
 }
 
 .productCard:hover {
-  border-color: color-mix(in srgb, var(--primary) 32%, var(--border-color));
-  box-shadow: 0 1.2rem 2.6rem color-mix(in srgb, #000000 13%, transparent);
-  transform: translateY(-6px);
-}
-
-.productCard:hover::before {
-  opacity: 1;
+  border-color: var(--primary);
+  transform: translateY(-4px);
 }
 
 .productImageContainer {
@@ -246,16 +130,13 @@
   width: 100%;
   height: 120px;
   padding: 0.6rem;
-  background:
-    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--primary-light) 70%, transparent), transparent 58%),
-    var(--layer-1);
+  background: var(--layer-1);
 }
 
 .productImageContainer img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 1rem 1rem color-mix(in srgb, #000000 14%, transparent));
   transition: transform var(--transition-base);
 }
 
@@ -284,44 +165,26 @@
 }
 
 .addToCartBtn {
-  position: relative;
-  overflow: hidden;
   width: 100%;
   min-height: 2.1rem;
   padding: 0.45rem 0.75rem;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   background: var(--primary);
   color: #ffffff;
   cursor: pointer;
   font-size: 0.8rem;
   font-weight: 800;
   text-align: center;
-  transition: transform var(--transition-base), box-shadow var(--transition-base), filter var(--transition-base);
+  transition: filter var(--transition-base);
 }
 
 .addToCartBtn:hover {
-  box-shadow: 0 0.8rem 1.5rem color-mix(in srgb, var(--primary) 20%, transparent);
   filter: brightness(0.95);
-  transform: translateY(-1px);
 }
 
 .addToCartBtn:active {
-  transform: translateY(0) scale(0.97);
-}
-
-.addToCartBtn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.35) 50%, transparent 80%);
-  transform: translateX(-120%);
-  transition: transform 0.6s ease;
-  pointer-events: none;
-}
-
-.addToCartBtn:hover::after {
-  transform: translateX(120%);
+  filter: brightness(0.9);
 }
 
 @keyframes fadeSlideUp {
@@ -336,82 +199,15 @@
   }
 }
 
-@keyframes meshDriftOne {
-
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  45% {
-    transform: translate3d(19vw, 8vh, 0) scale(1.2);
-  }
-
-  72% {
-    transform: translate3d(8vw, 22vh, 0) scale(0.89);
-  }
-}
-
-@keyframes meshDriftTwo {
-
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  40% {
-    transform: translate3d(-14vw, 14vh, 0) scale(1.16);
-  }
-
-  78% {
-    transform: translate3d(-23vw, -3vh, 0) scale(0.93);
-  }
-}
-
-@keyframes meshDriftThree {
-
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  35% {
-    transform: translate3d(-16vw, -13vh, 0) scale(1.2);
-  }
-
-  74% {
-    transform: translate3d(16vw, -16vh, 0) scale(0.9);
-  }
-}
-
-@keyframes gridPan {
-  from {
-    background-position: 0 0, 0 0;
-  }
-
-  to {
-    background-position: 4.25rem 4.25rem, 4.25rem 4.25rem;
-  }
-}
-
 @media (max-width: 900px) {
   .shopMain {
     padding: 1rem;
   }
-
-  .shopHeader {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .productGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 480px) {
   .productGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.6rem;
   }
 
@@ -426,12 +222,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-
-  .productSection,
-  .meshOrbOne,
-  .meshOrbTwo,
-  .meshOrbThree,
-  .gridGlow {
+  .heroBand,
+  .productSection {
     animation: none;
   }
 
@@ -439,9 +231,5 @@
   .productImageContainer img,
   .addToCartBtn {
     transition: none;
-  }
-
-  .addToCartBtn::after {
-    display: none;
   }
 }

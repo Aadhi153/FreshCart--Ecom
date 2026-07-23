@@ -47,6 +47,7 @@ const analyticsRouter  = require('./routes/analytics');
 const paymentsRouter   = require('./routes/payments');
 const reviewsRouter    = require('./routes/reviews');
 const wishlistRouter   = require('./routes/wishlist');
+const cartRouter       = require('./routes/cart');
 const notificationsRouter = require('./routes/notifications');
 const deliverySlotsRouter = require('./routes/deliverySlots');
 
@@ -59,6 +60,7 @@ app.use('/api/analytics',  analyticsRouter);
 app.use('/api/payments',   paymentsRouter);
 app.use('/api/reviews',    reviewsRouter);
 app.use('/api/wishlist',   wishlistRouter);
+app.use('/api/cart',       cartRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/delivery-slots', deliverySlotsRouter);
 

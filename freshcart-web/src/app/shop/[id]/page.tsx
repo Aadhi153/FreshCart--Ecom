@@ -112,6 +112,7 @@ function MiniProductCard({ product }: { product: HomeProductCard | RatedProductC
               addItem({
                 id: variant ? `${product.id}-${variant.id}` : product.id,
                 productId: product.id,
+                variantId: variant?.id,
                 name,
                 price: finalPrice,
                 image: variant?.image || product.image,
@@ -242,6 +243,7 @@ export default function ProductDetailPage() {
     addItem({
       id: selectedVariant ? `${product.id}-${selectedVariant.id}` : product.id,
       productId: product.id,
+      variantId: selectedVariant?.id,
       name: nameWithVariant,
       price: finalPrice,
       image: product.image_url,

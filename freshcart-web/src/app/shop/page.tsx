@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import { getCheapestVariant } from '../../lib/queries';
 import { useCartStore, useWishlistStore } from '../../lib/store';
@@ -10,14 +10,24 @@ import { useToast } from '../../components/ToastProvider';
 import {
   filterProducts,
   sortProducts,
+  getCategoryCounts,
+  getPriceBucketCounts,
+  PRICE_BUCKETS,
   type ProductCard,
   type ProductRow,
   type PriceBucketKey,
   type SortKey,
+  type DietaryFilters,
 } from './filters';
 import { FilterBar } from './components/FilterBar';
+import type { FilterChip } from './components/ActiveFilterChips';
+import { FilterSidebar } from './components/FilterSidebar';
+import { CartSidebar } from './components/CartSidebar';
 import { ProductGrid } from './components/ProductGrid';
 import styles from './page.module.css';
+
+const DEFAULT_DIETARY: DietaryFilters = { vegetarian: false, vegan: false, organic: false };
+const PAGE_SIZE = 24;
 
 export default function ShopPage() {
   return (
@@ -28,130 +38,25 @@ export default function ShopPage() {
 }
 
 function ShopContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [allProducts, setAllProducts] = useState<ProductCard[]>([]);
   const [categories, setCategories] = useState<string[]>(['All']);
 
-  const searchParams = useSearchParams();
-
   const [search, setSearch] = useState('');
-
-  // Momentum Scroll States & Refs
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [showLeftFade, setShowLeftFade] = useState(false);
-  const [showRightFade, setShowRightFade] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const isDown = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
-  const velocity = useRef(0);
-  const lastTime = useRef(0);
-  const lastX = useRef(0);
-  const dragDistance = useRef(0);
-  const frameId = useRef<number | null>(null);
-
-  const checkFades = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setShowLeftFade(scrollLeft > 0);
-      setShowRightFade(Math.ceil(scrollLeft + clientWidth) < scrollWidth);
-    }
-  };
-
-  useEffect(() => {
-    checkFades();
-    window.addEventListener('resize', checkFades);
-    return () => window.removeEventListener('resize', checkFades);
-  }, [categories]);
-
-  const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
-    isDown.current = true;
-    dragDistance.current = 0;
-    const container = scrollRef.current;
-    if (!container) return;
-    if (frameId.current) cancelAnimationFrame(frameId.current);
-
-    const pageX = 'touches' in e ? e.touches[0].pageX : (e as React.MouseEvent).pageX;
-    startX.current = pageX - container.offsetLeft;
-    scrollLeft.current = container.scrollLeft;
-    lastX.current = pageX;
-    lastTime.current = performance.now();
-    velocity.current = 0;
-  };
-
-  const handlePointerLeave = () => {
-    if (isDown.current) {
-      isDown.current = false;
-      startMomentum();
-      setTimeout(() => setIsDragging(false), 50);
-    }
-  };
-
-  const handlePointerUp = () => {
-    isDown.current = false;
-    startMomentum();
-    setTimeout(() => setIsDragging(false), 50);
-  };
-
-  const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDown.current || !scrollRef.current) return;
-
-    const pageX = 'touches' in e ? e.touches[0].pageX : (e as React.MouseEvent).pageX;
-    const dxForDistance = Math.abs(pageX - lastX.current);
-    dragDistance.current += dxForDistance;
-
-    if (dragDistance.current > 5 && !isDragging) {
-      setIsDragging(true);
-    }
-
-    const x = pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX.current);
-    scrollRef.current.scrollLeft = scrollLeft.current - walk;
-
-    const now = performance.now();
-    const dt = now - lastTime.current;
-    if (dt > 0) {
-      const dx = pageX - lastX.current;
-      velocity.current = dx / dt;
-    }
-
-    lastX.current = pageX;
-    lastTime.current = now;
-    checkFades();
-  };
-
-  const startMomentum = () => {
-    if (!scrollRef.current || Math.abs(velocity.current) < 0.1) return;
-
-    const step = () => {
-      if (!scrollRef.current) return;
-
-      scrollRef.current.scrollLeft -= velocity.current * 16;
-      velocity.current *= 0.92;
-
-      checkFades();
-
-      if (Math.abs(velocity.current) > 0.05) {
-        frameId.current = requestAnimationFrame(step);
-      }
-    };
-
-    frameId.current = requestAnimationFrame(step);
-  };
-
-  useEffect(() => {
-    const q = searchParams.get('q');
-    if (q !== null) setSearch(q);
-    const category = searchParams.get('category');
-    if (category) setSelectedCategory(category);
-  }, [searchParams]);
-
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [priceBucket, setPriceBucket] = useState<PriceBucketKey>('all');
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [dietary, setDietary] = useState<DietaryFilters>(DEFAULT_DIETARY);
+  const [onSaleOnly, setOnSaleOnly] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>('popular');
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
   const [isFiltering, setIsFiltering] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const addItem = useCartStore((state) => state.addItem);
   const addWishlistItem = useWishlistStore((state) => state.addItem);
@@ -161,6 +66,44 @@ function ShopContent() {
 
   const debouncedSearch = useDebouncedValue(search, 300);
 
+  // Read initial filter state from the URL so filtered views are shareable/bookmarkable.
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q !== null) setSearch(q);
+    const category = searchParams.get('category');
+    if (category) setSelectedCategories(category.split(',').filter(Boolean));
+    const price = searchParams.get('price') as PriceBucketKey | null;
+    if (price && PRICE_BUCKETS.some((b) => b.key === price)) setPriceBucket(price);
+    if (searchParams.get('inStock') === '1') setInStockOnly(true);
+    if (searchParams.get('onSale') === '1') setOnSaleOnly(true);
+    const dietaryParam = searchParams.get('dietary');
+    if (dietaryParam) {
+      const flags = new Set(dietaryParam.split(','));
+      setDietary({
+        vegetarian: flags.has('vegetarian'),
+        vegan: flags.has('vegan'),
+        organic: flags.has('organic'),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep the URL in sync as filters change, without adding history entries.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set('q', search.trim());
+    if (selectedCategories.length > 0) params.set('category', selectedCategories.join(','));
+    if (priceBucket !== 'all') params.set('price', priceBucket);
+    if (inStockOnly) params.set('inStock', '1');
+    if (onSaleOnly) params.set('onSale', '1');
+    const activeDietary = Object.entries(dietary).filter(([, v]) => v).map(([k]) => k);
+    if (activeDietary.length > 0) params.set('dietary', activeDietary.join(','));
+
+    const queryString = params.toString();
+    router.replace(queryString ? `/shop?${queryString}` : '/shop', { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, selectedCategories, priceBucket, inStockOnly, onSaleOnly, dietary]);
+
   const handleQuickAdd = async (product: ProductCard) => {
     const variant = await getCheapestVariant(product.id);
     const finalPrice = product.price + (variant?.priceAdjustment || 0);
@@ -168,6 +111,7 @@ function ShopContent() {
     addItem({
       id: variant ? `${product.id}-${variant.id}` : product.id,
       productId: product.id,
+      variantId: variant?.id,
       name,
       price: finalPrice,
       image: variant?.image || product.image_url,
@@ -214,7 +158,7 @@ function ShopContent() {
 
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, price, image_url, stock_quantity, in_stock, rating, review_count, created_at, categories(name)')
+        .select('id, name, price, image_url, stock_quantity, in_stock, rating, review_count, created_at, is_vegetarian, is_vegan, is_organic, is_on_sale, categories(name)')
         .returns<ProductRow[]>();
 
       if (cancelled) return;
@@ -231,6 +175,10 @@ function ShopContent() {
           rating: Number(p.rating) || 0,
           review_count: p.review_count ?? 0,
           created_at: p.created_at,
+          is_vegetarian: p.is_vegetarian ?? false,
+          is_vegan: p.is_vegan ?? false,
+          is_organic: p.is_organic ?? false,
+          is_on_sale: p.is_on_sale ?? false,
         })));
       } else {
         setFetchError(error?.message || 'Failed to load products.');
@@ -243,109 +191,170 @@ function ShopContent() {
 
   const filteredProducts = useMemo(
     () => sortProducts(
-      filterProducts(allProducts, { search: debouncedSearch, category: selectedCategory, priceBucket }),
+      filterProducts(allProducts, {
+        search: debouncedSearch,
+        categories: selectedCategories,
+        priceBucket,
+        inStockOnly,
+        dietary,
+        onSaleOnly,
+      }),
       sortBy,
     ),
-    [allProducts, debouncedSearch, selectedCategory, priceBucket, sortBy],
+    [allProducts, debouncedSearch, selectedCategories, priceBucket, inStockOnly, dietary, onSaleOnly, sortBy],
+  );
+
+  const visibleProducts = useMemo(
+    () => filteredProducts.slice(0, visibleCount),
+    [filteredProducts, visibleCount],
+  );
+
+  // Each facet's counts are computed against every *other* active filter, so selecting
+  // a category doesn't collapse that same category's own count to zero.
+  const categoryCounts = useMemo(
+    () => getCategoryCounts(allProducts, { search: debouncedSearch, priceBucket, inStockOnly, dietary, onSaleOnly }),
+    [allProducts, debouncedSearch, priceBucket, inStockOnly, dietary, onSaleOnly],
+  );
+  const priceBucketCounts = useMemo(
+    () => getPriceBucketCounts(allProducts, { search: debouncedSearch, categories: selectedCategories, inStockOnly, dietary, onSaleOnly }),
+    [allProducts, debouncedSearch, selectedCategories, inStockOnly, dietary, onSaleOnly],
   );
 
   // Brief skeleton flash on filter change for visual polish (the actual computation above is instant).
-  const didMountRef = useRef(false);
-  const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [didMount, setDidMount] = useState(false);
   useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
+    if (!didMount) {
+      setDidMount(true);
       return;
     }
     setIsFiltering(true);
-    if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
-    flashTimeoutRef.current = setTimeout(() => setIsFiltering(false), 150);
-    return () => { if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current); };
-  }, [debouncedSearch, selectedCategory, priceBucket, sortBy]);
+    const timeout = setTimeout(() => setIsFiltering(false), 150);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, selectedCategories, priceBucket, inStockOnly, dietary, onSaleOnly, sortBy]);
+
+  // Reset pagination whenever the matched set changes, so "Load more" always starts
+  // from the first page of the new result instead of an arbitrary offset.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [debouncedSearch, selectedCategories, priceBucket, inStockOnly, dietary, onSaleOnly, sortBy]);
 
   const clearAllFilters = () => {
-    setSelectedCategory('All');
+    setSelectedCategories([]);
     setPriceBucket('all');
+    setInStockOnly(false);
+    setDietary(DEFAULT_DIETARY);
+    setOnSaleOnly(false);
     setSearch('');
   };
 
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
+    );
+  };
+
+  const handleDietaryChange = (key: keyof DietaryFilters, value: boolean) => {
+    setDietary((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Count of filters scoped to the sidebar itself (search lives in the top bar and is
+  // surfaced separately via its own chip/clear control).
+  const activeFilterCount =
+    selectedCategories.length +
+    (priceBucket !== 'all' ? 1 : 0) +
+    (inStockOnly ? 1 : 0) +
+    (dietary.vegetarian ? 1 : 0) +
+    (dietary.vegan ? 1 : 0) +
+    (dietary.organic ? 1 : 0) +
+    (onSaleOnly ? 1 : 0);
+
+  const hasActiveFilters = activeFilterCount > 0 || search.trim() !== '';
+
+  const chips: FilterChip[] = [
+    ...selectedCategories.map((category) => ({
+      key: `category-${category}`,
+      label: category,
+      onRemove: () => toggleCategory(category),
+    })),
+    ...(priceBucket !== 'all'
+      ? [{
+          key: 'price',
+          label: PRICE_BUCKETS.find((b) => b.key === priceBucket)?.label || '',
+          onRemove: () => setPriceBucket('all'),
+        }]
+      : []),
+    ...(inStockOnly ? [{ key: 'inStock', label: 'In stock only', onRemove: () => setInStockOnly(false) }] : []),
+    ...(dietary.vegetarian ? [{ key: 'vegetarian', label: 'Vegetarian', onRemove: () => handleDietaryChange('vegetarian', false) }] : []),
+    ...(dietary.vegan ? [{ key: 'vegan', label: 'Vegan', onRemove: () => handleDietaryChange('vegan', false) }] : []),
+    ...(dietary.organic ? [{ key: 'organic', label: 'Organic', onRemove: () => handleDietaryChange('organic', false) }] : []),
+    ...(onSaleOnly ? [{ key: 'onSale', label: 'On sale', onRemove: () => setOnSaleOnly(false) }] : []),
+    ...(search.trim() ? [{ key: 'search', label: `"${search.trim()}"`, onRemove: () => setSearch('') }] : []),
+  ];
+
   return (
     <main className={styles.shopMain}>
-      <div className={styles.shopBackdrop} aria-hidden="true">
-        <span className={`${styles.meshOrb} ${styles.meshOrbOne}`} />
-        <span className={`${styles.meshOrb} ${styles.meshOrbTwo}`} />
-        <span className={`${styles.meshOrb} ${styles.meshOrbThree}`} />
-        <span className={styles.gridGlow} />
-      </div>
-
-      <div className={styles.categoryBarWrapper}>
-        <div className={`${styles.fadeEdge} ${styles.fadeLeft} ${showLeftFade ? styles.fadeVisible : ''}`} />
-        <div
-          className={styles.categoryBar}
-          ref={scrollRef}
-          onMouseDown={handlePointerDown}
-          onMouseLeave={handlePointerLeave}
-          onMouseUp={handlePointerUp}
-          onMouseMove={handlePointerMove}
-          onTouchStart={handlePointerDown}
-          onTouchEnd={handlePointerUp}
-          onTouchCancel={handlePointerLeave}
-          onTouchMove={handlePointerMove}
-          onScroll={checkFades}
-        >
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={(e) => {
-                if (isDragging) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  return;
-                }
-                setSelectedCategory(cat);
-              }}
-              className={`${styles.categoryChip} ${selectedCategory === cat ? styles.categoryChipActive : ''}`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-        <div className={`${styles.fadeEdge} ${styles.fadeRight} ${showRightFade ? styles.fadeVisible : ''}`} />
+      <div className={styles.heroBand}>
+        <span className={styles.heroEyebrow}>FreshCart store</span>
+        <h1 className={styles.heroHeading}>Shop fresh essentials</h1>
+        {!loading && !fetchError && (
+          <p className={styles.heroCount}>
+            {filteredProducts.length} product{filteredProducts.length === 1 ? '' : 's'} found
+          </p>
+        )}
       </div>
 
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        selectedCategory={selectedCategory}
-        onClearCategory={() => setSelectedCategory('All')}
-        priceBucket={priceBucket}
-        onPriceBucketChange={setPriceBucket}
+        chips={chips}
+        onClearAll={clearAllFilters}
         sortBy={sortBy}
         onSortByChange={setSortBy}
-        onClearAll={clearAllFilters}
       />
 
-      <section className={styles.productSection}>
-        <div className={styles.shopHeader}>
-          <div>
-            <span>FreshCart Store</span>
-            <h1>Shop fresh essentials</h1>
-          </div>
-        </div>
-
-        <ProductGrid
-          products={filteredProducts}
-          loading={loading}
-          isFiltering={isFiltering}
-          fetchError={fetchError}
-          searchTerm={debouncedSearch}
-          wishlistIds={wishlistIds}
-          onToggleWishlist={handleToggleWishlist}
-          onQuickAdd={handleQuickAdd}
-          onClearFilters={clearAllFilters}
-          onRetry={() => window.location.reload()}
+      <div className={styles.shopLayout}>
+        <FilterSidebar
+          categories={categories}
+          categoryCounts={categoryCounts}
+          selectedCategories={selectedCategories}
+          onToggleCategory={toggleCategory}
+          priceBucket={priceBucket}
+          priceBucketCounts={priceBucketCounts}
+          onPriceBucketChange={setPriceBucket}
+          inStockOnly={inStockOnly}
+          onInStockOnlyChange={setInStockOnly}
+          dietary={dietary}
+          onDietaryChange={handleDietaryChange}
+          onSaleOnly={onSaleOnly}
+          onOnSaleOnlyChange={setOnSaleOnly}
+          hasActiveFilters={hasActiveFilters}
+          activeFilterCount={activeFilterCount}
+          onClearAll={clearAllFilters}
+          mobileOpen={mobileFilterOpen}
+          onMobileOpen={() => setMobileFilterOpen(true)}
+          onMobileClose={() => setMobileFilterOpen(false)}
         />
-      </section>
+
+        <section className={styles.productSection}>
+          <ProductGrid
+            products={visibleProducts}
+            totalCount={filteredProducts.length}
+            loading={loading}
+            isFiltering={isFiltering}
+            fetchError={fetchError}
+            searchTerm={debouncedSearch}
+            wishlistIds={wishlistIds}
+            onToggleWishlist={handleToggleWishlist}
+            onQuickAdd={handleQuickAdd}
+            onClearFilters={clearAllFilters}
+            onRetry={() => window.location.reload()}
+            onLoadMore={() => setVisibleCount((c) => c + PAGE_SIZE)}
+          />
+        </section>
+
+        <CartSidebar />
+      </div>
     </main>
   );
 }

@@ -8,6 +8,7 @@ import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { PageTransition } from "../components/PageTransition";
 import { WishlistSync } from "../components/WishlistSync";
+import { CartSync } from "../components/CartSync";
 
 
 const inter = Inter({
@@ -27,7 +28,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "FreshCart | Farm Fresh. Delivered Fast.",
-  description: "Online store for everyday products: fresh eggs, coconuts, vegetables, T-shirts, and snacks.",
+  description: "Online store for everyday products: fresh eggs, coconuts, vegetables, and snacks.",
 };
 
 export default function RootLayout({
@@ -52,6 +53,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             <WishlistSync />
+            <CartSync />
             <Navbar />
             <PageTransition>{children}</PageTransition>
             <Footer />

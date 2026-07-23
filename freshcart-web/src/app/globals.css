@@ -55,6 +55,13 @@ a {
   background-color: color-mix(in srgb, var(--primary) 15%, transparent);
 }
 
+.nav-link-active {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 /* ── Dropdown Items ── */
 .dropdown-item {
   display: flex;
