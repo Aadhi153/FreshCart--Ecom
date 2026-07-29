@@ -6,6 +6,7 @@ const { PlaceOrderPayloadSchema, DELIVERY_SLOT_MAX_ORDERS_PER_WINDOW } = require
 const { sendOrderConfirmationEmail } = require('../lib/mailer');
 const { notifyOrderStatus } = require('../lib/notifications');
 const { isSlotBookable, buildSlotLabel } = require('../lib/deliverySlots');
+const { computeDiscountForCart, isWithinValidity, underUsageLimits } = require('../lib/promotions');
 
 // GET /api/orders — admin sees all; user sees own
 router.get('/', requireAuth, async (req, res) => {
@@ -73,7 +74,7 @@ router.post('/', requireAuth, async (req, res) => {
     const productIds = [...new Set(items.map(item => item.product_id))];
     const { data: products, error: prodErr } = await supabaseAdmin
       .from('products')
-      .select('id, name, price, stock_quantity')
+      .select('id, name, price, stock_quantity, category_id')
       .in('id', productIds);
     if (prodErr) throw prodErr;
 
@@ -106,27 +107,49 @@ router.post('/', requireAuth, async (req, res) => {
     }));
     const total_amount = pricedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    // Look up and apply the coupon server-side — never trust the client's discount math.
-    // An invalid/expired/ineligible code is treated as "no discount" rather than failing the
-    // order outright, since the client already validated it once before the final submit.
-    let discount_amount = 0;
-    let appliedCouponCode = null;
+    // Look up and apply a promotion server-side — never trust the client's discount math.
+    // An invalid/expired/ineligible coupon is treated as "no discount" rather than failing
+    // the order outright, since the client already validated it once before the final submit.
+    // If both a coupon and an auto-offer would apply, only the larger discount is kept —
+    // promotions never stack in v1.
+    const cartItemsForPromo = pricedItems.map(item => ({
+      product_id: item.product_id,
+      category_id: productById.get(item.product_id).category_id,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
+    let appliedPromotion = null; // { id, name, amount }
+
     if (coupon_code) {
       const { data: coupon } = await supabaseAdmin
-        .from('coupons')
+        .from('promotions')
         .select('*')
         .eq('code', coupon_code.toUpperCase())
-        .eq('active', true)
+        .eq('requires_code', true)
+        .eq('is_active', true)
         .maybeSingle();
-      if (coupon && (!coupon.expires_at || new Date(coupon.expires_at) > new Date()) && total_amount >= coupon.min_order_amount) {
-        discount_amount = coupon.discount_type === 'flat'
-          ? coupon.discount_value
-          : (total_amount * coupon.discount_value) / 100;
-        if (coupon.max_discount_amount != null) discount_amount = Math.min(discount_amount, coupon.max_discount_amount);
-        discount_amount = Math.min(discount_amount, total_amount);
-        appliedCouponCode = coupon.code;
+      if (coupon && isWithinValidity(coupon) && total_amount >= (coupon.min_order_value ?? 0)
+          && await underUsageLimits(coupon, req.user.id)) {
+        const amount = computeDiscountForCart(coupon, cartItemsForPromo, total_amount);
+        if (amount > 0) appliedPromotion = { id: coupon.id, name: coupon.name, amount };
       }
     }
+
+    const { data: autoOffers } = await supabaseAdmin
+      .from('promotions')
+      .select('*')
+      .eq('requires_code', false)
+      .eq('is_active', true);
+    for (const offer of (autoOffers || []).filter(o => isWithinValidity(o))) {
+      if (total_amount < (offer.min_order_value ?? 0)) continue;
+      if (!(await underUsageLimits(offer, req.user.id))) continue;
+      const amount = computeDiscountForCart(offer, cartItemsForPromo, total_amount);
+      if (amount > (appliedPromotion?.amount ?? 0)) appliedPromotion = { id: offer.id, name: offer.name, amount };
+    }
+
+    const discount_amount = appliedPromotion?.amount ?? 0;
+    const appliedCouponCode = appliedPromotion?.name ?? null;
     const finalTotal = total_amount - discount_amount;
 
     // 1️⃣ Create the order record
@@ -143,6 +166,7 @@ router.post('/', requireAuth, async (req, res) => {
         payment_method,
         coupon_code: appliedCouponCode,
         discount_amount,
+        promotion_id: appliedPromotion?.id ?? null,
       }])
       .select()
       .single();
@@ -175,6 +199,25 @@ router.post('/', requireAuth, async (req, res) => {
       if (!reserved) {
         await supabaseAdmin.from('orders').update({ status: 'cancelled' }).eq('id', order.id);
         return res.status(409).json({ error: `Insufficient stock for product ${item.product_id}, order cancelled` });
+      }
+    }
+
+    // 3.5️⃣ Record the redemption now that the order is confirmed to hold stock — placed
+    // after stock reservation succeeds so an order cancelled for insufficient stock never
+    // counts against the promotion's usage limits. Best-effort: a failure here shouldn't
+    // fail an otherwise-successful order, but is logged since it means usage limits could
+    // under-count.
+    if (appliedPromotion) {
+      try {
+        const { error: redemptionErr } = await supabaseAdmin.from('promotion_redemptions').insert([{
+          promotion_id: appliedPromotion.id,
+          user_id: req.user.id,
+          order_id: order.id,
+          discount_amount_applied: appliedPromotion.amount,
+        }]);
+        if (redemptionErr) throw redemptionErr;
+      } catch (redemptionErr) {
+        console.error('Failed to record promotion redemption for order', order.id, redemptionErr);
       }
     }
 

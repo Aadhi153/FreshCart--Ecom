@@ -50,6 +50,8 @@ const wishlistRouter   = require('./routes/wishlist');
 const cartRouter       = require('./routes/cart');
 const notificationsRouter = require('./routes/notifications');
 const deliverySlotsRouter = require('./routes/deliverySlots');
+const promotionsRouter = require('./routes/promotions');
+const adminPromotionsRouter = require('./routes/adminPromotions');
 
 app.use('/api/products',   productsRouter);
 app.use('/api/orders',     ordersRouter);
@@ -63,6 +65,8 @@ app.use('/api/wishlist',   wishlistRouter);
 app.use('/api/cart',       cartRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/delivery-slots', deliverySlotsRouter);
+app.use('/api/admin/promotions', adminPromotionsRouter);
+app.use('/api', promotionsRouter); // exposes /api/promotions/active and /api/coupons/validate
 
 // ── Health Check ─────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
