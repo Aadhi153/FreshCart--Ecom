@@ -5,12 +5,12 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 import { getAnalyticsSummary } from '../lib/api';
 
 const statusStyle: Record<string, CSSProperties> = {
-  delivered:  { background: 'rgba(74,222,128,0.15)', color: '#4ADE80' },
-  processing: { background: 'rgba(251,146,60,0.15)', color: '#FB923C' },
-  placed:     { background: 'rgba(251,191,36,0.15)', color: '#FBBF24' },
-  packed:     { background: 'rgba(251,191,36,0.15)', color: '#FBBF24' },
-  shipped:    { background: 'rgba(56,189,248,0.15)', color: '#38BDF8' },
-  cancelled:  { background: 'rgba(248,113,113,0.15)', color: '#F87171' },
+  delivered:  { background: 'color-mix(in srgb, var(--success) 16%, transparent)', color: 'var(--success)' },
+  processing: { background: 'color-mix(in srgb, var(--warning) 16%, transparent)', color: 'var(--warning)' },
+  placed:     { background: 'color-mix(in srgb, var(--accent) 16%, transparent)',  color: 'var(--accent)' },
+  packed:     { background: 'color-mix(in srgb, var(--accent) 16%, transparent)',  color: 'var(--accent)' },
+  shipped:    { background: 'color-mix(in srgb, var(--primary) 16%, transparent)', color: 'var(--primary)' },
+  cancelled:  { background: 'color-mix(in srgb, var(--danger) 16%, transparent)',  color: 'var(--danger)' },
 };
 
 interface KPI {
@@ -111,7 +111,7 @@ export default function Dashboard() {
             <div key={label} className="kpi-card spatial-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <p className="kpi-title">{label}</p>
-                <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: `color-mix(in srgb, ${color} 16%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon size={18} style={{ color }} />
                 </div>
               </div>

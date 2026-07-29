@@ -102,7 +102,9 @@ export default function ProductDetail() {
                 </span>
                 <span style={{
                   color: product.in_stock ? 'var(--success)' : 'var(--danger)',
-                  backgroundColor: product.in_stock ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)',
+                  backgroundColor: product.in_stock
+                    ? 'color-mix(in srgb, var(--success) 15%, transparent)'
+                    : 'color-mix(in srgb, var(--danger) 15%, transparent)',
                   padding: '3px 9px', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700,
                 }}>
                   {product.in_stock ? 'In Stock' : 'Out of Stock'}
@@ -124,7 +126,7 @@ export default function ProductDetail() {
             </button>
             <button
               onClick={handleDelete}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1rem', cursor: 'pointer', background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.25)', color: 'var(--danger)', borderRadius: 'var(--radius-md)', fontWeight: 600 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1rem', cursor: 'pointer', background: 'color-mix(in srgb, var(--danger) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--danger) 25%, transparent)', color: 'var(--danger)', borderRadius: 'var(--radius-md)', fontWeight: 600 }}
             >
               <Trash2 size={15} /> Delete
             </button>

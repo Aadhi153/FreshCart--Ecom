@@ -137,7 +137,7 @@ export default function Products() {
         <div className="kpi-card spatial-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
             <p className="kpi-title">Total Stock</p>
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'color-mix(in srgb, var(--accent) 16%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Layers size={18} style={{ color: 'var(--accent)' }} />
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function Products() {
         <div className="kpi-card spatial-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
             <p className="kpi-title">Total Stock Value</p>
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'rgba(74,222,128,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'color-mix(in srgb, var(--success) 16%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <IndianRupee size={18} style={{ color: 'var(--success)' }} />
             </div>
           </div>
@@ -244,7 +244,9 @@ export default function Products() {
                     <td>
                       <span style={{
                         color: p.in_stock ? 'var(--success)' : 'var(--danger)',
-                        backgroundColor: p.in_stock ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)',
+                        backgroundColor: p.in_stock
+                          ? 'color-mix(in srgb, var(--success) 15%, transparent)'
+                          : 'color-mix(in srgb, var(--danger) 15%, transparent)',
                         padding: '4px 10px', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700,
                       }}>
                         {p.in_stock ? 'In Stock' : 'Out of Stock'}

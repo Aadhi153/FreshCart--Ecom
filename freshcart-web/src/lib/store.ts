@@ -17,6 +17,7 @@ export interface CartItem {
   quantity: number;
   image?: string;
   category?: string;
+  categoryId?: string;
 }
 
 interface CartState {
@@ -211,6 +212,43 @@ export const useAddressStore = create<AddressState>()(
     }),
     {
       name: 'freshcart-address-storage',
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
+    }
+  )
+);
+
+export interface AppliedPromotion {
+  id: string;
+  name: string;
+  code: string | null;   // null for auto-applied offers
+  discountAmount: number; // last server-confirmed amount, for display only
+  source: 'coupon' | 'auto';
+}
+
+interface PromotionState {
+  applied: AppliedPromotion | null;
+  hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
+  setApplied: (promo: AppliedPromotion | null) => void;
+  clear: () => void;
+}
+
+// Single source of truth for "which promotion is currently applied", shared by the
+// cart sidebar, full cart page, and checkout page — previously each of those kept its
+// own local useState, so an applied coupon was silently lost navigating cart→checkout.
+export const usePromotionStore = create<PromotionState>()(
+  persist(
+    (set) => ({
+      applied: null,
+      hasHydrated: false,
+      setHasHydrated: (value) => set({ hasHydrated: value }),
+      setApplied: (promo) => set({ applied: promo }),
+      clear: () => set({ applied: null }),
+    }),
+    {
+      name: 'freshcart-promotion-storage',
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },

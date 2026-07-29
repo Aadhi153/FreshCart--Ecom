@@ -20,18 +20,64 @@ export const CategorySchema = z.object({
 });
 export type Category = z.infer<typeof CategorySchema>;
 
-export const CouponSchema = z.object({
+// ── Promotions ────────────────────────────────────────────────────────────────
+// A promotion is either a coupon (requires_code=true, shopper must type `code`) or an
+// auto-applied offer (requires_code=false, code is always null). Coupons are always
+// cart-wide (applicable_scope='cart'); offers can additionally be scoped to a category
+// or a specific set of products via applicable_ids.
+export const PromotionSchema = z.object({
   id: z.string().uuid().optional(),
-  code: z.string().min(1, "Code is required").transform(v => v.toUpperCase()),
-  discount_type: z.enum(['flat', 'percent']),
-  discount_value: z.number().positive("Discount value must be positive"),
-  min_order_amount: z.number().min(0).default(0),
+  code: z.string().min(1, "Code is required").transform(v => v.toUpperCase()).optional().nullable(),
+  name: z.string().min(1, "Name is required"),
+  requires_code: z.boolean().default(true),
+  discount_type: z.enum(['percentage', 'flat', 'bogo']),
+  discount_value: z.number().min(0, "Discount value must be zero or positive"),
+  min_order_value: z.number().min(0).optional().nullable(),
   max_discount_amount: z.number().positive().optional().nullable(),
-  active: z.boolean().default(true),
-  expires_at: z.string().optional().nullable(),
+  applicable_scope: z.enum(['cart', 'category', 'product']).default('cart'),
+  applicable_ids: z.array(z.string().uuid()).optional().nullable(),
+  usage_limit_total: z.number().int().positive().optional().nullable(),
+  usage_limit_per_user: z.number().int().positive().optional().nullable(),
+  valid_from: z.string().optional(),
+  valid_until: z.string().optional().nullable(),
+  is_active: z.boolean().default(true),
   created_at: z.string().datetime().optional(),
+  redemption_count: z.number().int().optional(), // admin list/detail responses only
 });
-export type Coupon = z.infer<typeof CouponSchema>;
+export type Promotion = z.infer<typeof PromotionSchema>;
+
+export const PromotionValidationRequestSchema = z.object({
+  code: z.string().min(1),
+  cart_items: z.array(z.object({
+    product_id: z.string().uuid(),
+    quantity: z.number().int().min(1),
+  })).min(1),
+  cart_subtotal: z.number().min(0),
+  user_id: z.string().uuid().optional(), // accepted for shape-compat; the server always uses the authenticated user
+});
+export type PromotionValidationRequest = z.infer<typeof PromotionValidationRequestSchema>;
+
+export const PromotionValidationResponseSchema = z.object({
+  valid: z.boolean(),
+  discount_amount: z.number().min(0).optional(),
+  promotion_name: z.string().optional(),
+  promotion_id: z.string().uuid().optional(),
+  error_message: z.string().optional(),
+});
+export type PromotionValidationResponse = z.infer<typeof PromotionValidationResponseSchema>;
+
+export const ActivePromotionSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  discount_type: z.enum(['percentage', 'flat', 'bogo']),
+  discount_value: z.number(),
+  min_order_value: z.number().nullable().optional(),
+  max_discount_amount: z.number().nullable().optional(),
+  applicable_scope: z.enum(['cart', 'category', 'product']),
+  applicable_ids: z.array(z.string().uuid()).nullable().optional(),
+  valid_until: z.string().nullable().optional(),
+});
+export type ActivePromotion = z.infer<typeof ActivePromotionSchema>;
 
 export const ReviewSchema = z.object({
   id: z.string().uuid().optional(),
@@ -80,6 +126,9 @@ export const OrderSchema = z.object({
   created_at: z.string().datetime().optional(),
   order_items: z.array(OrderItemSchema).optional(),
   delivery_slot: z.string().nullable().optional(),
+  coupon_code: z.string().nullable().optional(),
+  discount_amount: z.number().min(0).optional(),
+  promotion_id: z.string().uuid().nullable().optional(),
 
   // Frontend specific fields
   total: z.number().optional(),

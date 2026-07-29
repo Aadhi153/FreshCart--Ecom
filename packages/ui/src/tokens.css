@@ -36,115 +36,129 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   ADMIN PORTAL PALETTE
-   Brand: Indigo → Violet  |  Surface: Slate gray layers
-   Light: crisp white surfaces   Dark: deep slate surfaces
+   ADMIN PORTAL PALETTE — "Modern Indigo SaaS"
+   Brand: single confident indigo accent, no dual-tone gradients.
+   Neutral gray/white surfaces in light mode, near-black graphite in
+   dark mode — built for calm, low-fatigue daily admin use (Linear /
+   Vercel / Stripe dashboard register), not a marketing surface.
 ───────────────────────────────────────────────────────────────── */
+
+/* ── Sidebar — fixed brand rail color, does NOT change with the light/dark
+   toggle (only the main content area switches). Common dashboard pattern:
+   a constant-identity sidebar next to a theme-able content surface. ── */
+body.theme-admin,
+html.theme-admin,
+.theme-admin-light,
+.theme-admin-dark {
+  --sidebar-bg:      #101014;
+  --sidebar-text:    rgba(255,255,255,0.62);
+  --sidebar-active:  #818CF8;   /* indigo-400 — legible on the fixed dark rail */
+  --sidebar-active-bg: rgba(129,140,248,0.14);
+  --sidebar-border:  rgba(255,255,255,0.06);
+}
 
 /* ═══════════════════════════════════════════════════════
    ADMIN – Light Theme
-   Palette: Cool Slate surfaces + Cyan/Teal brand accent
-   Feel: Clean enterprise SaaS — professional & crisp
 ═══════════════════════════════════════════════════════ */
 body.theme-admin.theme-light,
 html.theme-admin .theme-light,
 .theme-admin-light {
   /* Brand */
-  --primary:         #0D9488;  /* teal-600 */
-  --primary-hover:   #0F766E;  /* teal-700 */
-  --primary-light:   rgba(13, 148, 136, 0.12);
-  --accent:          #6366F1;  /* indigo-500 — secondary pop */
-  --success:         #10B981;
-  --danger:          #EF4444;
-  --warning:         #F59E0B;
+  --primary:         #4F46E5;  /* indigo-600 */
+  --primary-hover:   #4338CA;  /* indigo-700 */
+  --primary-light:   rgba(79,70,229,0.10);
+  --accent:          #0EA5E9;  /* sky-500 — used sparingly for secondary data (charts, "auto" badges) */
+  --success:         #16A34A;
+  --danger:          #DC2626;
+  --warning:         #D97706;
 
-  /* Page background — cool pearl white */
-  --page-bg:         #F8FAFB;
-  --page-bg-alt:     #EEF2F6;
+  /* Page background — neutral cool gray, not tinted by brand */
+  --page-bg:         #FAFAFB;
+  --page-bg-alt:     #F0F1F5;
 
   /* Surface layers */
   --layer-0:         #FFFFFF;
-  --layer-1:         #F2F7F9;
-  --layer-2:         #E4EDF3;
+  --layer-1:         #F7F8FA;
+  --layer-2:         #EEF0F4;
 
-  /* Sidebar — deep slate charcoal */
-  --sidebar-bg:      #0F1923;
-  --sidebar-text:    rgba(255,255,255,0.65);
-  --sidebar-active:  #2DD4BF;   /* teal-300 — stands out on dark */
-  --sidebar-active-bg: rgba(45,212,191,0.14);
-  --sidebar-border:  rgba(255,255,255,0.07);
+  /* Sidebar — light surface matching the page, separated by a border only
+     (flat single-surface layout, no forced-dark sidebar) */
+  --sidebar-bg:      #FFFFFF;
+  --sidebar-text:    #5B5F6D;
+  --sidebar-active:  #4F46E5;   /* indigo-600 — same as primary, now on a light sidebar */
+  --sidebar-active-bg: rgba(79,70,229,0.08);
+  --sidebar-border:  #E4E6EB;
 
   /* Topbar */
-  --topbar-bg:       rgba(255,255,255,0.88);
-  --topbar-border:   rgba(13,148,136,0.14);
+  --topbar-bg:       rgba(255,255,255,0.85);
+  --topbar-border:   #E4E6EB;
 
   /* Text */
-  --text-primary:    #0D1B2A;
-  --text-secondary:  #4A6070;
-  --text-muted:      #8FA3B1;
+  --text-primary:    #14141F;
+  --text-secondary:  #5B5F6D;
+  --text-muted:      #9498A3;
 
-  /* Borders */
-  --border-color:    rgba(13,148,136,0.16);
-  --border-subtle:   rgba(0,0,0,0.06);
+  /* Borders — neutral gray, not brand-tinted */
+  --border-color:    #E4E6EB;
+  --border-subtle:   rgba(16,16,20,0.05);
 
-  /* Shadows */
-  --shadow-sm:  0 1px 3px rgba(13,148,136,0.08), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:  0 4px 16px rgba(13,148,136,0.12), 0 2px 6px rgba(0,0,0,0.06);
-  --shadow-lg:  0 12px 40px rgba(13,148,136,0.16), 0 4px 12px rgba(0,0,0,0.08);
-  --shadow-xl:  0 24px 60px rgba(13,148,136,0.22);
+  /* Shadows — neutral, not brand-tinted */
+  --shadow-sm:  0 1px 2px rgba(16,16,20,0.05);
+  --shadow-md:  0 4px 12px rgba(16,16,20,0.08), 0 1px 3px rgba(16,16,20,0.05);
+  --shadow-lg:  0 12px 32px rgba(16,16,20,0.12);
+  --shadow-xl:  0 24px 48px rgba(16,16,20,0.16);
 
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #0D9488 0%, #6366F1 100%);
-  --gradient-hero:    linear-gradient(135deg, #0F766E 0%, #0D9488 40%, #6366F1 100%);
-  --gradient-card:    linear-gradient(135deg, rgba(13,148,136,0.07) 0%, rgba(99,102,241,0.07) 100%);
+  /* Gradients — flat by default; --gradient-hero reserved for the auth brand panel only */
+  --gradient-primary: var(--primary);
+  --gradient-hero:    linear-gradient(135deg, #4338CA 0%, #4F46E5 55%, #0EA5E9 100%);
+  --gradient-card:    var(--layer-0);
   --gradient-glass:   rgba(255,255,255,0.75);
 }
 
 /* ═══════════════════════════════════════════════════════
    ADMIN – Dark Theme
-   Palette: Deep graphite surfaces + Rose/Coral accent
-   Feel: Modern premium dashboard — bold & sophisticated
 ═══════════════════════════════════════════════════════ */
 body.theme-admin.theme-dark,
 html.theme-admin .theme-dark,
 .theme-admin-dark {
   /* Brand */
-  --primary:         #FB7185;  /* rose-400 — vibrant on dark */
-  --primary-hover:   #F43F5E;  /* rose-500 */
-  --primary-light:   rgba(251,113,133,0.16);
-  --accent:          #38BDF8;  /* sky-400 — cool contrast */
+  --primary:         #818CF8;  /* indigo-400 — legible on dark */
+  --primary-hover:   #6366F1;  /* indigo-500 */
+  --primary-light:   rgba(129,140,248,0.16);
+  --accent:          #38BDF8;  /* sky-400 */
   --success:         #4ADE80;
   --danger:          #F87171;
   --warning:         #FBBF24;
 
-  /* Page background — graphite / warm charcoal */
-  --page-bg:         #141418;
-  --page-bg-alt:     #1A1A20;
+  /* Page background — neutral graphite */
+  --page-bg:         #0B0B10;
+  --page-bg-alt:     #16161C;
 
   /* Surface layers */
-  --layer-0:         #1C1C23;
-  --layer-1:         #242430;
-  --layer-2:         #2E2E3E;
+  --layer-0:         #18181F;
+  --layer-1:         #1E1E27;
+  --layer-2:         #26262F;
 
-  /* Sidebar — near-black with warm tint */
-  --sidebar-bg:      #0E0E12;
+  /* Sidebar — slightly lighter than the page canvas, separated by a border only
+     (flat single-surface layout, matches the light theme's approach) */
+  --sidebar-bg:      #111117;
   --sidebar-text:    rgba(255,255,255,0.60);
-  --sidebar-active:  #FB7185;   /* rose accent */
-  --sidebar-active-bg: rgba(251,113,133,0.14);
-  --sidebar-border:  rgba(255,255,255,0.06);
+  --sidebar-active:  #818CF8;
+  --sidebar-active-bg: rgba(129,140,248,0.16);
+  --sidebar-border:  rgba(255,255,255,0.08);
 
   /* Topbar */
-  --topbar-bg:       rgba(20,20,24,0.92);
-  --topbar-border:   rgba(251,113,133,0.18);
+  --topbar-bg:       rgba(16,16,20,0.90);
+  --topbar-border:   rgba(255,255,255,0.07);
 
   /* Text */
-  --text-primary:    #F1F0F5;
-  --text-secondary:  #A09CB0;
-  --text-muted:      #5C5870;
+  --text-primary:    #F1F1F5;
+  --text-secondary:  #A0A3AF;
+  --text-muted:      #5C5F6B;
 
-  /* Borders */
-  --border-color:    rgba(251,113,133,0.18);
-  --border-subtle:   rgba(255,255,255,0.06);
+  /* Borders — neutral, not brand-tinted */
+  --border-color:    rgba(255,255,255,0.08);
+  --border-subtle:   rgba(255,255,255,0.05);
 
   /* Shadows */
   --shadow-sm:  0 1px 3px rgba(0,0,0,0.40);
@@ -152,11 +166,11 @@ html.theme-admin .theme-dark,
   --shadow-lg:  0 12px 40px rgba(0,0,0,0.65);
   --shadow-xl:  0 24px 60px rgba(0,0,0,0.75);
 
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #FB7185 0%, #38BDF8 100%);
-  --gradient-hero:    linear-gradient(135deg, #BE123C 0%, #FB7185 45%, #38BDF8 100%);
-  --gradient-card:    linear-gradient(135deg, rgba(251,113,133,0.10) 0%, rgba(56,189,248,0.10) 100%);
-  --gradient-glass:   rgba(28,28,35,0.78);
+  /* Gradients — flat by default; --gradient-hero reserved for the auth brand panel only */
+  --gradient-primary: var(--primary);
+  --gradient-hero:    linear-gradient(135deg, #312E81 0%, #4F46E5 55%, #0EA5E9 100%);
+  --gradient-card:    var(--layer-0);
+  --gradient-glass:   rgba(24,24,31,0.80);
 }
 
 /* ─────────────────────────────────────────────────────────────────

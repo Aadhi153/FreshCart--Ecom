@@ -1,9 +1,9 @@
 import type { CSSProperties } from 'react';
 
 export const statusColors: Record<string, CSSProperties> = {
-  placed:     { background: 'rgba(251,191,36,0.15)',  color: '#FBBF24' },
-  packed:     { background: 'rgba(251,146,60,0.15)',  color: '#FB923C' },
-  shipped:    { background: 'rgba(56,189,248,0.15)',  color: '#38BDF8' },
-  delivered:  { background: 'rgba(74,222,128,0.15)',  color: '#4ADE80' },
-  cancelled:  { background: 'rgba(248,113,113,0.15)', color: '#F87171' },
+  placed:     { background: 'color-mix(in srgb, var(--accent) 16%, transparent)',  color: 'var(--accent)' },
+  packed:     { background: 'color-mix(in srgb, var(--warning) 16%, transparent)', color: 'var(--warning)' },
+  shipped:    { background: 'color-mix(in srgb, var(--primary) 16%, transparent)', color: 'var(--primary)' },
+  delivered:  { background: 'color-mix(in srgb, var(--success) 16%, transparent)', color: 'var(--success)' },
+  cancelled:  { background: 'color-mix(in srgb, var(--danger) 16%, transparent)',  color: 'var(--danger)' },
 };
