@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { PlaceOrderPayload, Order } from '@freshcart/types';
+import type { PlaceOrderPayload, Order, ActivePromotion, PromotionValidationRequest, PromotionValidationResponse } from '@freshcart/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -48,6 +48,21 @@ export interface DeliverySlotDay {
 }
 
 export const getDeliverySlots = (): Promise<DeliverySlotDay[]> => authFetch('/api/delivery-slots');
+
+// No auth required — used to render product badges and auto-apply offers before login.
+// Swallows errors since promotions are a display enhancement, not core cart function.
+export async function getActivePromotions(): Promise<ActivePromotion[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/promotions/active`);
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+export const validateCoupon = (payload: PromotionValidationRequest): Promise<PromotionValidationResponse> =>
+  authFetch('/api/coupons/validate', { method: 'POST', body: JSON.stringify(payload) });
 
 export async function getMyOrders(page = 1, limit = 10, status?: string): Promise<{ orders: Order[]; total: number }> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Heart, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { ActivePromotion } from '@freshcart/types';
 import { itemVariants } from '../../../lib/motion';
 import { highlightMatch } from '../../../lib/highlightMatch';
 import { formatPrice } from '../../../lib/formatPrice';
@@ -16,9 +17,16 @@ interface ProductCardProps {
   inWishlist: boolean;
   onToggleWishlist: (product: ProductCardData) => void;
   onQuickAdd: (product: ProductCardData) => void;
+  matchedPromotion?: ActivePromotion | null;
 }
 
-export function ProductCard({ product, searchTerm, inWishlist, onToggleWishlist, onQuickAdd }: ProductCardProps) {
+function promotionBadgeLabel(promotion: ActivePromotion): string {
+  if (promotion.discount_type === 'percentage') return `${promotion.discount_value}% OFF`;
+  if (promotion.discount_type === 'flat') return `₹${promotion.discount_value} OFF`;
+  return 'BOGO';
+}
+
+export function ProductCard({ product, searchTerm, inWishlist, onToggleWishlist, onQuickAdd, matchedPromotion }: ProductCardProps) {
   return (
     <motion.div
       className={styles.productCard}
@@ -54,6 +62,27 @@ export function ProductCard({ product, searchTerm, inWishlist, onToggleWishlist,
       >
         <Heart size={14} fill={inWishlist ? 'currentColor' : 'none'} />
       </button>
+
+      {matchedPromotion && (
+        <span
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            zIndex: 2,
+            padding: '3px 7px',
+            borderRadius: 6,
+            background: 'var(--primary)',
+            color: '#fff',
+            fontSize: '0.68rem',
+            fontWeight: 800,
+            letterSpacing: '0.01em',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          }}
+        >
+          {promotionBadgeLabel(matchedPromotion)}
+        </span>
+      )}
 
       <Link href={`/shop/${product.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <div className={styles.productImageContainer}>

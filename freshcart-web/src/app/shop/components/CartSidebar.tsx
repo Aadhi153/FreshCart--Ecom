@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Minus, Plus, ShoppingCart, Trash2, Truck } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Tag, Trash2, Truck } from 'lucide-react';
 import { useCartStore } from '../../../lib/store';
+import { usePromotion } from '../../../lib/usePromotion';
 import { formatPrice } from '../../../lib/formatPrice';
 import { ProductImage } from '../../../components/ProductImage';
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../../lib/constants';
@@ -20,7 +21,9 @@ export function CartSidebar() {
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const delivery = subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
   const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
-  const total = subtotal + delivery;
+  const { applied: appliedPromotion, couponInput, setCouponInput, validating, error, applyCoupon } = usePromotion(items, subtotal);
+  const discount = appliedPromotion?.discountAmount ?? 0;
+  const total = subtotal + delivery - discount;
 
   return (
     <aside className={styles.sidebar}>
@@ -93,11 +96,43 @@ export function CartSidebar() {
                 <Truck size={13} /> Add {formatPrice(amountToFreeDelivery)} more for free delivery
               </p>
             )}
+            <div className={styles.couponBlock}>
+              <div className={styles.couponRow}>
+                <input
+                  type="text"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder="Have a coupon?"
+                  className={styles.couponInput}
+                />
+                <button
+                  type="button"
+                  onClick={() => applyCoupon()}
+                  disabled={validating || !couponInput.trim()}
+                  className={styles.couponApplyBtn}
+                >
+                  {validating ? '…' : 'Apply'}
+                </button>
+              </div>
+              {error && <p className={styles.couponError}>{error}</p>}
+              {appliedPromotion && !error && (
+                <p className={styles.couponSuccess}>
+                  {appliedPromotion.source === 'coupon' ? `Coupon "${appliedPromotion.code}"` : appliedPromotion.name} applied!
+                </p>
+              )}
+            </div>
+
             <div className={styles.priceBreakdown}>
               <div className={styles.priceRow}>
                 <span>Subtotal</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
+              {appliedPromotion && (
+                <div className={`${styles.priceRow} ${styles.discountRow}`}>
+                  <span><Tag size={12} /> {appliedPromotion.name}</span>
+                  <span>−{formatPrice(discount)}</span>
+                </div>
+              )}
               <div className={styles.priceRow}>
                 <span>Delivery fee</span>
                 <span>{delivery === 0 ? 'Free' : formatPrice(delivery)}</span>

@@ -117,6 +117,7 @@ function MiniProductCard({ product }: { product: HomeProductCard | RatedProductC
                 price: finalPrice,
                 image: variant?.image || product.image,
                 category: product.category,
+                categoryId: product.categoryId ?? undefined,
               });
               showToast(`${name} added to cart`, 'success');
             }}
@@ -248,6 +249,7 @@ export default function ProductDetailPage() {
       price: finalPrice,
       image: product.image_url,
       category: product.category,
+      categoryId: product.category_id ?? undefined,
       quantity
     });
     setAdded(true);

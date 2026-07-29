@@ -179,6 +179,61 @@
   font-size: 0.82rem;
 }
 
+.discountRow {
+  color: var(--primary);
+}
+
+.couponBlock {
+  margin-bottom: 0.9rem;
+}
+
+.couponRow {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.couponInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--layer-1);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+}
+
+.couponApplyBtn {
+  padding: 0.45rem 0.7rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--layer-1);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.couponApplyBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.couponError {
+  margin: 0.4rem 0 0;
+  color: #e5484d;
+  font-size: 0.75rem;
+}
+
+.couponSuccess {
+  margin: 0.4rem 0 0;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .totalRow {
   display: flex;
   align-items: center;

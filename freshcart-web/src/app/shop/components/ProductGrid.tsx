@@ -2,8 +2,10 @@
 
 import { AlertCircle, PackageSearch } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { ActivePromotion } from '@freshcart/types';
 import { gridVariants } from '../../../lib/motion';
 import { ProductCardSkeleton, EmptyState } from '../../../components/Skeleton';
+import { findBestProductMatch } from '../../../lib/promotionMath';
 import type { ProductCard as ProductCardData } from '../filters';
 import { ProductCard } from './ProductCard';
 import styles from '../page.module.css';
@@ -18,6 +20,7 @@ interface ProductGridProps {
   fetchError: string;
   searchTerm: string;
   wishlistIds: Set<string | number>;
+  activePromotions: ActivePromotion[];
   onToggleWishlist: (product: ProductCardData) => void;
   onQuickAdd: (product: ProductCardData) => void;
   onClearFilters: () => void;
@@ -33,6 +36,7 @@ export function ProductGrid({
   fetchError,
   searchTerm,
   wishlistIds,
+  activePromotions,
   onToggleWishlist,
   onQuickAdd,
   onClearFilters,
@@ -120,6 +124,7 @@ export function ProductGrid({
                 inWishlist={wishlistIds.has(product.id)}
                 onToggleWishlist={onToggleWishlist}
                 onQuickAdd={onQuickAdd}
+                matchedPromotion={activePromotions.length > 0 ? findBestProductMatch(product, activePromotions) : null}
               />
             ))}
           </motion.div>

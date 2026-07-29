@@ -2,6 +2,7 @@ export interface ProductRow {
   id: string;
   name: string;
   price: number | string;
+  category_id: string | null;
   categories: { name: string } | null;
   image_url: string | null;
   stock_quantity: number;
@@ -20,6 +21,7 @@ export interface ProductCard {
   name: string;
   price: number;
   category: string;
+  categoryId: string | null;
   image_url?: string;
   stock_quantity: number;
   in_stock: boolean;
