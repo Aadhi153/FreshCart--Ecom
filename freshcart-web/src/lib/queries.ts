@@ -32,6 +32,7 @@ export interface HomeProductCard {
   name: string;
   price: number;
   category: string;
+  categoryId: string | null;
   image: string;
 }
 
@@ -40,10 +41,11 @@ interface ProductRow {
   name: string;
   price: number;
   image_url: string | null;
+  category_id: string | null;
   categories: { name: string } | null;
 }
 
-const SELECT = 'id, name, price, image_url, categories(name)';
+const SELECT = 'id, name, price, image_url, category_id, categories(name)';
 
 function mapRow(p: ProductRow): HomeProductCard {
   return {
@@ -51,6 +53,7 @@ function mapRow(p: ProductRow): HomeProductCard {
     name: p.name,
     price: Number(p.price),
     category: p.categories?.name || 'Uncategorized',
+    categoryId: p.category_id,
     image: p.image_url || '',
   };
 }
@@ -98,7 +101,7 @@ interface RatedProductRow extends ProductRow {
   review_count: number | null;
 }
 
-const RATED_SELECT = 'id, name, price, image_url, categories(name), rating, review_count';
+const RATED_SELECT = 'id, name, price, image_url, category_id, categories(name), rating, review_count';
 
 function mapRatedRow(p: RatedProductRow): RatedProductCard {
   return { ...mapRow(p), rating: Number(p.rating) || 0, reviewCount: p.review_count ?? 0 };
