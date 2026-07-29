@@ -20,6 +20,7 @@ import { supabase } from '../../lib/supabase';
 import { placeOrder as placeOrderApi, getDeliverySlots, type DeliverySlotDay } from '../../lib/api';
 import type { Session } from '@supabase/supabase-js';
 import { useAddressStore, useCartStore, type AddressType, type SavedAddress } from '../../lib/store';
+import { usePromotion } from '../../lib/usePromotion';
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../lib/constants';
 import { CheckoutStepper } from '../../components/CheckoutStepper';
 import { Confetti } from '../../components/Confetti';
@@ -33,8 +34,6 @@ const TYPE_OPTIONS: { value: AddressType; label: string; icon: typeof Home }[] =
   { value: 'work', label: 'Work', icon: Briefcase },
   { value: 'other', label: 'Other', icon: MapPin },
 ];
-
-const AVAILABLE_OFFERS = ['FRESH10', 'NEWUSER'];
 
 const UPI_APPS = ['GPay', 'PhonePe', 'Paytm'];
 const BANKS = ['SBI', 'HDFC', 'ICICI', 'Axis'];
@@ -359,40 +358,18 @@ export default function CheckoutPage() {
   const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
   const freeDeliveryProgress = Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
 
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount_type: string; discount_value: number; max_discount_amount: number | null; min_order_amount: number } | null>(null);
-  const [couponError, setCouponError] = useState('');
+  const {
+    applied: appliedPromotion,
+    activeOffers,
+    couponInput: couponCode,
+    setCouponInput: setCouponCode,
+    validating: applyingCoupon,
+    error: couponError,
+    applyCoupon: handleApplyCoupon,
+    removeCoupon,
+  } = usePromotion(items, subtotal);
 
-  const handleApplyCoupon = async (codeOverride?: string) => {
-    const code = (codeOverride ?? couponCode).trim().toUpperCase();
-    setCouponError('');
-    const { data, error: couponFetchError } = await supabase
-      .from('coupons')
-      .select('*')
-      .eq('code', code)
-      .eq('active', true)
-      .maybeSingle();
-    if (couponFetchError || !data) {
-      setCouponError('Invalid or expired coupon code.');
-      setAppliedCoupon(null);
-      return;
-    }
-    if (subtotal < data.min_order_amount) {
-      setCouponError(`Minimum order value ₹${data.min_order_amount} required.`);
-      setAppliedCoupon(null);
-      return;
-    }
-    setCouponCode(code);
-    setAppliedCoupon(data);
-  };
-
-  const discount = appliedCoupon
-    ? Math.min(
-        appliedCoupon.discount_type === 'flat' ? appliedCoupon.discount_value : (subtotal * appliedCoupon.discount_value) / 100,
-        appliedCoupon.max_discount_amount ?? Infinity,
-        subtotal
-      )
-    : 0;
+  const discount = appliedPromotion?.discountAmount ?? 0;
   const total = subtotal + delivery - discount;
 
   const handleSummarySubmit = () => {
@@ -454,9 +431,10 @@ export default function CheckoutPage() {
         delivery_address: selectedAddress,
         delivery_slot: { date: selectedDate, window: selectedWindow },
         payment_method: paymentMethod,
-        coupon_code: appliedCoupon?.code,
+        coupon_code: appliedPromotion?.code ?? undefined,
       });
       clearCart();
+      removeCoupon();
       setShowConfetti(true);
       showToast('Order placed successfully!', 'success');
       setTimeout(() => router.push(`/order-confirmation/${order.id}`), 1200);
@@ -637,23 +615,29 @@ export default function CheckoutPage() {
               <div className={styles.promoInputRow}>
                 <div className={styles.promoInputWrap}>
                   <Tag size={15} />
-                  <input value={couponCode} onChange={(e) => setCouponCode(e.target.value)} placeholder="Have a promo code?" />
+                  <input value={couponCode} onChange={(e) => setCouponCode(e.target.value)} placeholder="Have a coupon?" />
                 </div>
-                <button type="button" className={styles.applyButton} onClick={() => handleApplyCoupon()}>
-                  Apply
+                <button type="button" className={styles.applyButton} disabled={applyingCoupon || !couponCode.trim()} onClick={() => handleApplyCoupon()}>
+                  {applyingCoupon ? 'Applying…' : 'Apply'}
                 </button>
               </div>
-              <div className={styles.offerChipsRow}>
-                {AVAILABLE_OFFERS.map((code) => (
-                  <button key={code} type="button" className={styles.offerChip} onClick={() => handleApplyCoupon(code)}>
-                    {code}
-                  </button>
-                ))}
-              </div>
+              {activeOffers.length > 0 && (
+                <div className={styles.offerChipsRow}>
+                  {activeOffers.map((offer) => (
+                    <span key={offer.id} className={styles.offerChip}>{offer.name}</span>
+                  ))}
+                </div>
+              )}
               {couponError && <p className={styles.fieldErrorText}>{couponError}</p>}
-              {appliedCoupon && (
+              {appliedPromotion && (
                 <div className={styles.successBanner}>
-                  <CheckCircle2 size={15} /> Coupon "{appliedCoupon.code}" applied — ₹{discount.toFixed(2)} saved!
+                  <CheckCircle2 size={15} />
+                  {appliedPromotion.source === 'coupon' ? `Coupon "${appliedPromotion.code}"` : appliedPromotion.name} applied — ₹{discount.toFixed(2)} saved!
+                  {appliedPromotion.source === 'coupon' && (
+                    <button type="button" onClick={removeCoupon} className={styles.applyButton} style={{ marginLeft: '0.5rem' }}>
+                      Remove
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -792,16 +776,16 @@ export default function CheckoutPage() {
                 <span>Price ({items.length} item{items.length === 1 ? '' : 's'})</span>
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
+              {appliedPromotion && (
+                <div className={`${styles.priceRow} ${styles.priceRowDiscount}`}>
+                  <span>{appliedPromotion.name}</span>
+                  <span>−₹{discount.toFixed(2)}</span>
+                </div>
+              )}
               <div className={styles.priceRow}>
                 <span>Delivery Charges</span>
                 <span className={delivery === 0 ? styles.freeTag : ''}>{delivery === 0 ? 'Free' : `₹${delivery.toFixed(2)}`}</span>
               </div>
-              {appliedCoupon && (
-                <div className={`${styles.priceRow} ${styles.priceRowDiscount}`}>
-                  <span>Discount</span>
-                  <span>−₹{discount.toFixed(2)}</span>
-                </div>
-              )}
 
               {amountToFreeDelivery > 0 ? (
                 <div className={styles.progressWrap}>

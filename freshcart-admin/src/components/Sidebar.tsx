@@ -17,7 +17,7 @@ const navItems = [
   { path: '/products', label: 'Products', icon: Package },
   { path: '/orders', label: 'Orders', icon: ShoppingBag },
   { path: '/customers', label: 'Customers', icon: Users },
-  { path: '/coupons', label: 'Coupons', icon: Tag },
+  { path: '/promotions', label: 'Promotions', icon: Tag },
   { path: '/reviews', label: 'Reviews', icon: Star },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -65,7 +65,7 @@ export default function Sidebar() {
         <button
           className="admin-nav-item"
           onClick={() => void signOut()}
-          style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', color: '#E63946', cursor: 'pointer' }}
+          style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', color: 'var(--danger)', cursor: 'pointer' }}
         >
           <LogOut size={18} style={{ marginRight: '0.75rem' }} />
           Sign Out

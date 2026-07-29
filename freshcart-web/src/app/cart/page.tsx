@@ -8,23 +8,15 @@ import {
   RefreshCw, ShieldCheck, ChevronRight, PartyPopper, Star,
 } from 'lucide-react';
 import { useCartStore } from '../../lib/store';
+import { usePromotion } from '../../lib/usePromotion';
 import { gridVariants, itemVariants } from '../../lib/motion';
 import { useToast } from '../../components/ToastProvider';
 import { CartItemSkeleton } from '../../components/Skeleton';
 import { ProductImage } from '../../components/ProductImage';
-import { supabase } from '../../lib/supabase';
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../lib/constants';
 import { getTopRatedProducts, getProductsByIds, getCheapestVariant, type RatedProductCard } from '../../lib/queries';
 import { getRecentlyViewedIds } from '../../lib/recentlyViewed';
 import styles from './page.module.css';
-
-type Coupon = {
-  code: string;
-  discount_type: string;
-  discount_value: number;
-  max_discount_amount: number | null;
-  min_order_amount: number;
-};
 
 function splitVariant(name: string): [string, string | null] {
   const match = name.match(/^(.+?) - (.+)$/);
@@ -61,10 +53,6 @@ export default function CartPage() {
   const { items, removeItem, updateQuantity, addItem, hasHydrated } = useCartStore();
   const { showToast } = useToast();
 
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
-  const [couponError, setCouponError] = useState('');
-  const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | number | null>(null);
 
   const [recommended, setRecommended] = useState<RatedProductCard[]>([]);
@@ -78,15 +66,8 @@ export default function CartPage() {
   const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
   const freeDeliveryProgress = Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
 
-  const discount = appliedCoupon
-    ? Math.min(
-        appliedCoupon.discount_type === 'flat'
-          ? appliedCoupon.discount_value
-          : (subtotal * appliedCoupon.discount_value) / 100,
-        appliedCoupon.max_discount_amount ?? Infinity,
-        subtotal
-      )
-    : 0;
+  const { applied: appliedPromotion, couponInput, setCouponInput, validating: applyingCoupon, error: couponError, applyCoupon, removeCoupon } = usePromotion(items, subtotal);
+  const discount = appliedPromotion?.discountAmount ?? 0;
   const total = subtotal + delivery - discount;
 
   useEffect(() => {
@@ -111,31 +92,6 @@ export default function CartPage() {
     // recommendation doesn't linger in its own "you might also like" row.
   }, [hasHydrated, cartProductIdsKey]);
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    setApplyingCoupon(true);
-    setCouponError('');
-    const { data, error } = await supabase
-      .from('coupons')
-      .select('*')
-      .eq('code', couponCode.trim().toUpperCase())
-      .eq('active', true)
-      .maybeSingle();
-    setApplyingCoupon(false);
-
-    if (error || !data) {
-      setAppliedCoupon(null);
-      setCouponError('Invalid or expired coupon code.');
-      return;
-    }
-    if (subtotal < data.min_order_amount) {
-      setAppliedCoupon(null);
-      setCouponError(`Minimum order value ₹${data.min_order_amount} required.`);
-      return;
-    }
-    setAppliedCoupon(data);
-  };
-
   const handleConfirmRemove = (id: string | number, name: string) => {
     removeItem(id);
     setConfirmRemoveId(null);
@@ -154,6 +110,7 @@ export default function CartPage() {
       price: finalPrice,
       image: variant?.image || product.image,
       category: product.category,
+      categoryId: product.categoryId ?? undefined,
     });
     showToast(`${name} added to cart`, 'success');
   };
@@ -355,18 +312,18 @@ export default function CartPage() {
                   <span><ShoppingCart size={14} /> Subtotal</span>
                   <span className="price">₹{subtotal.toFixed(2)}</span>
                 </div>
+                {appliedPromotion && (
+                  <div className={styles.summaryRow} style={{ color: 'var(--primary)' }}>
+                    <span><Tag size={14} /> {appliedPromotion.name}</span>
+                    <span className="price">−₹{discount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className={styles.summaryRow}>
                   <span><Truck size={14} /> Delivery</span>
                   <span className="price" style={{ color: delivery === 0 ? 'var(--primary)' : undefined }}>
                     {delivery === 0 ? 'Free' : `₹${delivery.toFixed(2)}`}
                   </span>
                 </div>
-                {appliedCoupon && (
-                  <div className={styles.summaryRow} style={{ color: 'var(--primary)' }}>
-                    <span><Tag size={14} /> Discount ({appliedCoupon.code})</span>
-                    <span className="price">−₹{discount.toFixed(2)}</span>
-                  </div>
-                )}
 
                 <div className={styles.couponCard}>
                   <div className={styles.couponRow}>
@@ -374,25 +331,30 @@ export default function CartPage() {
                       <Tag size={14} className={styles.couponIcon} />
                       <input
                         type="text"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Coupon code"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value)}
+                        placeholder="Have a coupon?"
                         className={styles.couponInput}
                       />
                     </div>
                     <button
                       type="button"
-                      onClick={handleApplyCoupon}
-                      disabled={applyingCoupon || !couponCode.trim()}
+                      onClick={() => applyCoupon()}
+                      disabled={applyingCoupon || !couponInput.trim()}
                       className={styles.couponApplyBtn}
                     >
                       {applyingCoupon ? 'Applying…' : 'Apply'}
                     </button>
                   </div>
                   {couponError && <p className={styles.couponError}>{couponError}</p>}
-                  {appliedCoupon && !couponError && (
+                  {appliedPromotion && !couponError && (
                     <p className={styles.couponSuccess}>
-                      {appliedCoupon.code} applied! ₹{discount.toFixed(0)} off
+                      {appliedPromotion.source === 'coupon' ? `Coupon "${appliedPromotion.code}"` : appliedPromotion.name} applied! ₹{discount.toFixed(0)} off
+                      {appliedPromotion.source === 'coupon' && (
+                        <button type="button" onClick={removeCoupon} className={styles.couponApplyBtn} style={{ marginLeft: '0.5rem' }}>
+                          Remove
+                        </button>
+                      )}
                     </p>
                   )}
                 </div>

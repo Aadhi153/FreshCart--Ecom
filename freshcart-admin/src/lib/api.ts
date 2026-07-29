@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-import type { Product, Order, Profile, Category, Coupon, Review } from '@freshcart/types';
+import type { Product, Order, Profile, Category, Promotion, Review } from '@freshcart/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -128,42 +128,55 @@ export async function deleteProduct(id: string): Promise<boolean> {
   return true;
 }
 
-// ── Coupons ───────────────────────────────────────────────────────────────────
-export async function getCoupons(): Promise<Coupon[]> {
-  const { data, error } = await supabase
-    .from('coupons')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
+// ── Promotions ────────────────────────────────────────────────────────────────
+// Unlike most other resources here, promotions go through the backend rather than
+// direct-Supabase: redemption-count aggregation and delete-blocking (can't delete a
+// promotion that's already been redeemed) are business logic that needs to live
+// server-side, not duplicated in the admin client.
+export async function getPromotions(): Promise<Promotion[]> {
+  const res = await fetch(`${API_URL}/api/admin/promotions`, { headers: await authHeaders() });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch promotions');
+  }
+  return res.json();
 }
 
-export async function createCoupon(coupon: Partial<Coupon>): Promise<Coupon> {
-  const { data, error } = await supabase
-    .from('coupons')
-    .insert([{ ...coupon, code: coupon.code?.toUpperCase() }])
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+export async function createPromotion(promotion: Partial<Promotion>): Promise<Promotion> {
+  const res = await fetch(`${API_URL}/api/admin/promotions`, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: JSON.stringify(promotion),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to create promotion');
+  }
+  return res.json();
 }
 
-export async function updateCoupon(id: string, updates: Partial<Coupon>): Promise<Coupon> {
-  const payload = updates.code ? { ...updates, code: updates.code.toUpperCase() } : updates;
-  const { data, error } = await supabase
-    .from('coupons')
-    .update(payload)
-    .eq('id', id)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+export async function updatePromotion(id: string, updates: Partial<Promotion>): Promise<Promotion> {
+  const res = await fetch(`${API_URL}/api/admin/promotions/${id}`, {
+    method: 'PATCH',
+    headers: await authHeaders(),
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to update promotion');
+  }
+  return res.json();
 }
 
-export async function deleteCoupon(id: string): Promise<boolean> {
-  const { error } = await supabase.from('coupons').delete().eq('id', id);
-  if (error) throw error;
-  return true;
+export async function deletePromotion(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/admin/promotions/${id}`, {
+    method: 'DELETE',
+    headers: await authHeaders(),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to delete promotion');
+  }
 }
 
 // ── Reviews ───────────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import Orders from './pages/Orders';
 import Customers from './pages/Customers';
-import Coupons from './pages/Coupons';
+import Promotions from './pages/Promotions';
 import Reviews from './pages/Reviews';
 import Settings from './pages/Settings';
 import Auth from './pages/Auth';
@@ -20,7 +20,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/products': 'Products',
   '/orders': 'Orders',
   '/customers': 'Customers',
-  '/coupons': 'Coupons',
+  '/promotions': 'Promotions',
   '/reviews': 'Reviews',
   '/settings': 'Settings',
 };
@@ -64,7 +64,7 @@ function AdminLayout() {
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/customers" element={<Customers />} />
-            <Route path="/coupons" element={<Coupons />} />
+            <Route path="/promotions" element={<Promotions />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<div style={{ padding: '2rem', color: 'var(--text-primary)' }}>Admin page not found – check your routes.</div>} />

@@ -2,8 +2,10 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import type { ActivePromotion } from '@freshcart/types';
 import { supabase } from '../../lib/supabase';
 import { getCheapestVariant } from '../../lib/queries';
+import { getActivePromotions } from '../../lib/api';
 import { useCartStore, useWishlistStore } from '../../lib/store';
 import { useDebouncedValue } from '../../lib/useDebouncedValue';
 import { useToast } from '../../components/ToastProvider';
@@ -43,6 +45,7 @@ function ShopContent() {
 
   const [allProducts, setAllProducts] = useState<ProductCard[]>([]);
   const [categories, setCategories] = useState<string[]>(['All']);
+  const [activePromotions, setActivePromotions] = useState<ActivePromotion[]>([]);
 
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -116,6 +119,7 @@ function ShopContent() {
       price: finalPrice,
       image: variant?.image || product.image_url,
       category: product.category,
+      categoryId: product.categoryId ?? undefined,
     });
     showToast(`${name} added to cart`, 'success');
   };
@@ -148,6 +152,11 @@ function ShopContent() {
     fetchCategories();
   }, []);
 
+  // Decoupled from the product fetch, same as categories — drives product-card badges.
+  useEffect(() => {
+    getActivePromotions().then(setActivePromotions);
+  }, []);
+
   // The entire catalog is fetched once — every filter/sort/search from here on is a
   // pure in-memory operation with zero further network calls.
   useEffect(() => {
@@ -158,7 +167,7 @@ function ShopContent() {
 
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, price, image_url, stock_quantity, in_stock, rating, review_count, created_at, is_vegetarian, is_vegan, is_organic, is_on_sale, categories(name)')
+        .select('id, name, price, category_id, image_url, stock_quantity, in_stock, rating, review_count, created_at, is_vegetarian, is_vegan, is_organic, is_on_sale, categories(name)')
         .returns<ProductRow[]>();
 
       if (cancelled) return;
@@ -169,6 +178,7 @@ function ShopContent() {
           name: p.name,
           price: Number(p.price),
           category: p.categories?.name || 'Uncategorized',
+          categoryId: p.category_id,
           image_url: p.image_url || undefined,
           stock_quantity: p.stock_quantity ?? 0,
           in_stock: p.in_stock ?? true,
@@ -345,6 +355,7 @@ function ShopContent() {
             fetchError={fetchError}
             searchTerm={debouncedSearch}
             wishlistIds={wishlistIds}
+            activePromotions={activePromotions}
             onToggleWishlist={handleToggleWishlist}
             onQuickAdd={handleQuickAdd}
             onClearFilters={clearAllFilters}
