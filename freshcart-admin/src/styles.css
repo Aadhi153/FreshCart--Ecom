@@ -24,11 +24,12 @@ body {
   display: flex;
   min-height: 100vh;
   background-color: var(--page-bg);
+  --admin-sidebar-width: 256px;
 }
 
 /* ── Sidebar ── */
 .admin-sidebar {
-  width: 256px;
+  width: var(--admin-sidebar-width);
   flex-shrink: 0;
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
@@ -210,9 +211,14 @@ body {
 }
 
 /* ── Modals ── */
+/* left offset keeps the fixed sidebar visible/unobscured while a modal is open,
+   instead of the overlay covering the whole viewport */
 .modal-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--admin-sidebar-width, 0px);
   background: rgba(0, 0, 0, 0.50);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -268,10 +274,11 @@ body {
 .modal-content {
   background-color: var(--layer-0);
   border: 1px solid var(--border-color);
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
+  width: 95%;
+  max-width: 1100px;
+  height: 95vh;
+  display: flex;
+  flex-direction: column;
   border-radius: var(--radius-xl);
   padding: 2rem;
   box-shadow: var(--shadow-xl);
@@ -315,6 +322,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .modal-footer {
@@ -324,6 +333,38 @@ body {
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border-subtle);
+  background-color: var(--layer-0);
+  flex-shrink: 0;
+}
+
+/* ── Form Sections ── */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-section + .form-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.form-section-label {
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
 }
 
 /* ── Form Group ── */
@@ -337,6 +378,79 @@ body {
   font-weight: 600;
   font-size: 0.85rem;
   color: var(--text-primary);
+}
+
+/* ── Custom checkbox (Promotion modal "Active" toggle) ── */
+.promo-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: 1.5px solid var(--border-color);
+  background: var(--layer-0);
+  cursor: pointer;
+  position: relative;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.promo-checkbox:hover {
+  border-color: var(--primary);
+}
+
+.promo-checkbox:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.promo-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.promo-checkbox:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Date inputs (Promotion modal Start/End Date) ──
+   Same border/padding/font as .form-input; the native calendar glyph is
+   made invisible-but-clickable and a lucide Calendar icon is layered on top
+   in the same spot so it matches the rest of the app's icon system (the
+   codebase uses lucide-react everywhere, not a separate Tabler icon set). */
+.promo-date-wrap {
+  position: relative;
+}
+
+.promo-date-input {
+  padding-right: 2.4rem;
+}
+
+.promo-date-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0;
+  width: 2.4rem;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.promo-date-icon {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
 }
 
 /* ── Status Badges ── */
@@ -695,13 +809,17 @@ body {
 .btn-primary {
   background: var(--primary);
   color: #fff;
-  border: none;
+  /* transparent (not `none`) so the box model matches .btn-secondary's 1px
+     border exactly — otherwise flex:1 buttons of each type (e.g. the
+     Coupon/Auto-Offer toggle) render their centered text off by ~1px. */
+  border: 1px solid transparent;
   min-height: 40px;
   padding: 0.65rem 1rem;
   border-radius: var(--radius-md);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   font-weight: 600;
   transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
@@ -724,6 +842,7 @@ body {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   font-weight: 600;
   transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
@@ -743,9 +862,292 @@ body {
   transform: none;
 }
 
+/* Transparent flex passthrough so the framer-motion wrapper around
+   ProductFormPage/PromotionFormPage doesn't disrupt their own flex:1 sizing
+   inside .admin-main (see AnimatePresence usage in App.tsx). */
+.pf-page-transition {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Add/Edit Product full page ──
+   Color custom properties are aliased to the existing token system here so the
+   whole page (and any future edit-product page reusing these components) can
+   have its palette swapped by editing this block alone, without touching any
+   layout/component code. */
+.product-form-page {
+  --bg-sidebar: var(--sidebar-bg);
+  --bg-page: var(--page-bg);
+  --bg-card: var(--layer-0);
+  --accent: var(--primary);
+  --border: var(--border-color);
+
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background-color: var(--bg-page);
+}
+
+.pf-header {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 1.25rem 2rem 1rem;
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.pf-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 0.6rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.pf-breadcrumb:hover {
+  color: var(--accent);
+}
+
+.pf-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pf-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.pf-header-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.pf-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.pf-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 1.5rem;
+  align-items: start;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pf-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Card ── */
+.pf-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* Publish Product needs to read as unmistakably primary against the white
+   cards — the shared .btn-primary indigo reads as soft/lavender at this size
+   and next to this much white, so it gets a deeper, more saturated shade
+   scoped to this page only (global .btn-primary is used all over the admin
+   and isn't being touched). */
+.pf-btn-publish {
+  background: #5B52E8;
+}
+
+.pf-btn-publish:hover:not(:disabled) {
+  background: #4A40D6;
+}
+
+.pf-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 16px;
+  color: var(--text-primary);
+}
+
+/* ── Fields ── */
+.pf-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.pf-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.pf-input,
+.pf-textarea,
+.pf-select {
+  width: 100%;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.pf-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.pf-input:focus,
+.pf-textarea:focus,
+.pf-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.pf-subgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── Image dropzone ── */
+.pf-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  min-height: 160px;
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  background: var(--bg-page);
+  cursor: pointer;
+  padding: 1.5rem;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+  overflow: hidden;
+}
+
+.pf-dropzone:hover,
+.pf-dropzone-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-page));
+}
+
+.pf-dropzone-text {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.pf-dropzone-preview {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* ── Status toggle ── */
+.pf-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pf-status-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pf-toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--border);
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--transition-fast);
+}
+
+.pf-toggle-on {
+  background: var(--accent);
+}
+
+.pf-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast);
+}
+
+.pf-toggle-on .pf-toggle-thumb {
+  transform: translateX(18px);
+}
+
+/* Scrollable checkbox list (Discount Rules card, category/product scope) */
+.pf-checklist {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: var(--bg-page);
+}
+
+.pf-checklist-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .pf-grid { grid-template-columns: 1fr; }
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .admin-sidebar { width: 200px; }
+  .admin-layout { --admin-sidebar-width: 200px; }
   .admin-content { padding: 1rem; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .auth-page { padding: 1rem; }
@@ -754,6 +1156,7 @@ body {
 }
 
 @media (max-width: 500px) {
+  .admin-layout { --admin-sidebar-width: 0px; }
   .admin-sidebar { display: none; }
   .kpi-grid { grid-template-columns: 1fr; }
   .auth-brand-panel,

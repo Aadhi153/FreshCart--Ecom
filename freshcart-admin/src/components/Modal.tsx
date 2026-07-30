@@ -7,12 +7,15 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  // Rendered as a fixed bar below the scrollable body (outside its scroll area),
+  // so actions stay reachable regardless of how long the form content is.
+  footer?: ReactNode;
 }
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, footer }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   // Parent components (e.g. Products.tsx) redefine onClose on every render,
@@ -82,6 +85,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
         <div className="modal-body">
           {children}
         </div>
+        {footer && <div className="modal-footer">{footer}</div>}
       </div>
     </div>
   );
