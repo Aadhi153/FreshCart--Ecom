@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Calendar } from 'lucide-react';
 import Modal from './Modal';
 import { createPromotion, updatePromotion, getCategories, getProducts } from '../lib/api';
 import type { Promotion, Category, Product } from '@freshcart/types';
@@ -106,211 +107,250 @@ export default function PromotionFormModal({ isOpen, editingPromotion, onClose, 
     }
   };
 
+  const isValid =
+    formData.name.trim().length > 0 &&
+    (!formData.requires_code || formData.code.trim().length > 0) &&
+    !!formData.discount_type &&
+    Number(formData.discount_value) > 0;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={editingPromotion ? 'Edit Promotion' : 'Add New Promotion'}>
-      <form onSubmit={handleSave}>
-        <div className="form-group" style={{ display: 'flex', gap: '0.5rem' }}>
-          <button
-            type="button"
-            className={formData.requires_code ? 'btn-primary' : 'btn-secondary'}
-            style={{ flex: 1 }}
-            onClick={() => setFormData({ ...formData, requires_code: true })}
-          >
-            Coupon
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={editingPromotion ? 'Edit Promotion' : 'Add New Promotion'}
+      footer={
+        <>
+          <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+          <button type="submit" form="promotion-form" className="btn-primary" disabled={!isValid}>
+            {editingPromotion ? 'Save Promotion' : 'Create Promotion'}
           </button>
-          <button
-            type="button"
-            className={!formData.requires_code ? 'btn-primary' : 'btn-secondary'}
-            style={{ flex: 1 }}
-            onClick={() => setFormData({ ...formData, requires_code: false, code: '' })}
-          >
-            Auto-Offer
-          </button>
-        </div>
+        </>
+      }
+    >
+      <form id="promotion-form" onSubmit={handleSave}>
+        {/* Basic Info */}
+        <div className="form-section">
+          <p className="form-section-label">Basic Info</p>
 
-        <div className="form-group">
-          <label>Name *</label>
-          <input
-            required
-            type="text"
-            className="form-input"
-            value={formData.name}
-            onChange={e => setFormData({ ...formData, name: e.target.value })}
-            placeholder="e.g. Dairy Week Sale"
-          />
-        </div>
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem' }}>
+            <button
+              type="button"
+              className={formData.requires_code ? 'btn-primary' : 'btn-secondary'}
+              style={{ flex: 1 }}
+              onClick={() => setFormData({ ...formData, requires_code: true })}
+            >
+              Coupon
+            </button>
+            <button
+              type="button"
+              className={!formData.requires_code ? 'btn-primary' : 'btn-secondary'}
+              style={{ flex: 1 }}
+              onClick={() => setFormData({ ...formData, requires_code: false, code: '' })}
+            >
+              Auto-Offer
+            </button>
+          </div>
 
-        {formData.requires_code && (
           <div className="form-group">
-            <label>Coupon Code *</label>
+            <label>Name *</label>
             <input
               required
               type="text"
               className="form-input"
-              style={{ textTransform: 'uppercase' }}
-              value={formData.code}
-              onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-              placeholder="e.g. WELCOME10"
+              value={formData.name}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g. Dairy Week Sale"
             />
           </div>
-        )}
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <div className="form-group" style={{ flex: 1 }}>
-            <label>Discount Type *</label>
-            <select
-              className="form-input"
-              value={formData.discount_type}
-              onChange={e => setFormData({ ...formData, discount_type: e.target.value as 'percentage' | 'flat' | 'bogo' })}
-            >
-              <option value="flat">Flat amount (₹)</option>
-              <option value="percentage">Percentage (%)</option>
-              <option value="bogo">Buy One Get One</option>
-            </select>
-          </div>
-          <div className="form-group" style={{ flex: 1 }}>
-            <label>Discount Value *</label>
-            <input
-              required
-              type="number"
-              min="0"
-              step="0.01"
-              className="form-input"
-              value={formData.discount_value}
-              onChange={e => setFormData({ ...formData, discount_value: Number(e.target.value) })}
-            />
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <div className="form-group" style={{ flex: 1 }}>
-            <label>Minimum Order Value</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              className="form-input"
-              value={formData.min_order_value}
-              onChange={e => setFormData({ ...formData, min_order_value: e.target.value })}
-              placeholder="No minimum"
-            />
-          </div>
-          {formData.discount_type === 'percentage' && (
-            <div className="form-group" style={{ flex: 1 }}>
-              <label>Max Discount Cap</label>
+          {formData.requires_code && (
+            <div className="form-group">
+              <label>Coupon Code *</label>
               <input
-                type="number"
-                min="0"
-                step="0.01"
+                required
+                type="text"
                 className="form-input"
-                value={formData.max_discount_amount}
-                onChange={e => setFormData({ ...formData, max_discount_amount: e.target.value })}
-                placeholder="No cap"
+                style={{ textTransform: 'uppercase' }}
+                value={formData.code}
+                onChange={e => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                placeholder="e.g. WELCOME10"
               />
             </div>
           )}
         </div>
 
-        {!formData.requires_code && (
-          <>
+        {/* Discount Rules */}
+        <div className="form-section">
+          <p className="form-section-label">Discount Rules</p>
+
+          <div className="form-grid-2">
             <div className="form-group">
-              <label>Applicable Scope *</label>
+              <label>Discount Type *</label>
               <select
                 className="form-input"
-                value={formData.applicable_scope}
-                onChange={e => setFormData({ ...formData, applicable_scope: e.target.value as 'cart' | 'category' | 'product', applicable_ids: [] })}
+                value={formData.discount_type}
+                onChange={e => setFormData({ ...formData, discount_type: e.target.value as 'percentage' | 'flat' | 'bogo' })}
               >
-                <option value="cart">Whole cart</option>
-                <option value="category">Specific categories</option>
-                <option value="product">Specific products</option>
+                <option value="flat">Flat amount (₹)</option>
+                <option value="percentage">Percentage (%)</option>
+                <option value="bogo">Buy One Get One</option>
               </select>
             </div>
+            <div className="form-group">
+              <label>Discount Value *</label>
+              <input
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                className="form-input"
+                value={formData.discount_value}
+                onChange={e => setFormData({ ...formData, discount_value: Number(e.target.value) })}
+              />
+            </div>
+          </div>
 
-            {formData.applicable_scope === 'category' && (
+          <div className="form-grid-2">
+            <div className="form-group" style={formData.discount_type !== 'percentage' ? { gridColumn: '1 / -1' } : undefined}>
+              <label>Minimum Order Value</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className="form-input"
+                value={formData.min_order_value}
+                onChange={e => setFormData({ ...formData, min_order_value: e.target.value })}
+                placeholder="No minimum"
+              />
+            </div>
+            {formData.discount_type === 'percentage' && (
               <div className="form-group">
-                <label>Categories *</label>
-                <div style={{ maxHeight: 160, overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.5rem' }}>
-                  {categories.map(c => (
-                    <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={formData.applicable_ids.includes(c.id!)} onChange={() => toggleId(c.id!)} />
-                      {c.name}
-                    </label>
-                  ))}
-                </div>
+                <label>Max Discount Cap</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="form-input"
+                  value={formData.max_discount_amount}
+                  onChange={e => setFormData({ ...formData, max_discount_amount: e.target.value })}
+                  placeholder="No cap"
+                />
               </div>
             )}
+          </div>
 
-            {formData.applicable_scope === 'product' && (
+          {!formData.requires_code && (
+            <>
               <div className="form-group">
-                <label>Products *</label>
-                <div style={{ maxHeight: 160, overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.5rem' }}>
-                  {products.map(p => (
-                    <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={formData.applicable_ids.includes(p.id!)} onChange={() => toggleId(p.id!)} />
-                      {p.name}
-                    </label>
-                  ))}
-                </div>
+                <label>Applicable Scope *</label>
+                <select
+                  className="form-input"
+                  value={formData.applicable_scope}
+                  onChange={e => setFormData({ ...formData, applicable_scope: e.target.value as 'cart' | 'category' | 'product', applicable_ids: [] })}
+                >
+                  <option value="cart">Whole cart</option>
+                  <option value="category">Specific categories</option>
+                  <option value="product">Specific products</option>
+                </select>
               </div>
-            )}
-          </>
-        )}
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <div className="form-group" style={{ flex: 1 }}>
-            <label>Usage Limit (total)</label>
-            <input
-              type="number"
-              min="1"
-              className="form-input"
-              value={formData.usage_limit_total}
-              onChange={e => setFormData({ ...formData, usage_limit_total: e.target.value })}
-              placeholder="Unlimited"
-            />
-          </div>
-          <div className="form-group" style={{ flex: 1 }}>
-            <label>Usage Limit (per user)</label>
-            <input
-              type="number"
-              min="1"
-              className="form-input"
-              value={formData.usage_limit_per_user}
-              onChange={e => setFormData({ ...formData, usage_limit_per_user: e.target.value })}
-              placeholder="Unlimited"
-            />
+              {formData.applicable_scope === 'category' && (
+                <div className="form-group">
+                  <label>Categories *</label>
+                  <div style={{ maxHeight: 160, overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.5rem' }}>
+                    {categories.map(c => (
+                      <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={formData.applicable_ids.includes(c.id!)} onChange={() => toggleId(c.id!)} />
+                        {c.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {formData.applicable_scope === 'product' && (
+                <div className="form-group">
+                  <label>Products *</label>
+                  <div style={{ maxHeight: 160, overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.5rem' }}>
+                    {products.map(p => (
+                      <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={formData.applicable_ids.includes(p.id!)} onChange={() => toggleId(p.id!)} />
+                        {p.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Usage Limits */}
+        <div className="form-section">
+          <p className="form-section-label">Usage Limits</p>
+
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label>Usage Limit (total)</label>
+              <input
+                type="number"
+                min="1"
+                className="form-input"
+                value={formData.usage_limit_total}
+                onChange={e => setFormData({ ...formData, usage_limit_total: e.target.value })}
+                placeholder="Unlimited"
+              />
+            </div>
+            <div className="form-group">
+              <label>Usage Limit (per user)</label>
+              <input
+                type="number"
+                min="1"
+                className="form-input"
+                value={formData.usage_limit_per_user}
+                onChange={e => setFormData({ ...formData, usage_limit_per_user: e.target.value })}
+                placeholder="Unlimited"
+              />
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <div className="form-group" style={{ flex: 1 }}>
-            <label>Valid From</label>
-            <input
-              type="date"
-              className="form-input"
-              value={formData.valid_from}
-              onChange={e => setFormData({ ...formData, valid_from: e.target.value })}
-            />
-          </div>
-          <div className="form-group" style={{ flex: 1 }}>
-            <label>Valid Until</label>
-            <input
-              type="date"
-              className="form-input"
-              value={formData.valid_until}
-              onChange={e => setFormData({ ...formData, valid_until: e.target.value })}
-              placeholder="No expiry"
-            />
-          </div>
-        </div>
+        {/* Schedule */}
+        <div className="form-section">
+          <p className="form-section-label">Schedule</p>
 
-        <div className="form-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
-          <input type="checkbox" id="promotionActive" checked={formData.is_active} onChange={e => setFormData({ ...formData, is_active: e.target.checked })} />
-          <label htmlFor="promotionActive" style={{ margin: 0, cursor: 'pointer' }}>Active</label>
-        </div>
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label>Start Date</label>
+              <div className="promo-date-wrap">
+                <input
+                  type="date"
+                  className="form-input promo-date-input"
+                  value={formData.valid_from}
+                  onChange={e => setFormData({ ...formData, valid_from: e.target.value })}
+                />
+                <Calendar size={15} className="promo-date-icon" />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>End Date</label>
+              <div className="promo-date-wrap">
+                <input
+                  type="date"
+                  className="form-input promo-date-input"
+                  value={formData.valid_until}
+                  onChange={e => setFormData({ ...formData, valid_until: e.target.value })}
+                  placeholder="No expiry"
+                />
+                <Calendar size={15} className="promo-date-icon" />
+              </div>
+            </div>
+          </div>
 
-        <div className="modal-footer" style={{ marginTop: '2rem' }}>
-          <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
-          <button type="submit" className="btn-primary">Save Promotion</button>
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
+            <input type="checkbox" id="promotionActive" className="promo-checkbox" checked={formData.is_active} onChange={e => setFormData({ ...formData, is_active: e.target.checked })} />
+            <label htmlFor="promotionActive" style={{ margin: 0, cursor: 'pointer' }}>Active</label>
+          </div>
         </div>
       </form>
     </Modal>

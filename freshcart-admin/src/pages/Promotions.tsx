@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PromotionFormModal from '../components/PromotionFormModal';
 import { getPromotions, updatePromotion, deletePromotion } from '../lib/api';
 import type { Promotion } from '@freshcart/types';
@@ -6,6 +7,7 @@ import { Edit2, Trash2, Plus, RefreshCw, Search, Tag } from 'lucide-react';
 import { useToast } from '../components/ToastProvider';
 
 export default function Promotions() {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,8 +31,8 @@ export default function Promotions() {
     }
   }
 
-  const handleOpenModal = (promotion?: Promotion) => {
-    setEditingPromotion(promotion ?? null);
+  const handleOpenEditModal = (promotion: Promotion) => {
+    setEditingPromotion(promotion);
     setIsModalOpen(true);
   };
 
@@ -87,7 +89,7 @@ export default function Promotions() {
           <button onClick={fetchPromotions} disabled={loading} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--layer-1)', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
             <RefreshCw size={14} />
           </button>
-          <button onClick={() => handleOpenModal()} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button onClick={() => navigate('/promotions/new')} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Plus size={18} /> Add Promotion
           </button>
         </div>
@@ -166,7 +168,7 @@ export default function Promotions() {
                       {p.valid_from ? new Date(p.valid_from).toLocaleDateString() : '—'} – {p.valid_until ? new Date(p.valid_until).toLocaleDateString() : 'Never'}
                     </td>
                     <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <button onClick={() => handleOpenModal(p)} style={{ padding: '0.4rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                      <button onClick={() => handleOpenEditModal(p)} style={{ padding: '0.4rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                         <Edit2 size={16} />
                       </button>
                       <button onClick={() => handleDelete(p.id!)} style={{ padding: '0.4rem', background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>

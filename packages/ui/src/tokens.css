@@ -72,22 +72,14 @@ html.theme-admin .theme-light,
   --danger:          #DC2626;
   --warning:         #D97706;
 
-  /* Page background — neutral cool gray, not tinted by brand */
-  --page-bg:         #FAFAFB;
-  --page-bg-alt:     #F0F1F5;
+  /* Page background — subtle indigo tint, ties to the brand accent */
+  --page-bg:         #F5F6FC;
+  --page-bg-alt:     #EDEFF8;
 
   /* Surface layers */
   --layer-0:         #FFFFFF;
   --layer-1:         #F7F8FA;
   --layer-2:         #EEF0F4;
-
-  /* Sidebar — light surface matching the page, separated by a border only
-     (flat single-surface layout, no forced-dark sidebar) */
-  --sidebar-bg:      #FFFFFF;
-  --sidebar-text:    #5B5F6D;
-  --sidebar-active:  #4F46E5;   /* indigo-600 — same as primary, now on a light sidebar */
-  --sidebar-active-bg: rgba(79,70,229,0.08);
-  --sidebar-border:  #E4E6EB;
 
   /* Topbar */
   --topbar-bg:       rgba(255,255,255,0.85);
@@ -130,25 +122,17 @@ html.theme-admin .theme-dark,
   --danger:          #F87171;
   --warning:         #FBBF24;
 
-  /* Page background — neutral graphite */
-  --page-bg:         #0B0B10;
-  --page-bg-alt:     #16161C;
+  /* Page background — lifted charcoal, softer than pure black */
+  --page-bg:         #1A1A22;
+  --page-bg-alt:     #20202A;
 
   /* Surface layers */
-  --layer-0:         #18181F;
-  --layer-1:         #1E1E27;
-  --layer-2:         #26262F;
-
-  /* Sidebar — slightly lighter than the page canvas, separated by a border only
-     (flat single-surface layout, matches the light theme's approach) */
-  --sidebar-bg:      #111117;
-  --sidebar-text:    rgba(255,255,255,0.60);
-  --sidebar-active:  #818CF8;
-  --sidebar-active-bg: rgba(129,140,248,0.16);
-  --sidebar-border:  rgba(255,255,255,0.08);
+  --layer-0:         #212129;
+  --layer-1:         #272733;
+  --layer-2:         #2F2F3C;
 
   /* Topbar */
-  --topbar-bg:       rgba(16,16,20,0.90);
+  --topbar-bg:       rgba(26,26,34,0.90);
   --topbar-border:   rgba(255,255,255,0.07);
 
   /* Text */

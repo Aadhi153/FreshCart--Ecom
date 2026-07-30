@@ -95,11 +95,19 @@ export const ProductSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   price: z.number().min(0, "Price must be positive"),
+  compare_at_price: z.number().min(0).optional().nullable(),
   image_url: z.string().url().optional().or(z.literal('')),
   category_id: z.string().uuid().optional().nullable(),
   categories: CategorySchema.optional().nullable(),
   in_stock: z.boolean().default(true),
   stock_quantity: z.number().int().min(0).default(0),
+  low_stock_threshold: z.number().int().min(0).optional().nullable(),
+  unit: z.string().optional().nullable(),
+  // Storefront visibility toggle, independent of `status` (a draft can still be
+  // marked visible ahead of publishing; a published product can be hidden without
+  // being demoted back to draft).
+  is_active: z.boolean().default(true),
+  status: z.enum(['draft', 'published']).default('published'),
   created_at: z.string().datetime().optional(),
   variants: z.array(ProductVariantSchema).optional(),
   reviews: z.array(ReviewSchema).optional(),

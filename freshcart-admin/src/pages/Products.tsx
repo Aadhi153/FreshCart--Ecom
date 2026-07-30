@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ProductFormModal from '../components/ProductFormModal';
 import { getProducts, deleteProduct, getCategories, getProductSoldQuantities } from '../lib/api';
 import type { Product, Category } from '@freshcart/types';
 import { Edit2, Trash2, Plus, RefreshCw, Search, Package, Layers, IndianRupee, Download } from 'lucide-react';
@@ -17,8 +16,6 @@ export default function Products() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -40,13 +37,6 @@ export default function Products() {
       setLoading(false);
     }
   }
-
-  const handleOpenModal = (product?: Product) => {
-    setEditingProduct(product ?? null);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => { setIsModalOpen(false); setEditingProduct(null); };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this product permanently?')) return;
@@ -118,7 +108,7 @@ export default function Products() {
           >
             <Download size={14} /> Export CSV
           </button>
-          <button onClick={() => handleOpenModal()} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button onClick={() => navigate('/products/new')} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Plus size={18} /> Add Product
           </button>
         </div>
@@ -259,15 +249,6 @@ export default function Products() {
           </table>
         </div>
       </div>
-
-      <ProductFormModal
-        isOpen={isModalOpen}
-        editingProduct={editingProduct}
-        categories={categories}
-        onClose={handleCloseModal}
-        onSaved={async () => { await fetchProducts(); handleCloseModal(); }}
-        onCategoryCreated={category => setCategories(prev => [...prev, category])}
-      />
     </div>
   );
 }
