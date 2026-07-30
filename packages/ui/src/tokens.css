@@ -43,118 +43,144 @@
    Vercel / Stripe dashboard register), not a marketing surface.
 ───────────────────────────────────────────────────────────────── */
 
-/* ── Sidebar — fixed brand rail color, does NOT change with the light/dark
-   toggle (only the main content area switches). Common dashboard pattern:
-   a constant-identity sidebar next to a theme-able content surface. ── */
+/* ── Sidebar — fixed gradient brand rail, never participates in the
+   light/dark content toggle. The gradient + border are applied directly
+   (hardcoded) on .admin-sidebar in the app's styles.css; the handful of
+   variables below exist only for sub-elements (logo mark, wordmark,
+   subtext, sign-out) that live inside that fixed rail. ── */
 body.theme-admin,
 html.theme-admin,
 .theme-admin-light,
 .theme-admin-dark {
-  --sidebar-bg:      #101014;
-  --sidebar-text:    rgba(255,255,255,0.62);
-  --sidebar-active:  #818CF8;   /* indigo-400 — legible on the fixed dark rail */
-  --sidebar-active-bg: rgba(129,140,248,0.14);
-  --sidebar-border:  rgba(255,255,255,0.06);
+  --sidebar-logo-gradient: linear-gradient(135deg, #818CF8, #6366F1);
+  --sidebar-text:          #9C93B0;
+  --sidebar-text-active:   #B7BCFB;
+  --sidebar-active-bg:     rgba(129,140,248,0.18);
+  --sidebar-wordmark:      #B7BCFB;
+  --sidebar-subtext:       #726B85;
+  --sidebar-danger:        #F87171;
+  --sidebar-border:        rgba(255,255,255,0.06);
 }
 
 /* ═══════════════════════════════════════════════════════
-   ADMIN – Light Theme
+   ADMIN – Light Theme (content area)
 ═══════════════════════════════════════════════════════ */
 body.theme-admin.theme-light,
 html.theme-admin .theme-light,
-.theme-admin-light {
-  /* Brand */
-  --primary:         #4F46E5;  /* indigo-600 */
-  --primary-hover:   #4338CA;  /* indigo-700 */
-  --primary-light:   rgba(79,70,229,0.10);
-  --accent:          #0EA5E9;  /* sky-500 — used sparingly for secondary data (charts, "auto" badges) */
-  --success:         #16A34A;
-  --danger:          #DC2626;
+.theme-admin-light,
+body.theme-admin[data-theme="light"] {
+  /* Brand accent — identical in both themes so brand color never shifts */
+  --accent:          #6366F1;
+  --accent-hover:    #4F46E5;
+  --accent-tint:     #EEEFFD;
+
+  --success:         #22C55E;
+  --success-tint:    #E7F9EE;
+  --info:            #3B82F6;
+  --info-tint:       #EAF2FE;
+  --danger:          #EF4444;
+  --danger-tint:     #FDEDED;
   --warning:         #D97706;
+  --warning-tint:    #FDF3E7;
 
-  /* Page background — subtle indigo tint, ties to the brand accent */
-  --page-bg:         #F5F6FC;
-  --page-bg-alt:     #EDEFF8;
+  --chart-line:      #6366F1;
 
-  /* Surface layers */
-  --layer-0:         #FFFFFF;
-  --layer-1:         #F7F8FA;
-  --layer-2:         #EEF0F4;
+  /* Surfaces — white card must always read as distinct from the gray page */
+  --bg-page:         #F7F8FA;
+  --bg-card:         #FFFFFF;
+  --border:          #E5E7EB;
+  --card-shadow:     0 1px 2px rgba(0,0,0,0.04);
+
+  /* Text */
+  --text-primary:    #0F172A;
+  --text-secondary:  #6B7280;
+  --text-muted:      #8A8A94;
 
   /* Topbar */
   --topbar-bg:       rgba(255,255,255,0.85);
-  --topbar-border:   #E4E6EB;
+  --topbar-border:   var(--border);
 
-  /* Text */
-  --text-primary:    #14141F;
-  --text-secondary:  #5B5F6D;
-  --text-muted:      #9498A3;
-
-  /* Borders — neutral gray, not brand-tinted */
-  --border-color:    #E4E6EB;
-  --border-subtle:   rgba(16,16,20,0.05);
-
-  /* Shadows — neutral, not brand-tinted */
-  --shadow-sm:  0 1px 2px rgba(16,16,20,0.05);
+  /* ── Back-compat aliases — the rest of the app was built against these
+     older token names; keeping them wired to the new tokens means every
+     existing consumer picks up the new palette without needing a rewrite. ── */
+  --primary:         var(--accent);
+  --primary-hover:   var(--accent-hover);
+  --primary-light:   var(--accent-tint);
+  --page-bg:         var(--bg-page);
+  --page-bg-alt:     #EEF0F4;
+  --layer-0:         var(--bg-card);
+  --layer-1:         #F7F8FA;
+  --layer-2:         #EEF0F4;
+  --border-color:    var(--border);
+  --border-subtle:   rgba(15,23,42,0.05);
+  --shadow-sm:  var(--card-shadow);
   --shadow-md:  0 4px 12px rgba(16,16,20,0.08), 0 1px 3px rgba(16,16,20,0.05);
   --shadow-lg:  0 12px 32px rgba(16,16,20,0.12);
   --shadow-xl:  0 24px 48px rgba(16,16,20,0.16);
-
-  /* Gradients — flat by default; --gradient-hero reserved for the auth brand panel only */
-  --gradient-primary: var(--primary);
-  --gradient-hero:    linear-gradient(135deg, #4338CA 0%, #4F46E5 55%, #0EA5E9 100%);
-  --gradient-card:    var(--layer-0);
+  --gradient-primary: var(--accent);
+  --gradient-hero:    linear-gradient(135deg, #4338CA 0%, #6366F1 55%, #3B82F6 100%);
+  --gradient-card:    var(--bg-card);
   --gradient-glass:   rgba(255,255,255,0.75);
 }
 
 /* ═══════════════════════════════════════════════════════
-   ADMIN – Dark Theme
+   ADMIN – Dark Theme (content area)
 ═══════════════════════════════════════════════════════ */
 body.theme-admin.theme-dark,
 html.theme-admin .theme-dark,
-.theme-admin-dark {
-  /* Brand */
-  --primary:         #818CF8;  /* indigo-400 — legible on dark */
-  --primary-hover:   #6366F1;  /* indigo-500 */
-  --primary-light:   rgba(129,140,248,0.16);
-  --accent:          #38BDF8;  /* sky-400 */
+.theme-admin-dark,
+body.theme-admin[data-theme="dark"] {
+  /* Brand accent — identical in both themes so brand color never shifts */
+  --accent:          #6366F1;
+  --accent-hover:    #818CF8;
+  --accent-tint:     rgba(99,102,241,0.15);
+
   --success:         #4ADE80;
+  --success-tint:    rgba(74,222,128,0.15);
+  --info:            #60A5FA;
+  --info-tint:       rgba(96,165,250,0.15);
+  --info-secondary:      #8B93F8;
+  --info-secondary-tint: rgba(139,147,248,0.15);
   --danger:          #F87171;
+  --danger-tint:     rgba(248,113,113,0.15);
   --warning:         #FBBF24;
+  --warning-tint:    rgba(251,191,36,0.15);
 
-  /* Page background — lifted charcoal, softer than pure black */
-  --page-bg:         #1A1A22;
-  --page-bg-alt:     #20202A;
+  --chart-line:      #8B93F8;
 
-  /* Surface layers */
-  --layer-0:         #212129;
-  --layer-1:         #272733;
-  --layer-2:         #2F2F3C;
-
-  /* Topbar */
-  --topbar-bg:       rgba(26,26,34,0.90);
-  --topbar-border:   rgba(255,255,255,0.07);
+  /* Surfaces — card must always read lighter than the page behind it */
+  --bg-page:         #161320;
+  --bg-card:         #211D30;
+  --border:          rgba(255,255,255,0.07);
 
   /* Text */
-  --text-primary:    #F1F1F5;
-  --text-secondary:  #A0A3AF;
-  --text-muted:      #5C5F6B;
+  --text-primary:    #FFFFFF;
+  --text-secondary:  #9C93B0;
+  --text-muted:      #8A7FA0;
 
-  /* Borders — neutral, not brand-tinted */
-  --border-color:    rgba(255,255,255,0.08);
+  /* Topbar */
+  --topbar-bg:       rgba(22,19,32,0.90);
+  --topbar-border:   var(--border);
+
+  /* Back-compat aliases — see light theme block above for rationale */
+  --primary:         var(--accent);
+  --primary-hover:   var(--accent-hover);
+  --primary-light:   var(--accent-tint);
+  --page-bg:         var(--bg-page);
+  --page-bg-alt:     #1B1828;
+  --layer-0:         var(--bg-card);
+  --layer-1:         #272233;
+  --layer-2:         #2F293D;
+  --border-color:    var(--border);
   --border-subtle:   rgba(255,255,255,0.05);
-
-  /* Shadows */
   --shadow-sm:  0 1px 3px rgba(0,0,0,0.40);
   --shadow-md:  0 4px 16px rgba(0,0,0,0.55);
   --shadow-lg:  0 12px 40px rgba(0,0,0,0.65);
   --shadow-xl:  0 24px 60px rgba(0,0,0,0.75);
-
-  /* Gradients — flat by default; --gradient-hero reserved for the auth brand panel only */
-  --gradient-primary: var(--primary);
-  --gradient-hero:    linear-gradient(135deg, #312E81 0%, #4F46E5 55%, #0EA5E9 100%);
-  --gradient-card:    var(--layer-0);
-  --gradient-glass:   rgba(24,24,31,0.80);
+  --gradient-primary: var(--accent);
+  --gradient-hero:    linear-gradient(135deg, #312E81 0%, #6366F1 55%, #60A5FA 100%);
+  --gradient-card:    var(--bg-card);
+  --gradient-glass:   rgba(22,19,32,0.80);
 }
 
 /* ─────────────────────────────────────────────────────────────────

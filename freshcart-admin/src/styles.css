@@ -24,22 +24,22 @@ body {
   display: flex;
   min-height: 100vh;
   background-color: var(--page-bg);
-  --admin-sidebar-width: 256px;
+  --admin-sidebar-width: 224px;
 }
 
 /* ── Sidebar ── */
 .admin-sidebar {
   width: var(--admin-sidebar-width);
   flex-shrink: 0;
-  background-color: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
+  /* Fixed brand rail — hardcoded, does not participate in the light/dark toggle */
+  background: linear-gradient(180deg, #1A1030 0%, #0D0714 55%, #050409 100%);
+  border-right: 1px solid rgba(255,255,255,0.06);
   display: flex;
   flex-direction: column;
   position: sticky;
   top: 0;
   height: 100vh;
   overflow-y: auto;
-  transition: background-color var(--transition-slow);
 }
 
 .admin-sidebar-header {
@@ -49,7 +49,7 @@ body {
 
 .admin-sidebar-header h2 {
   margin: 0;
-  color: var(--sidebar-active);
+  color: var(--sidebar-wordmark);
   font-family: var(--font-display);
   font-size: 1.15rem;
 }
@@ -82,14 +82,14 @@ body {
 
 .admin-nav-item:hover {
   background-color: var(--sidebar-active-bg);
-  color: var(--sidebar-active);
-  border-left-color: var(--sidebar-active);
+  color: var(--sidebar-text-active);
+  border-left-color: var(--sidebar-text-active);
 }
 
 .admin-nav-item.active {
   background-color: var(--sidebar-active-bg);
-  color: var(--sidebar-active);
-  border-left-color: var(--sidebar-active);
+  color: var(--sidebar-text-active);
+  border-left-color: var(--sidebar-text-active);
   font-weight: 600;
 }
 
@@ -873,17 +873,10 @@ body {
 }
 
 /* ── Add/Edit Product full page ──
-   Color custom properties are aliased to the existing token system here so the
-   whole page (and any future edit-product page reusing these components) can
-   have its palette swapped by editing this block alone, without touching any
-   layout/component code. */
+   Reuses the shared --bg-page/--bg-card/--accent/--border tokens directly
+   (see @freshcart/ui/tokens.css) so it stays in sync with the rest of the
+   admin's light/dark color system automatically. */
 .product-form-page {
-  --bg-sidebar: var(--sidebar-bg);
-  --bg-page: var(--page-bg);
-  --bg-card: var(--layer-0);
-  --accent: var(--primary);
-  --border: var(--border-color);
-
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -1147,7 +1140,7 @@ body {
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .admin-layout { --admin-sidebar-width: 200px; }
+  .admin-layout { --admin-sidebar-width: 180px; }
   .admin-content { padding: 1rem; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .auth-page { padding: 1rem; }

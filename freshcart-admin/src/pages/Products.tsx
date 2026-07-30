@@ -118,8 +118,8 @@ export default function Products() {
         <div className="kpi-card spatial-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
             <p className="kpi-title">Total Products</p>
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Package size={18} style={{ color: 'var(--primary)' }} />
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'var(--accent-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Package size={18} style={{ color: 'var(--accent)' }} />
             </div>
           </div>
           <h3 className="kpi-value">{stats.totalProducts}</h3>
@@ -127,8 +127,8 @@ export default function Products() {
         <div className="kpi-card spatial-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
             <p className="kpi-title">Total Stock</p>
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'color-mix(in srgb, var(--accent) 16%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Layers size={18} style={{ color: 'var(--accent)' }} />
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'var(--info-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Layers size={18} style={{ color: 'var(--info)' }} />
             </div>
           </div>
           <h3 className="kpi-value">{stats.totalStock}</h3>
@@ -136,7 +136,7 @@ export default function Products() {
         <div className="kpi-card spatial-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
             <p className="kpi-title">Total Stock Value</p>
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'color-mix(in srgb, var(--success) 16%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'var(--success-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <IndianRupee size={18} style={{ color: 'var(--success)' }} />
             </div>
           </div>
@@ -206,7 +206,7 @@ export default function Products() {
                       <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
                     </td>
                     <td>
-                      <span style={{ padding: '2px 7px', borderRadius: 'var(--radius-full)', background: 'var(--primary-light)', color: 'var(--primary)', fontSize: '0.72rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      <span style={{ padding: '2px 7px', borderRadius: 'var(--radius-full)', background: 'var(--accent-tint)', color: 'var(--accent)', fontSize: '0.72rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
                         {p.categories?.name || 'Uncategorized'}
                       </span>
                     </td>
@@ -234,9 +234,7 @@ export default function Products() {
                     <td>
                       <span style={{
                         color: p.in_stock ? 'var(--success)' : 'var(--danger)',
-                        backgroundColor: p.in_stock
-                          ? 'color-mix(in srgb, var(--success) 15%, transparent)'
-                          : 'color-mix(in srgb, var(--danger) 15%, transparent)',
+                        backgroundColor: p.in_stock ? 'var(--success-tint)' : 'var(--danger-tint)',
                         padding: '4px 10px', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700,
                       }}>
                         {p.in_stock ? 'In Stock' : 'Out of Stock'}

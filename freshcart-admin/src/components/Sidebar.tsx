@@ -31,16 +31,16 @@ export default function Sidebar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{
             width: 36, height: 36, borderRadius: '10px',
-            backgroundColor: 'var(--primary)',
+            background: 'var(--sidebar-logo-gradient)',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <Leaf size={20} color="#fff" />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--primary)', fontFamily: 'var(--font-display)' }}>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--sidebar-wordmark)', fontFamily: 'var(--font-display)' }}>
               FreshCart
             </h2>
-            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Admin Portal</p>
+            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--sidebar-subtext)' }}>Admin Portal</p>
           </div>
         </div>
       </div>
@@ -61,11 +61,11 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)' }}>
+      <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--sidebar-border)' }}>
         <button
           className="admin-nav-item"
           onClick={() => void signOut()}
-          style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', color: 'var(--danger)', cursor: 'pointer' }}
+          style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', color: 'var(--sidebar-danger)', cursor: 'pointer' }}
         >
           <LogOut size={18} style={{ marginRight: '0.75rem' }} />
           Sign Out

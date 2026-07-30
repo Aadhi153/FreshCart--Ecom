@@ -26,6 +26,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Apply both the app identity (theme-admin) and the light/dark variant
     document.body.className = `theme-admin theme-${theme}`;
+    document.body.setAttribute('data-theme', theme);
     localStorage.setItem('admin-theme', theme);
   }, [theme]);
 

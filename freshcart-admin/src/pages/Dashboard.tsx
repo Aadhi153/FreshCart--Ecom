@@ -5,12 +5,12 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianG
 import { getAnalyticsSummary } from '../lib/api';
 
 const statusStyle: Record<string, CSSProperties> = {
-  delivered:  { background: 'color-mix(in srgb, var(--success) 16%, transparent)', color: 'var(--success)' },
-  processing: { background: 'color-mix(in srgb, var(--warning) 16%, transparent)', color: 'var(--warning)' },
-  placed:     { background: 'color-mix(in srgb, var(--accent) 16%, transparent)',  color: 'var(--accent)' },
-  packed:     { background: 'color-mix(in srgb, var(--accent) 16%, transparent)',  color: 'var(--accent)' },
-  shipped:    { background: 'color-mix(in srgb, var(--primary) 16%, transparent)', color: 'var(--primary)' },
-  cancelled:  { background: 'color-mix(in srgb, var(--danger) 16%, transparent)',  color: 'var(--danger)' },
+  delivered:  { background: 'var(--success-tint)', color: 'var(--success)' },
+  processing: { background: 'var(--warning-tint)', color: 'var(--warning)' },
+  placed:     { background: 'var(--info-tint)',    color: 'var(--info)' },
+  packed:     { background: 'var(--info-tint)',    color: 'var(--info)' },
+  shipped:    { background: 'var(--accent-tint)',  color: 'var(--accent)' },
+  cancelled:  { background: 'var(--danger-tint)',  color: 'var(--danger)' },
 };
 
 interface KPI {
@@ -46,10 +46,10 @@ export default function Dashboard() {
 
       setKpiCards([
         { label: 'Total Revenue',   value: `₹${kpis.totalRevenue}`, change: 'All-time', icon: TrendingUp,    color: 'var(--success)' },
-        { label: 'Total Orders',    value: String(kpis.totalOrders ?? 0), change: 'All-time', icon: ShoppingBag, color: 'var(--primary)' },
+        { label: 'Total Orders',    value: String(kpis.totalOrders ?? 0), change: 'All-time', icon: ShoppingBag, color: 'var(--accent)' },
         { label: 'Revenue Today',   value: `₹${kpis.todayRevenue}`, change: 'Live',    icon: TrendingUp,    color: 'var(--success)' },
-        { label: 'Orders Today',    value: String(kpis.todayOrders ?? 0),       change: 'Live',    icon: ShoppingBag,   color: 'var(--primary)' },
-        { label: 'Total Customers', value: String(kpis.totalCustomers ?? 0),    change: 'Total',   icon: Users,         color: 'var(--accent)' },
+        { label: 'Orders Today',    value: String(kpis.todayOrders ?? 0),       change: 'Live',    icon: ShoppingBag,   color: 'var(--accent)' },
+        { label: 'Total Customers', value: String(kpis.totalCustomers ?? 0),    change: 'Total',   icon: Users,         color: 'var(--info)' },
         { label: 'Low Stock Items', value: String(kpis.outOfStockCount ?? 0), change: 'Alert',  icon: AlertTriangle, color: 'var(--danger)' },
       ]);
 
@@ -132,19 +132,19 @@ export default function Dashboard() {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="var(--primary)" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="var(--chart-line)" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="var(--chart-line)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
               <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis stroke="var(--text-muted)" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${v}`} />
               <Tooltip
-                contentStyle={{ backgroundColor: 'var(--layer-0)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }}
+                contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }}
                 formatter={(value: any) => [`₹${Number(value).toFixed(2)}`, 'Revenue']}
               />
-              <Area type="monotone" dataKey="revenue" stroke="var(--primary)" strokeWidth={2.5} fill="url(#revenueGrad)"
-                dot={{ r: 4, fill: 'var(--primary)', strokeWidth: 0 }} activeDot={{ r: 6, fill: 'var(--primary)' }} />
+              <Area type="monotone" dataKey="revenue" stroke="var(--chart-line)" strokeWidth={2.5} fill="url(#revenueGrad)"
+                dot={{ r: 4, fill: 'var(--chart-line)', strokeWidth: 0 }} activeDot={{ r: 6, fill: 'var(--chart-line)' }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -204,10 +204,10 @@ export default function Dashboard() {
                 <XAxis type="number" stroke="var(--text-muted)" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis dataKey="name" type="category" stroke="var(--text-muted)" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: 'var(--layer-0)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }}
+                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }}
                   formatter={(value: any) => [value, 'Items Sold']}
                 />
-                <Bar dataKey="total_quantity" fill="var(--accent)" radius={[0, 4, 4, 0]} barSize={24} />
+                <Bar dataKey="total_quantity" fill="var(--info)" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -216,13 +216,13 @@ export default function Dashboard() {
 
       {/* Low Stock Alert */}
       {lowStockItems.length > 0 && (
-        <div className="spatial-card" style={{ padding: '1.75rem', border: '1px solid rgba(248,113,113,0.3)' }}>
+        <div className="spatial-card" style={{ padding: '1.75rem', border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)' }}>
           <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 700, color: 'var(--danger)' }}>
             ⚠️ Low Stock Alerts
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {lowStockItems.map(item => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'rgba(248,113,113,0.05)', borderRadius: 'var(--radius-sm)' }}>
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--danger-tint)', borderRadius: 'var(--radius-sm)' }}>
                 <span style={{ fontWeight: 500 }}>{item.name}</span>
                 <span style={{ color: 'var(--danger)', fontWeight: 700, fontSize: '0.85rem' }}>
                   {!item.in_stock || !item.stock_quantity ? 'Out of stock' : `${item.stock_quantity} left`}
