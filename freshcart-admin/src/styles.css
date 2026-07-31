@@ -80,10 +80,19 @@ body {
   text-align: left;
 }
 
+.admin-nav-item svg {
+  transition: transform var(--transition-base);
+}
+
 .admin-nav-item:hover {
   background-color: var(--sidebar-active-bg);
   color: var(--sidebar-text-active);
   border-left-color: var(--sidebar-text-active);
+  transform: translateX(4px);
+}
+
+.admin-nav-item:hover svg {
+  transform: scale(1.12);
 }
 
 .admin-nav-item.active {
@@ -129,37 +138,38 @@ body {
 /* ── KPI cards ── */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .kpi-card {
   background: var(--layer-0);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1rem;
   box-shadow: var(--shadow-sm);
   position: relative;
-  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
 }
 
 .kpi-card:hover {
   box-shadow: var(--shadow-md);
   border-color: var(--primary);
+  transform: translateY(-3px);
 }
 
 .kpi-title {
   color: var(--text-secondary);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .kpi-value {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
@@ -197,6 +207,7 @@ body {
 .admin-table td {
   padding: 0.6rem 0.75rem;
   text-align: left;
+  transition: background-color var(--transition-base), transform var(--transition-base);
   border-bottom: 1px solid var(--border-subtle);
   font-size: 0.82rem;
   color: var(--text-primary);
@@ -208,6 +219,16 @@ body {
 
 .admin-table tbody tr:hover td {
   background-color: var(--primary-light);
+  transform: translateX(3px);
+}
+
+.admin-table tbody tr td button {
+  transition: transform var(--transition-fast), filter var(--transition-fast);
+}
+
+.admin-table tbody tr td button:hover {
+  transform: scale(1.1);
+  filter: brightness(1.2);
 }
 
 /* ── Modals ── */

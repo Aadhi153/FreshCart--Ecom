@@ -71,8 +71,8 @@ export default function Dashboard() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>Dashboard</h1>
-          <p style={{ margin: '0.35rem 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800 }}>Dashboard</h1>
+          <p style={{ margin: '0.3rem 0 0', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
             Live data from your Supabase database.
           </p>
         </div>
@@ -109,14 +109,14 @@ export default function Dashboard() {
         ) : (
           kpiCards.map(({ label, value, change, icon: Icon, color }) => (
             <div key={label} className="kpi-card spatial-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
                 <p className="kpi-title">{label}</p>
-                <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: `color-mix(in srgb, ${color} 16%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon size={18} style={{ color }} />
+                <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', background: `color-mix(in srgb, ${color} 16%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon size={14} style={{ color }} />
                 </div>
               </div>
               <h3 className="kpi-value">{value}</h3>
-              <p style={{ margin: '0.5rem 0 0', fontSize: '0.78rem', fontWeight: 600, color: change === 'Alert' ? 'var(--danger)' : change === 'Live' ? 'var(--success)' : 'var(--text-secondary)' }}>
+              <p style={{ margin: '0.35rem 0 0', fontSize: '0.7rem', fontWeight: 600, color: change === 'Alert' ? 'var(--danger)' : change === 'Live' ? 'var(--success)' : 'var(--text-secondary)' }}>
                 {change === 'Live' ? '🟢 Live' : change === 'Alert' && (lowStockItems.length > 0) ? '⚠️ Needs attention' : change}
               </p>
             </div>
@@ -125,9 +125,9 @@ export default function Dashboard() {
       </div>
 
       {/* Revenue Chart */}
-      <div className="spatial-card" style={{ padding: '1.75rem' }}>
-        <h3 style={{ margin: '0 0 1.5rem', fontSize: '1rem', fontWeight: 700 }}>Revenue — Last 7 Days</h3>
-        <div style={{ height: 280 }}>
+      <div className="spatial-card" style={{ padding: '1.25rem' }}>
+        <h3 style={{ margin: '0 0 1rem', fontSize: '0.9rem', fontWeight: 700 }}>Revenue — Last 7 Days</h3>
+        <div style={{ height: 240 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData}>
               <defs>
@@ -153,10 +153,10 @@ export default function Dashboard() {
       {/* Grid for Recent Orders and Top Products */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         {/* Recent Orders */}
-        <div className="spatial-card" style={{ padding: '1.75rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Recent Orders</h3>
-            <span style={{ fontSize: '0.82rem', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer' }}>View all →</span>
+        <div className="spatial-card" style={{ padding: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Recent Orders</h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer' }}>View all →</span>
           </div>
           <div className="admin-table-container">
             <table className="admin-table">
@@ -195,9 +195,9 @@ export default function Dashboard() {
         </div>
 
         {/* Top Selling Products */}
-        <div className="spatial-card" style={{ padding: '1.75rem' }}>
-          <h3 style={{ margin: '0 0 1.5rem', fontSize: '1rem', fontWeight: 700 }}>Top Selling Products</h3>
-          <div style={{ height: 280 }}>
+        <div className="spatial-card" style={{ padding: '1.25rem' }}>
+          <h3 style={{ margin: '0 0 1rem', fontSize: '0.9rem', fontWeight: 700 }}>Top Selling Products</h3>
+          <div style={{ height: 240 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topProducts} layout="vertical" margin={{ left: 50 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" horizontal={false} />
@@ -216,8 +216,8 @@ export default function Dashboard() {
 
       {/* Low Stock Alert */}
       {lowStockItems.length > 0 && (
-        <div className="spatial-card" style={{ padding: '1.75rem', border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)' }}>
-          <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 700, color: 'var(--danger)' }}>
+        <div className="spatial-card" style={{ padding: '1.25rem', border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)' }}>
+          <h3 style={{ margin: '0 0 0.75rem', fontSize: '0.9rem', fontWeight: 700, color: 'var(--danger)' }}>
             ⚠️ Low Stock Alerts
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

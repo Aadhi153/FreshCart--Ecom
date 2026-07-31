@@ -15,12 +15,19 @@ app.use(helmet());
 app.use(morgan('dev'));
 const allowedOrigins = [
   'http://localhost:3000',  // Next.js web
-  'http://localhost:5173',  // Vite admin
   'http://localhost:19006', // Expo mobile
 ];
 if (process.env.ALLOWED_ORIGIN) allowedOrigins.push(process.env.ALLOWED_ORIGIN);
 app.use(cors({
-  origin: allowedOrigins,
+  origin(origin, callback) {
+    // Vite picks the next free port (5173, 5174, 5175, ...) when one is taken,
+    // so allow any localhost/127.0.0.1 port in addition to the fixed list above.
+    if (!origin || allowedOrigins.includes(origin) || /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   exposedHeaders: ['X-Total-Count'],
 }));

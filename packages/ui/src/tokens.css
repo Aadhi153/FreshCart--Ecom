@@ -148,18 +148,21 @@ body.theme-admin[data-theme="dark"] {
 
   --chart-line:      #8B93F8;
 
-  /* Surfaces — card must always read lighter than the page behind it */
-  --bg-page:         #161320;
-  --bg-card:         #211D30;
-  --border:          rgba(255,255,255,0.07);
+  /* Surfaces — neutral graphite (not purple-tinted), but with a much bigger
+     page↔card jump than a flat single-step scale, plus an inset top-highlight
+     baked into the shadows below so cards read as physically raised instead
+     of just "a slightly different gray rectangle". */
+  --bg-page:         #121214;
+  --bg-card:         #1E1E23;
+  --border:          rgba(255,255,255,0.14);
 
   /* Text */
-  --text-primary:    #FFFFFF;
-  --text-secondary:  #9C93B0;
-  --text-muted:      #8A7FA0;
+  --text-primary:    #F5F5F7;
+  --text-secondary:  #A6A6AD;
+  --text-muted:      #7A7A81;
 
   /* Topbar */
-  --topbar-bg:       rgba(22,19,32,0.90);
+  --topbar-bg:       rgba(18,18,20,0.92);
   --topbar-border:   var(--border);
 
   /* Back-compat aliases — see light theme block above for rationale */
@@ -167,20 +170,20 @@ body.theme-admin[data-theme="dark"] {
   --primary-hover:   var(--accent-hover);
   --primary-light:   var(--accent-tint);
   --page-bg:         var(--bg-page);
-  --page-bg-alt:     #1B1828;
+  --page-bg-alt:     #17171A;
   --layer-0:         var(--bg-card);
-  --layer-1:         #272233;
-  --layer-2:         #2F293D;
+  --layer-1:         #26262C;
+  --layer-2:         #2F2F37;
   --border-color:    var(--border);
-  --border-subtle:   rgba(255,255,255,0.05);
-  --shadow-sm:  0 1px 3px rgba(0,0,0,0.40);
-  --shadow-md:  0 4px 16px rgba(0,0,0,0.55);
-  --shadow-lg:  0 12px 40px rgba(0,0,0,0.65);
-  --shadow-xl:  0 24px 60px rgba(0,0,0,0.75);
+  --border-subtle:   rgba(255,255,255,0.09);
+  --shadow-sm:  inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 3px rgba(0,0,0,0.55);
+  --shadow-md:  inset 0 1px 0 rgba(255,255,255,0.05), 0 6px 20px rgba(0,0,0,0.65);
+  --shadow-lg:  inset 0 1px 0 rgba(255,255,255,0.06), 0 16px 44px rgba(0,0,0,0.75);
+  --shadow-xl:  inset 0 1px 0 rgba(255,255,255,0.06), 0 28px 64px rgba(0,0,0,0.85);
   --gradient-primary: var(--accent);
   --gradient-hero:    linear-gradient(135deg, #312E81 0%, #6366F1 55%, #60A5FA 100%);
   --gradient-card:    var(--bg-card);
-  --gradient-glass:   rgba(22,19,32,0.80);
+  --gradient-glass:   rgba(18,18,20,0.80);
 }
 
 /* ─────────────────────────────────────────────────────────────────
