@@ -11,13 +11,19 @@
   },
   "dependencies": {
     "@freshcart/types": "^1.0.0",
+    "@freshcart/ui": "^1.0.0",
+    "@hookform/resolvers": "^3.9.0",
     "@supabase/supabase-js": "^2.108.2",
+    "@tanstack/react-query": "^5.59.0",
+    "framer-motion": "^12.42.2",
     "lucide-react": "^1.21.0",
     "puppeteer": "^25.2.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-hook-form": "^7.53.0",
     "react-router-dom": "^7.18.0",
-    "recharts": "^3.9.0"
+    "recharts": "^3.9.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^24.13.2",

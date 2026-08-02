@@ -1,80 +1,23 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProducts, deleteProduct, getCategories, getProductSoldQuantities } from '../lib/api';
-import type { Product, Category } from '@freshcart/types';
-import { Edit2, Trash2, Plus, RefreshCw, Search, Package, Layers, IndianRupee, Download } from 'lucide-react';
-import { useToast } from '../components/ToastProvider';
+import type { Product } from '@freshcart/types';
+import { Plus, RefreshCw, Search, Package, Layers, IndianRupee, Download } from 'lucide-react';
+import { Button, Card, EmptyState, Skeleton, Table, Thead, Tbody, Tr, Th, Td } from '@freshcart/ui';
 import { exportToCsv } from '../lib/csv';
+import { useProducts, useCategories, useProductSoldQuantities } from '../lib/queries/products';
 
 export default function Products() {
   const navigate = useNavigate();
-  const { showToast } = useToast();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [soldQuantities, setSoldQuantities] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
+  const { data: products = [], isLoading: loading, refetch } = useProducts();
+  const { data: categories = [] } = useCategories();
+  const { data: soldQuantities = {} } = useProductSoldQuantities();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    fetchProducts();
-    getCategories().then(setCategories).catch(err => console.error('Error fetching categories:', err));
-    const interval = setInterval(fetchProducts, 30000); // refresh every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  async function fetchProducts() {
-    try {
-      setLoading(true);
-      const data = await getProducts();
-      setProducts(data);
-      const sold = await getProductSoldQuantities();
-      setSoldQuantities(sold);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this product permanently?')) return;
-    try {
-      await deleteProduct(id);
-      setProducts(products.filter(p => p.id !== id));
-      showToast('Product deleted', 'success');
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      showToast('Failed to delete product.', 'error');
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedIds.size} product(s) permanently?`)) return;
-    try {
-      await Promise.all([...selectedIds].map(id => deleteProduct(id)));
-      setProducts(prev => prev.filter(p => !selectedIds.has(p.id!)));
-      setSelectedIds(new Set());
-      showToast(`${selectedIds.size} product(s) deleted`, 'success');
-    } catch (error) {
-      console.error('Error bulk deleting products:', error);
-      showToast('Some products failed to delete.', 'error');
-    }
-  };
-
-  const toggleSelectId = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   const filteredProducts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return products.filter(p => {
+    return products.filter((p: Product) => {
       const matchesSearch = !q || p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q);
       const matchesCategory = categoryFilter === 'all' || p.category_id === categoryFilter;
       return matchesSearch && matchesCategory;
@@ -82,8 +25,8 @@ export default function Products() {
   }, [products, searchQuery, categoryFilter]);
 
   const stats = useMemo(() => {
-    const totalStock = products.reduce((sum, p) => sum + (p.stock_quantity ?? 0), 0);
-    const totalValue = products.reduce((sum, p) => sum + p.price * (p.stock_quantity ?? 0), 0);
+    const totalStock = products.reduce((sum: number, p: Product) => sum + (p.stock_quantity ?? 0), 0);
+    const totalValue = products.reduce((sum: number, p: Product) => sum + p.price * (p.stock_quantity ?? 0), 0);
     return { totalProducts: products.length, totalStock, totalValue };
   }, [products]);
 
@@ -97,25 +40,24 @@ export default function Products() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button onClick={fetchProducts} disabled={loading} style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--layer-1)', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
-            <RefreshCw size={14} />
-          </button>
-          <button
+          <Button variant="secondary" onClick={() => refetch()} disabled={loading} leftIcon={<RefreshCw size={14} />} />
+          <Button
+            variant="secondary"
+            leftIcon={<Download size={14} />}
             onClick={() => exportToCsv('products.csv', filteredProducts.map(p => ({
               Name: p.name, Category: p.categories?.name || '', Price: p.price, Stock: p.stock_quantity, InStock: p.in_stock,
             })))}
-            style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--layer-1)', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
           >
-            <Download size={14} /> Export CSV
-          </button>
-          <button onClick={() => navigate('/products/new')} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plus size={18} /> Add Product
-          </button>
+            Export CSV
+          </Button>
+          <Button variant="primary" leftIcon={<Plus size={18} />} onClick={() => navigate('/products/new')}>
+            Add Product
+          </Button>
         </div>
       </div>
 
       <div className="kpi-grid">
-        <div className="kpi-card spatial-card">
+        <Card className="kpi-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
             <p className="kpi-title">Total Products</p>
             <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'var(--accent-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -123,8 +65,8 @@ export default function Products() {
             </div>
           </div>
           <h3 className="kpi-value">{stats.totalProducts}</h3>
-        </div>
-        <div className="kpi-card spatial-card">
+        </Card>
+        <Card className="kpi-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
             <p className="kpi-title">Total Stock</p>
             <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'var(--info-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -132,8 +74,8 @@ export default function Products() {
             </div>
           </div>
           <h3 className="kpi-value">{stats.totalStock}</h3>
-        </div>
-        <div className="kpi-card spatial-card">
+        </Card>
+        <Card className="kpi-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
             <p className="kpi-title">Total Stock Value</p>
             <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'var(--success-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -141,7 +83,7 @@ export default function Products() {
             </div>
           </div>
           <h3 className="kpi-value">₹{stats.totalValue.toFixed(2)}</h3>
-        </div>
+        </Card>
       </div>
 
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem' }}>
@@ -169,84 +111,90 @@ export default function Products() {
         </select>
       </div>
 
-
-      <div className="spatial-card" style={{ padding: '1.5rem' }}>
-        <div className="admin-table-container">
-          <table className="admin-table">
-            <thead>
-              <tr>
-
-                <th>Image</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Variants</th>
-                <th>Price</th>
-                <th style={{ textAlign: 'center' }}>Stock</th>
-                <th>In Stock</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>Loading products...</td></tr>
-              ) : filteredProducts.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                  {products.length === 0 ? 'No products yet. Add your first one!' : 'No products match your search.'}
-                </td></tr>
-              ) : (
-                filteredProducts.map(p => (
-                  <tr key={p.id} onClick={() => navigate(`/products/${p.id}`)} style={{ cursor: 'pointer' }}>
-                    <td>
-                      {p.image_url ? (
-                        <img src={p.image_url} alt={p.name} style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />
-                      ) : (
-                        <div style={{ width: 34, height: 34, backgroundColor: 'var(--layer-0)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🛒</div>
-                      )}
-                    </td>
-                    <td style={{ maxWidth: 180 }}>
-                      <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                    </td>
-                    <td>
-                      <span style={{ padding: '2px 7px', borderRadius: 'var(--radius-full)', background: 'var(--accent-tint)', color: 'var(--accent)', fontSize: '0.72rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                        {p.categories?.name || 'Uncategorized'}
-                      </span>
-                    </td>
-                    <td style={{ maxWidth: 160 }}>
-                      {p.variants && p.variants.length > 0 ? (
-                        <ul style={{ margin: 0, paddingLeft: '1rem' }}>
-                          {p.variants.map((v, idx) => (
-                            <li key={idx} style={{ fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{v.name} — ₹{v.price_adjustment.toFixed(2)} ({v.stock_quantity})</li>
-                          ))}
-                        </ul>
-                      ) : '—'}
-                    </td>
-                    <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>₹{p.price.toFixed(2)}</td>
-                    {(() => {
-                      const available = p.stock_quantity ?? 0;
-                      const sold = soldQuantities[p.id!] ?? 0;
-                      const total = available + sold;
-                      return (
-                        <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                          <div style={{ fontWeight: 600 }}>{available} / {total}</div>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{sold} sold</div>
-                        </td>
-                      );
-                    })()}
-                    <td>
-                      <span style={{
-                        color: p.in_stock ? 'var(--success)' : 'var(--danger)',
-                        backgroundColor: p.in_stock ? 'var(--success-tint)' : 'var(--danger-tint)',
-                        padding: '4px 10px', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700,
-                      }}>
-                        {p.in_stock ? 'In Stock' : 'Out of Stock'}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Card style={{ padding: '1.5rem' }}>
+        <Table>
+          <Thead>
+            <Tr>
+              <Th>Image</Th>
+              <Th>Name</Th>
+              <Th>Category</Th>
+              <Th>Variants</Th>
+              <Th>Price</Th>
+              <Th style={{ textAlign: 'center' }}>Stock</Th>
+              <Th>In Stock</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <Tr key={i}>
+                  <Td colSpan={7}><Skeleton height={34} /></Td>
+                </Tr>
+              ))
+            ) : filteredProducts.length === 0 ? (
+              <Tr>
+                <Td colSpan={7}>
+                  <EmptyState
+                    icon={<Package size={28} />}
+                    title={products.length === 0 ? 'No products yet' : 'No products match your search'}
+                    description={products.length === 0 ? 'Add your first product to get started.' : undefined}
+                  />
+                </Td>
+              </Tr>
+            ) : (
+              filteredProducts.map(p => (
+                <Tr key={p.id} onClick={() => navigate(`/products/${p.id}`)} style={{ cursor: 'pointer' }}>
+                  <Td>
+                    {p.image_url ? (
+                      <img src={p.image_url} alt={p.name} style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />
+                    ) : (
+                      <div style={{ width: 34, height: 34, backgroundColor: 'var(--layer-0)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🛒</div>
+                    )}
+                  </Td>
+                  <Td style={{ maxWidth: 180 }}>
+                    <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                  </Td>
+                  <Td>
+                    <span style={{ padding: '2px 7px', borderRadius: 'var(--radius-full)', background: 'var(--accent-tint)', color: 'var(--accent)', fontSize: '0.72rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      {p.categories?.name || 'Uncategorized'}
+                    </span>
+                  </Td>
+                  <Td style={{ maxWidth: 160 }}>
+                    {p.variants && p.variants.length > 0 ? (
+                      <ul style={{ margin: 0, paddingLeft: '1rem' }}>
+                        {p.variants.map((v, idx) => (
+                          <li key={idx} style={{ fontSize: '0.72rem', whiteSpace: 'nowrap' }}>{v.name} — ₹{v.price_adjustment.toFixed(2)} ({v.stock_quantity})</li>
+                        ))}
+                      </ul>
+                    ) : '—'}
+                  </Td>
+                  <Td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>₹{p.price.toFixed(2)}</Td>
+                  {(() => {
+                    const available = p.stock_quantity ?? 0;
+                    const sold = soldQuantities[p.id!] ?? 0;
+                    const total = available + sold;
+                    return (
+                      <Td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontWeight: 600 }}>{available} / {total}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{sold} sold</div>
+                      </Td>
+                    );
+                  })()}
+                  <Td>
+                    <span style={{
+                      color: p.in_stock ? 'var(--success)' : 'var(--danger)',
+                      backgroundColor: p.in_stock ? 'var(--success-tint)' : 'var(--danger-tint)',
+                      padding: '4px 10px', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700,
+                    }}>
+                      {p.in_stock ? 'In Stock' : 'Out of Stock'}
+                    </span>
+                  </Td>
+                </Tr>
+              ))
+            )}
+          </Tbody>
+        </Table>
+      </Card>
     </div>
   );
 }

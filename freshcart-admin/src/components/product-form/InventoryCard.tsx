@@ -1,11 +1,14 @@
-import type { ProductFormData } from './types';
+import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import type { Product } from '@freshcart/types';
 
 interface InventoryCardProps {
-  formData: ProductFormData;
-  onChange: (patch: Partial<ProductFormData>) => void;
+  register: UseFormRegister<Product>;
+  errors: FieldErrors<Product>;
 }
 
-export default function InventoryCard({ formData, onChange }: InventoryCardProps) {
+const asNumber = (v: string) => (v === '' ? undefined : Number(v));
+
+export default function InventoryCard({ register, errors }: InventoryCardProps) {
   return (
     <div className="pf-card">
       <h3 className="pf-card-title">Inventory</h3>
@@ -20,9 +23,9 @@ export default function InventoryCard({ formData, onChange }: InventoryCardProps
             step="1"
             className="pf-input"
             placeholder="0"
-            value={formData.stockQuantity}
-            onChange={e => onChange({ stockQuantity: e.target.value })}
+            {...register('stock_quantity', { setValueAs: asNumber })}
           />
+          {errors.stock_quantity && <p className="pf-error">{errors.stock_quantity.message}</p>}
         </div>
         <div className="pf-field" style={{ marginBottom: 0 }}>
           <label className="pf-label" htmlFor="pf-low-stock">Low Stock Alert At</label>
@@ -33,9 +36,9 @@ export default function InventoryCard({ formData, onChange }: InventoryCardProps
             step="1"
             className="pf-input"
             placeholder="e.g. 10"
-            value={formData.lowStockThreshold}
-            onChange={e => onChange({ lowStockThreshold: e.target.value })}
+            {...register('low_stock_threshold', { setValueAs: asNumber })}
           />
+          {errors.low_stock_threshold && <p className="pf-error">{errors.low_stock_threshold.message}</p>}
         </div>
       </div>
     </div>

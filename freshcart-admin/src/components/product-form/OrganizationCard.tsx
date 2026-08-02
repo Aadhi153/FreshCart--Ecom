@@ -1,14 +1,16 @@
-import type { Category } from '@freshcart/types';
-import type { ProductFormData } from './types';
+import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import type { Category, Product } from '@freshcart/types';
 import { UNIT_OPTIONS } from './types';
 
 interface OrganizationCardProps {
-  formData: ProductFormData;
+  register: UseFormRegister<Product>;
+  errors: FieldErrors<Product>;
   categories: Category[];
-  onChange: (patch: Partial<ProductFormData>) => void;
 }
 
-export default function OrganizationCard({ formData, categories, onChange }: OrganizationCardProps) {
+const emptyToUndefined = (v: string) => (v === '' ? undefined : v);
+
+export default function OrganizationCard({ register, errors, categories }: OrganizationCardProps) {
   return (
     <div className="pf-card">
       <h3 className="pf-card-title">Organization</h3>
@@ -18,14 +20,14 @@ export default function OrganizationCard({ formData, categories, onChange }: Org
         <select
           id="pf-category"
           className="pf-select"
-          value={formData.categoryId}
-          onChange={e => onChange({ categoryId: e.target.value })}
+          {...register('category_id', { setValueAs: emptyToUndefined })}
         >
           <option value="">Select a category</option>
           {categories.map(c => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
+        {errors.category_id && <p className="pf-error">{errors.category_id.message}</p>}
       </div>
 
       <div className="pf-field" style={{ marginBottom: 0 }}>
@@ -33,8 +35,7 @@ export default function OrganizationCard({ formData, categories, onChange }: Org
         <select
           id="pf-unit"
           className="pf-select"
-          value={formData.unit}
-          onChange={e => onChange({ unit: e.target.value })}
+          {...register('unit', { setValueAs: emptyToUndefined })}
         >
           <option value="">Select a unit</option>
           {UNIT_OPTIONS.map(u => (

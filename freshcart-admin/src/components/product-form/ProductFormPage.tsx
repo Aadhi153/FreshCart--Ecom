@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from 'lucide-react';
 import type { Category, Product } from '@freshcart/types';
-import { createProduct, getCategories } from '../../lib/api';
+import { ProductSchema } from '@freshcart/types';
+import { getCategories } from '../../lib/api';
+import { useCreateProduct } from '../../lib/queries/products';
 import { useToast } from '../ToastProvider';
 import BasicInfoCard from './BasicInfoCard';
 import PricingCard from './PricingCard';
@@ -10,8 +14,6 @@ import InventoryCard from './InventoryCard';
 import ImageUploadCard from './ImageUploadCard';
 import OrganizationCard from './OrganizationCard';
 import StatusCard from './StatusCard';
-import { EMPTY_PRODUCT_FORM } from './types';
-import type { ProductFormData } from './types';
 
 type SaveStatus = 'draft' | 'published';
 
@@ -19,51 +21,54 @@ export default function ProductFormPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [formData, setFormData] = useState<ProductFormData>(EMPTY_PRODUCT_FORM);
   const [saving, setSaving] = useState<SaveStatus | null>(null);
+  const createProductMutation = useCreateProduct();
 
   useEffect(() => {
     getCategories().then(setCategories).catch(err => console.error('Error fetching categories:', err));
   }, []);
 
-  const patch = (fields: Partial<ProductFormData>) => setFormData(prev => ({ ...prev, ...fields }));
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isValid },
+  } = useForm<Product>({
+    resolver: zodResolver(ProductSchema),
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      description: '',
+      price: undefined,
+      compare_at_price: undefined,
+      stock_quantity: undefined,
+      low_stock_threshold: undefined,
+      category_id: undefined,
+      unit: undefined,
+      image_url: '',
+      is_active: true,
+      status: 'published',
+    },
+  });
 
-  const canPublish = useMemo(() => {
-    return (
-      formData.name.trim() !== '' &&
-      formData.price.trim() !== '' &&
-      Number(formData.price) >= 0 &&
-      formData.stockQuantity.trim() !== '' &&
-      Number(formData.stockQuantity) >= 0 &&
-      formData.categoryId !== ''
-    );
-  }, [formData]);
+  // "Publish requires a category" is admin-form business logic conditional on
+  // which submit button was clicked -- not a rule ProductSchema itself should
+  // carry, since category_id is legitimately optional for other consumers.
+  const category = watch('category_id');
+  const publishDisabled = !isValid || !category || saving !== null;
 
-  async function handleSave(status: SaveStatus) {
-    if (!formData.name.trim()) {
-      showToast('Product name is required.', 'error');
-      return;
-    }
-    if (status === 'published' && !canPublish) return;
-
+  async function onSubmit(data: Product, status: SaveStatus) {
     setSaving(status);
     try {
-      const stockQuantity = formData.stockQuantity === '' ? 0 : Number(formData.stockQuantity);
+      const stockQuantity = data.stock_quantity ?? 0;
       const payload: Partial<Product> = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        price: formData.price === '' ? 0 : Number(formData.price),
-        compare_at_price: formData.compareAtPrice === '' ? null : Number(formData.compareAtPrice),
+        ...data,
         stock_quantity: stockQuantity,
-        low_stock_threshold: formData.lowStockThreshold === '' ? null : Number(formData.lowStockThreshold),
-        category_id: formData.categoryId || null,
-        unit: formData.unit || null,
-        image_url: formData.imageUrl || undefined,
         in_stock: stockQuantity > 0,
-        is_active: formData.isVisible,
         status,
       };
-      await createProduct(payload);
+      await createProductMutation.mutateAsync(payload);
       showToast(status === 'draft' ? 'Product saved as draft' : 'Product published', 'success');
       navigate('/products');
     } catch (error) {
@@ -87,15 +92,15 @@ export default function ProductFormPage() {
               type="button"
               className="btn-secondary"
               disabled={saving !== null}
-              onClick={() => handleSave('draft')}
+              onClick={handleSubmit(data => onSubmit(data, 'draft'))}
             >
               {saving === 'draft' ? 'Saving…' : 'Save as Draft'}
             </button>
             <button
               type="button"
               className="btn-primary pf-btn-publish"
-              disabled={!canPublish || saving !== null}
-              onClick={() => handleSave('published')}
+              disabled={publishDisabled}
+              onClick={handleSubmit(data => onSubmit(data, 'published'))}
             >
               {saving === 'published' ? 'Publishing…' : 'Publish Product'}
             </button>
@@ -106,14 +111,14 @@ export default function ProductFormPage() {
       <div className="pf-body">
         <div className="pf-grid">
           <div className="pf-col pf-col-main">
-            <BasicInfoCard formData={formData} onChange={patch} />
-            <PricingCard formData={formData} onChange={patch} />
-            <InventoryCard formData={formData} onChange={patch} />
+            <BasicInfoCard register={register} errors={errors} />
+            <PricingCard register={register} errors={errors} />
+            <InventoryCard register={register} errors={errors} />
           </div>
           <div className="pf-col pf-col-side">
-            <ImageUploadCard imageUrl={formData.imageUrl} onChange={url => patch({ imageUrl: url })} />
-            <OrganizationCard formData={formData} categories={categories} onChange={patch} />
-            <StatusCard isVisible={formData.isVisible} onChange={isVisible => patch({ isVisible })} />
+            <ImageUploadCard imageUrl={watch('image_url') || ''} onChange={url => setValue('image_url', url, { shouldValidate: true, shouldDirty: true })} />
+            <OrganizationCard register={register} errors={errors} categories={categories} />
+            <StatusCard isVisible={watch('is_active') ?? true} onChange={isVisible => setValue('is_active', isVisible, { shouldDirty: true })} />
           </div>
         </div>
       </div>
