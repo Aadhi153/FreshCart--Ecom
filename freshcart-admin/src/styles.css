@@ -3,6 +3,7 @@
    Uses tokens from @freshcart/ui/tokens.css
 ══════════════════════════════════════════════════ */
 @import '@freshcart/ui/tokens.css';
+@import '@freshcart/ui/components.css';
 
 /* ── Body & Root ── */
 body {
@@ -1016,6 +1017,12 @@ body {
   font-size: 12px;
   color: var(--text-secondary);
   margin-bottom: 5px;
+}
+
+.pf-error {
+  font-size: 12px;
+  color: var(--danger);
+  margin: 5px 0 0;
 }
 
 .pf-input,

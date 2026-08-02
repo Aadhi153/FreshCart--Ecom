@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
+import { queryClient } from './lib/queryClient';
 import './styles.css';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
@@ -115,31 +117,33 @@ function StandardPage() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <Router>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<AdminShell />}>
-                <Route element={<StandardPage />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="products" element={<Products />} />
-                  <Route path="products/:id" element={<ProductDetail />} />
-                  <Route path="orders" element={<Orders />} />
-                  <Route path="customers" element={<Customers />} />
-                  <Route path="promotions" element={<Promotions />} />
-                  <Route path="reviews" element={<Reviews />} />
-                  <Route path="settings" element={<Settings />} />
-                  <Route path="*" element={<div style={{ padding: '2rem', color: 'var(--text-primary)' }}>Admin page not found – check your routes.</div>} />
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <Router>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/" element={<AdminShell />}>
+                  <Route element={<StandardPage />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="products" element={<Products />} />
+                    <Route path="products/:id" element={<ProductDetail />} />
+                    <Route path="orders" element={<Orders />} />
+                    <Route path="customers" element={<Customers />} />
+                    <Route path="promotions" element={<Promotions />} />
+                    <Route path="reviews" element={<Reviews />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="*" element={<div style={{ padding: '2rem', color: 'var(--text-primary)' }}>Admin page not found – check your routes.</div>} />
+                  </Route>
+                  <Route path="products/new" element={<ProductNew />} />
+                  <Route path="promotions/new" element={<PromotionNew />} />
                 </Route>
-                <Route path="products/new" element={<ProductNew />} />
-                <Route path="promotions/new" element={<PromotionNew />} />
-              </Route>
-            </Routes>
-          </Router>
-        </AuthProvider>
-      </ThemeProvider>
-    </ToastProvider>
+              </Routes>
+            </Router>
+          </AuthProvider>
+        </ThemeProvider>
+      </ToastProvider>
+    </QueryClientProvider>
   );
 }

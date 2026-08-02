@@ -1,11 +1,12 @@
-import type { ProductFormData } from './types';
+import type { FieldErrors, UseFormRegister } from 'react-hook-form';
+import type { Product } from '@freshcart/types';
 
 interface BasicInfoCardProps {
-  formData: ProductFormData;
-  onChange: (patch: Partial<ProductFormData>) => void;
+  register: UseFormRegister<Product>;
+  errors: FieldErrors<Product>;
 }
 
-export default function BasicInfoCard({ formData, onChange }: BasicInfoCardProps) {
+export default function BasicInfoCard({ register, errors }: BasicInfoCardProps) {
   return (
     <div className="pf-card">
       <h3 className="pf-card-title">Basic Information</h3>
@@ -17,9 +18,9 @@ export default function BasicInfoCard({ formData, onChange }: BasicInfoCardProps
           type="text"
           className="pf-input"
           placeholder="e.g. Organic Carrots"
-          value={formData.name}
-          onChange={e => onChange({ name: e.target.value })}
+          {...register('name')}
         />
+        {errors.name && <p className="pf-error">{errors.name.message}</p>}
       </div>
 
       <div className="pf-field" style={{ marginBottom: 0 }}>
@@ -29,8 +30,7 @@ export default function BasicInfoCard({ formData, onChange }: BasicInfoCardProps
           className="pf-textarea"
           placeholder="Short product description"
           rows={3}
-          value={formData.description}
-          onChange={e => onChange({ description: e.target.value })}
+          {...register('description')}
         />
       </div>
     </div>

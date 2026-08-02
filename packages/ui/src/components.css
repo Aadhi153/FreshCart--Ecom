@@ -1,0 +1,165 @@
+/* ═══════════════════════════════════════════════════════════════
+   @freshcart/ui — shared component styles
+   Built entirely from tokens.css custom properties so these render
+   correctly wherever tokens.css is loaded (admin or web), without
+   depending on any app-local class names.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Button ── */
+.fc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.fc-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fc-btn--sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+.fc-btn--md { padding: 0.55rem 1.1rem; font-size: 0.88rem; }
+
+.fc-btn--primary {
+  background: var(--gradient-primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+.fc-btn--primary:hover:not(:disabled) {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.fc-btn--secondary {
+  background: var(--layer-1);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+.fc-btn--secondary:hover:not(:disabled) {
+  background: var(--layer-2);
+}
+
+.fc-btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.fc-btn--ghost:hover:not(:disabled) {
+  background: var(--layer-1);
+  color: var(--text-primary);
+}
+
+.fc-btn--danger {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+.fc-btn--danger:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* ── Card ── */
+.fc-card {
+  background-color: var(--layer-1);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.fc-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── EmptyState ── */
+.fc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-secondary);
+}
+
+.fc-empty-state-icon {
+  color: var(--text-secondary);
+  opacity: 0.6;
+  margin-bottom: 0.75rem;
+}
+
+.fc-empty-state-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.fc-empty-state-description {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+}
+
+.fc-empty-state-action {
+  margin-top: 1rem;
+}
+
+/* ── Skeleton ── */
+.fc-skeleton {
+  background: var(--layer-2);
+  border-radius: var(--radius-sm);
+  animation: fc-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes fc-skeleton-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ── Table ── */
+.fc-table-container {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+}
+
+.fc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+}
+
+.fc-th {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.fc-td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-subtle, var(--border-color));
+  transition: background-color var(--transition-base), transform var(--transition-base);
+}
+
+.fc-tr:last-child .fc-td {
+  border-bottom: none;
+}
+
+.fc-tr:hover .fc-td {
+  background-color: var(--primary-light);
+  transform: translateX(3px);
+}
