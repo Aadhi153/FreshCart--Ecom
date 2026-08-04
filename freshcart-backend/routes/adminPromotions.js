@@ -56,6 +56,72 @@ router.get('/', requireAdmin, async (_req, res) => {
   }
 });
 
+// GET /api/admin/promotions/:id — single promotion, for the edit page
+router.get('/:id', requireAdmin, async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('promotions')
+      .select('*')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Promotion not found' });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/promotions/:id/performance — redemptions/discount/revenue for one
+// promotion, joined from promotion_redemptions + orders (no new tracking tables).
+// Aggregation is done in JS rather than SQL, same convention as routes/analytics.js,
+// which also excludes cancelled orders from revenue figures.
+router.get('/:id/performance', requireAdmin, async (req, res) => {
+  try {
+    const { data: promotion, error: promoErr } = await supabaseAdmin
+      .from('promotions')
+      .select('*')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (promoErr) throw promoErr;
+    if (!promotion) return res.status(404).json({ error: 'Promotion not found' });
+
+    const { data: redemptionRows, error: redErr } = await supabaseAdmin
+      .from('promotion_redemptions')
+      .select('id, user_id, order_id, discount_amount_applied, redeemed_at, orders(total_amount, status), profiles(full_name, email)')
+      .eq('promotion_id', req.params.id)
+      .order('redeemed_at', { ascending: false });
+    if (redErr) throw redErr;
+
+    const rows = redemptionRows || [];
+    const nonCancelled = rows.filter((r) => r.orders && r.orders.status !== 'cancelled');
+    const totalDiscountGiven = rows.reduce((sum, r) => sum + parseFloat(r.discount_amount_applied || 0), 0);
+    const revenueFromOrders = nonCancelled.reduce((sum, r) => sum + parseFloat(r.orders.total_amount || 0), 0);
+
+    res.json({
+      promotion,
+      kpis: {
+        totalRedemptions: rows.length,
+        totalDiscountGiven,
+        revenueFromOrders,
+        uniqueCustomers: new Set(rows.map((r) => r.user_id).filter(Boolean)).size,
+        averageOrderValue: nonCancelled.length > 0 ? revenueFromOrders / nonCancelled.length : 0,
+      },
+      redemptions: rows.map((r) => ({
+        id: r.id,
+        order_id: r.order_id,
+        customer_name: r.profiles?.full_name || r.profiles?.email || 'Unknown',
+        discount_amount_applied: r.discount_amount_applied,
+        order_total: r.orders?.total_amount ?? null,
+        order_status: r.orders?.status ?? null,
+        redeemed_at: r.redeemed_at,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // PATCH /api/admin/promotions/:id — edit or toggle is_active
 router.patch('/:id', requireAdmin, async (req, res) => {
   try {

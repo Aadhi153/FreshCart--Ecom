@@ -55,6 +55,33 @@ export default function BasicInfoCard({ formData, onChange }: BasicInfoCardProps
           />
         </div>
       )}
+
+      <div className="pf-field" style={{ marginTop: '12px' }}>
+        <label className="pf-label" htmlFor="promo-description">Customer-Facing Description</label>
+        <textarea
+          id="promo-description"
+          className="pf-input"
+          rows={2}
+          placeholder='Shown on the /offers page and homepage banner, e.g. "10% off all dairy this weekend."'
+          value={formData.description}
+          onChange={e => onChange({ description: e.target.value })}
+        />
+      </div>
+
+      {formData.requires_code && (
+        <div className="pf-field" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', marginBottom: 0 }}>
+          <input
+            type="checkbox"
+            id="promo-is-public"
+            className="promo-checkbox"
+            checked={formData.is_public}
+            onChange={e => onChange({ is_public: e.target.checked })}
+          />
+          <label htmlFor="promo-is-public" style={{ margin: 0, cursor: 'pointer' }}>
+            List on /offers &amp; homepage (auto-offers are always listed)
+          </label>
+        </div>
+      )}
     </div>
   );
 }

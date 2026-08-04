@@ -13,6 +13,7 @@ import Orders from './pages/Orders';
 import Customers from './pages/Customers';
 import Promotions from './pages/Promotions';
 import PromotionNew from './pages/PromotionNew';
+import PromotionEdit from './pages/PromotionEdit';
 import Reviews from './pages/Reviews';
 import Settings from './pages/Settings';
 import Auth from './pages/Auth';
@@ -138,6 +139,7 @@ export default function App() {
                   </Route>
                   <Route path="products/new" element={<ProductNew />} />
                   <Route path="promotions/new" element={<PromotionNew />} />
+                  <Route path="promotions/:id/edit" element={<PromotionEdit />} />
                 </Route>
               </Routes>
             </Router>
