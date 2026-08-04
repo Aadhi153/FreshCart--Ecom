@@ -4,7 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import ProductFormModal from '../components/ProductFormModal';
 import { getProduct, getCategories, getProductSoldQuantities, deleteProduct } from '../lib/api';
 import type { Product, Category } from '@freshcart/types';
-import { ArrowLeft, Edit2, Trash2, Package, Layers, IndianRupee, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Package, Layers, ShoppingBag } from 'lucide-react';
 import { useToast } from '../components/ToastProvider';
 
 function StatTile({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {

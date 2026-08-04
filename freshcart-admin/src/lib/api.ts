@@ -142,6 +142,15 @@ export async function getPromotions(): Promise<Promotion[]> {
   return res.json();
 }
 
+export async function getPromotion(id: string): Promise<Promotion> {
+  const res = await fetch(`${API_URL}/api/admin/promotions/${id}`, { headers: await authHeaders() });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch promotion');
+  }
+  return res.json();
+}
+
 export async function createPromotion(promotion: Partial<Promotion>): Promise<Promotion> {
   const res = await fetch(`${API_URL}/api/admin/promotions`, {
     method: 'POST',
@@ -168,6 +177,35 @@ export async function updatePromotion(id: string, updates: Partial<Promotion>): 
   return res.json();
 }
 
+export interface PromotionPerformance {
+  promotion: Promotion;
+  kpis: {
+    totalRedemptions: number;
+    totalDiscountGiven: number;
+    revenueFromOrders: number;
+    uniqueCustomers: number;
+    averageOrderValue: number;
+  };
+  redemptions: Array<{
+    id: string;
+    order_id: string | null;
+    customer_name: string;
+    discount_amount_applied: number;
+    order_total: number | null;
+    order_status: string | null;
+    redeemed_at: string;
+  }>;
+}
+
+export async function getPromotionPerformance(id: string): Promise<PromotionPerformance> {
+  const res = await fetch(`${API_URL}/api/admin/promotions/${id}/performance`, { headers: await authHeaders() });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch promotion performance');
+  }
+  return res.json();
+}
+
 export async function deletePromotion(id: string): Promise<void> {
   const res = await fetch(`${API_URL}/api/admin/promotions/${id}`, {
     method: 'DELETE',
@@ -176,6 +214,22 @@ export async function deletePromotion(id: string): Promise<void> {
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.error || 'Failed to delete promotion');
+  }
+}
+
+// ── Customers ─────────────────────────────────────────────────────────────────
+// Toggling is_vip goes through the backend (service-role) rather than a direct
+// Supabase update — there's no RLS policy letting an admin update another user's
+// profiles row directly, only "update your own profile".
+export async function updateCustomerVip(id: string, is_vip: boolean): Promise<void> {
+  const res = await fetch(`${API_URL}/api/customers/${id}/vip`, {
+    method: 'PATCH',
+    headers: await authHeaders(),
+    body: JSON.stringify({ is_vip }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to update VIP status');
   }
 }
 

@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PromotionFormModal from '../components/PromotionFormModal';
 import { getPromotions, updatePromotion, deletePromotion } from '../lib/api';
 import type { Promotion } from '@freshcart/types';
-import { Edit2, Trash2, Plus, RefreshCw, Search, Tag } from 'lucide-react';
+import { Edit2, Trash2, Plus, RefreshCw, Search, Tag, BarChart3 } from 'lucide-react';
 import { useToast } from '../components/ToastProvider';
+import PromotionPerformanceModal from '../components/PromotionPerformanceModal';
 
 export default function Promotions() {
   const navigate = useNavigate();
@@ -12,8 +12,7 @@ export default function Promotions() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
+  const [performanceId, setPerformanceId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPromotions();
@@ -30,13 +29,6 @@ export default function Promotions() {
       setLoading(false);
     }
   }
-
-  const handleOpenEditModal = (promotion: Promotion) => {
-    setEditingPromotion(promotion);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => { setIsModalOpen(false); setEditingPromotion(null); };
 
   const handleToggleActive = async (promotion: Promotion) => {
     try {
@@ -69,11 +61,15 @@ export default function Promotions() {
   const isExpired = (p: Promotion) => !!p.valid_until && new Date(p.valid_until) < new Date();
 
   const discountLabel = (p: Promotion) => {
+    if (p.tiers && p.tiers.length > 0) return 'Tiered';
     if (p.discount_type === 'flat') return `₹${p.discount_value.toFixed(2)} off`;
     if (p.discount_type === 'percentage') {
       return `${p.discount_value}% off${p.max_discount_amount != null ? ` (cap ₹${p.max_discount_amount.toFixed(2)})` : ''}`;
     }
-    return 'BOGO';
+    if (p.discount_type === 'bogo') return 'BOGO';
+    if (p.discount_type === 'free_shipping') return 'Free Shipping';
+    if (p.discount_type === 'gift_with_purchase') return 'Free Gift';
+    return p.discount_type;
   };
 
   return (
@@ -168,7 +164,10 @@ export default function Promotions() {
                       {p.valid_from ? new Date(p.valid_from).toLocaleDateString() : '—'} – {p.valid_until ? new Date(p.valid_until).toLocaleDateString() : 'Never'}
                     </td>
                     <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <button onClick={() => handleOpenEditModal(p)} style={{ padding: '0.4rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                      <button onClick={() => setPerformanceId(p.id!)} title="View performance" style={{ padding: '0.4rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                        <BarChart3 size={16} />
+                      </button>
+                      <button onClick={() => navigate(`/promotions/${p.id}/edit`)} style={{ padding: '0.4rem', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                         <Edit2 size={16} />
                       </button>
                       <button onClick={() => handleDelete(p.id!)} style={{ padding: '0.4rem', background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>
@@ -183,12 +182,7 @@ export default function Promotions() {
         </div>
       </div>
 
-      <PromotionFormModal
-        isOpen={isModalOpen}
-        editingPromotion={editingPromotion}
-        onClose={handleCloseModal}
-        onSaved={async () => { await fetchPromotions(); handleCloseModal(); }}
-      />
+      <PromotionPerformanceModal promotionId={performanceId} onClose={() => setPerformanceId(null)} />
     </div>
   );
 }

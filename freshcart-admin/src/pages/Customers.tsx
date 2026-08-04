@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
-import { RefreshCw, Search, Eye, Download } from 'lucide-react';
+import { RefreshCw, Search, Eye, Download, Star } from 'lucide-react';
 import Modal from '../components/Modal';
 import { statusColors } from '../lib/orderStatus';
 import { useToast } from '../components/ToastProvider';
 import { exportToCsv } from '../lib/csv';
+import { updateCustomerVip } from '../lib/api';
 
 export default function Customers() {
   const { showToast } = useToast();
@@ -66,6 +67,18 @@ export default function Customers() {
       admins: customers.filter(c => c.role === 'admin').length,
     };
   }, [customers]);
+
+  const handleToggleVip = async (customer: any) => {
+    const next = !customer.is_vip;
+    setCustomers(prev => prev.map(c => (c.id === customer.id ? { ...c, is_vip: next } : c)));
+    try {
+      await updateCustomerVip(customer.id, next);
+    } catch (err) {
+      console.error('Error updating VIP status:', err);
+      showToast('Failed to update VIP status', 'error');
+      setCustomers(prev => prev.map(c => (c.id === customer.id ? { ...c, is_vip: !next } : c)));
+    }
+  };
 
   const avatarColor = (name: string) => {
     const colors = ['#4ADE80', '#38BDF8', '#FB923C', '#A78BFA', '#F472B6', '#FBBF24'];
@@ -140,15 +153,16 @@ export default function Customers() {
                 <th>Phone</th>
                 <th>Role</th>
                 <th style={{ textAlign: 'center' }}>Orders</th>
+                <th style={{ textAlign: 'center' }}>VIP</th>
                 <th>Joined</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2rem' }}>Loading customers...</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: 'center', padding: '2rem' }}>Loading customers...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                <tr><td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
                   {search ? 'No customers match your search.' : 'No customers yet.'}
                 </td></tr>
               ) : (
@@ -184,6 +198,18 @@ export default function Customers() {
                         </span>
                       </td>
                       <td style={{ textAlign: 'center' }}>{(ordersByUser[c.id] || []).length}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleToggleVip(c)}
+                          title={c.is_vip ? 'Remove VIP status' : 'Mark as VIP'}
+                          style={{
+                            padding: '4px', background: 'transparent', border: 'none', cursor: 'pointer',
+                            color: c.is_vip ? '#FBBF24' : 'var(--text-secondary)',
+                          }}
+                        >
+                          <Star size={17} fill={c.is_vip ? '#FBBF24' : 'none'} />
+                        </button>
+                      </td>
                       <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                         {new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>

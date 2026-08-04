@@ -22,6 +22,25 @@ async function requireAuth(req, res, next) {
 }
 
 /**
+ * Middleware: like requireAuth, but a missing/invalid token sets req.user = null and
+ * continues instead of 401ing. Used by routes that personalize their response for a
+ * logged-in shopper (e.g. filtering out promotions they don't qualify for) but must
+ * still serve logged-out/guest traffic.
+ */
+async function optionalAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    req.user = null;
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1];
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  req.user = error ? null : user;
+  next();
+}
+
+/**
  * Middleware: Verify user has admin role (stored in user metadata).
  */
 async function requireAdmin(req, res, next) {
@@ -39,4 +58,4 @@ async function requireAdmin(req, res, next) {
   });
 }
 
-module.exports = { requireAuth, requireAdmin };
+module.exports = { requireAuth, optionalAuth, requireAdmin };

@@ -64,4 +64,27 @@ router.patch('/:id/role', requireAdmin, async (req, res) => {
   }
 });
 
+// PATCH /api/customers/:id/vip — admin only. There's no RLS policy letting an admin
+// update another user's profiles row directly (only "update your own profile" exists),
+// so this goes through the backend's service-role client, same as /:id/role above.
+// This is the only way to ever set target_segment='vip' promotions.is_vip today — no
+// automatic criteria, purely an admin judgment call.
+router.patch('/:id/vip', requireAdmin, async (req, res) => {
+  try {
+    const { is_vip } = req.body;
+    if (typeof is_vip !== 'boolean') {
+      return res.status(400).json({ error: 'is_vip must be a boolean' });
+    }
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .update({ is_vip, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .select().single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 module.exports = router;

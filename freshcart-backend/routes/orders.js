@@ -2,11 +2,20 @@ const express = require('express');
 const router = express.Router();
 const { supabaseAdmin } = require('../supabaseClient');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
-const { PlaceOrderPayloadSchema, DELIVERY_SLOT_MAX_ORDERS_PER_WINDOW } = require('@freshcart/types');
+const { PlaceOrderPayloadSchema, DELIVERY_SLOT_MAX_ORDERS_PER_WINDOW, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } = require('@freshcart/types');
 const { sendOrderConfirmationEmail } = require('../lib/mailer');
 const { notifyOrderStatus } = require('../lib/notifications');
 const { isSlotBookable, buildSlotLabel } = require('../lib/deliverySlots');
-const { computeDiscountForCart, isWithinValidity, underUsageLimits } = require('../lib/promotions');
+const {
+  isWithinValidity,
+  underUsageLimits,
+  selectBestPromotion,
+  meetsMinimumOrder,
+  giftProductDetails,
+  getUserEligibilityContext,
+  meetsFirstOrderRequirement,
+  matchesTargetSegment,
+} = require('../lib/promotions');
 
 // GET /api/orders — admin sees all; user sees own
 router.get('/', requireAuth, async (req, res) => {
@@ -68,7 +77,19 @@ router.post('/', requireAuth, async (req, res) => {
     if (!validationResult.success) {
       return res.status(400).json({ error: 'Validation failed', details: validationResult.error.issues });
     }
-    const { items, delivery_address, delivery_slot, payment_method, coupon_code } = validationResult.data;
+    const { items, delivery_address, delivery_slot, payment_method, coupon_code, idempotency_key } = validationResult.data;
+
+    // A double-click or network retry resubmits the same idempotency_key — return
+    // the order already created for it instead of placing a second one.
+    if (idempotency_key) {
+      const { data: existing } = await supabaseAdmin
+        .from('orders')
+        .select('*, order_items(*, products(name, image_url))')
+        .eq('user_id', req.user.id)
+        .eq('idempotency_key', idempotency_key)
+        .maybeSingle();
+      if (existing) return res.status(200).json(existing);
+    }
 
     // Never trust client-supplied prices/totals — look up authoritative prices and stock.
     const productIds = [...new Set(items.map(item => item.product_id))];
@@ -119,8 +140,14 @@ router.post('/', requireAuth, async (req, res) => {
       price: item.price,
     }));
 
-    let appliedPromotion = null; // { id, name, amount }
+    // Fetched once and threaded through every candidate below — never re-queried per
+    // promotion (see getUserEligibilityContext's own comment for why).
+    const eligibilityContext = await getUserEligibilityContext(req.user.id);
 
+    // Gather eligible candidates (active, valid, min order met, under usage limits,
+    // matches first-order/segment targeting) — selectBestPromotion below decides which
+    // single one wins.
+    let eligibleCoupon = null;
     if (coupon_code) {
       const { data: coupon } = await supabaseAdmin
         .from('promotions')
@@ -129,10 +156,11 @@ router.post('/', requireAuth, async (req, res) => {
         .eq('requires_code', true)
         .eq('is_active', true)
         .maybeSingle();
-      if (coupon && isWithinValidity(coupon) && total_amount >= (coupon.min_order_value ?? 0)
+      if (coupon && isWithinValidity(coupon) && meetsMinimumOrder(coupon, total_amount)
+          && meetsFirstOrderRequirement(coupon, eligibilityContext)
+          && matchesTargetSegment(coupon, eligibilityContext)
           && await underUsageLimits(coupon, req.user.id)) {
-        const amount = computeDiscountForCart(coupon, cartItemsForPromo, total_amount);
-        if (amount > 0) appliedPromotion = { id: coupon.id, name: coupon.name, amount };
+        eligibleCoupon = coupon;
       }
     }
 
@@ -141,16 +169,71 @@ router.post('/', requireAuth, async (req, res) => {
       .select('*')
       .eq('requires_code', false)
       .eq('is_active', true);
+    const eligibleAutoOffers = [];
     for (const offer of (autoOffers || []).filter(o => isWithinValidity(o))) {
-      if (total_amount < (offer.min_order_value ?? 0)) continue;
+      if (!meetsMinimumOrder(offer, total_amount)) continue;
+      if (!meetsFirstOrderRequirement(offer, eligibilityContext)) continue;
+      if (!matchesTargetSegment(offer, eligibilityContext)) continue;
       if (!(await underUsageLimits(offer, req.user.id))) continue;
-      const amount = computeDiscountForCart(offer, cartItemsForPromo, total_amount);
-      if (amount > (appliedPromotion?.amount ?? 0)) appliedPromotion = { id: offer.id, name: offer.name, amount };
+      eligibleAutoOffers.push(offer);
     }
 
-    const discount_amount = appliedPromotion?.amount ?? 0;
+    // Attach gift_product onto any gift_with_purchase candidate before ranking —
+    // computeDiscountForCart (via selectBestPromotion) needs the gift's price to rank
+    // it fairly against a flat/percentage/bogo discount.
+    const giftCandidates = [eligibleCoupon, ...eligibleAutoOffers].filter(p => p?.discount_type === 'gift_with_purchase' && p.gift_product_id);
+    if (giftCandidates.length > 0) {
+      const { data: giftProducts, error: giftErr } = await supabaseAdmin
+        .from('products')
+        .select('id, name, price, stock_quantity')
+        .in('id', giftCandidates.map(p => p.gift_product_id));
+      if (giftErr) throw giftErr;
+      const giftProductsById = new Map((giftProducts || []).map(p => [p.id, p]));
+      for (const candidate of giftCandidates) candidate.gift_product = giftProductDetails(candidate, giftProductsById);
+    }
+
+    let appliedPromotion = selectBestPromotion({
+      coupon: eligibleCoupon,
+      autoOffers: eligibleAutoOffers,
+      cartItems: cartItemsForPromo,
+      cartSubtotal: total_amount,
+    }); // { id, name, amount, discount_type, gift_product } | null
+
+    // Atomically reserve the redemption *before* the total is finalized — this is
+    // the authoritative usage-limit check (underUsageLimits above is only an
+    // advisory pre-check). redeem_promotion() locks the promotion row and
+    // rejects if usage_limit_total/usage_limit_per_user is already met, so a
+    // losing racer never gets the discounted price in the first place. order_id
+    // is attached below once the order exists, and the reservation is released
+    // if the order is later cancelled for insufficient stock.
+    let redemptionId = null;
+    if (appliedPromotion) {
+      const { data: redeemedId, error: redeemErr } = await supabaseAdmin.rpc('redeem_promotion', {
+        p_promotion_id: appliedPromotion.id,
+        p_user_id: req.user.id,
+        p_discount_amount: appliedPromotion.amount,
+      });
+      if (redeemErr) throw redeemErr;
+      if (redeemedId) {
+        redemptionId = redeemedId;
+      } else {
+        // Usage limit was hit by a concurrent request between our advisory check
+        // and now — treat like an invalid coupon: proceed without the discount.
+        appliedPromotion = null;
+      }
+    }
+
+    // free_shipping never discounts items — it waives delivery_fee below instead, so
+    // it must never also land in discount_amount (that would double the customer's
+    // savings: once as a delivery waiver, once again as an item discount). Same logic
+    // for gift_with_purchase: the "discount" is a free product injected as its own
+    // order_item below, not a subtraction from the cart total.
+    const isFreeShipping = appliedPromotion?.discount_type === 'free_shipping';
+    const isGift = appliedPromotion?.discount_type === 'gift_with_purchase';
+    const discount_amount = (isFreeShipping || isGift) ? 0 : (appliedPromotion?.amount ?? 0);
     const appliedCouponCode = appliedPromotion?.name ?? null;
-    const finalTotal = total_amount - discount_amount;
+    const delivery_fee = (!isFreeShipping && total_amount > 0 && total_amount < FREE_DELIVERY_THRESHOLD) ? DELIVERY_FEE : 0;
+    const finalTotal = total_amount - discount_amount + delivery_fee;
 
     // 1️⃣ Create the order record
     const { data: order, error: oErr } = await supabaseAdmin
@@ -166,11 +249,35 @@ router.post('/', requireAuth, async (req, res) => {
         payment_method,
         coupon_code: appliedCouponCode,
         discount_amount,
+        delivery_fee,
         promotion_id: appliedPromotion?.id ?? null,
+        idempotency_key: idempotency_key ?? null,
       }])
       .select()
       .single();
-    if (oErr) throw oErr;
+    if (oErr) {
+      // Race-safety backstop for the idempotency check above: if two requests with
+      // the same key both passed the pre-check, the unique index rejects the second
+      // insert (23505) — return the order the first request created instead of erroring.
+      if (oErr.code === '23505' && idempotency_key) {
+        const { data: existing } = await supabaseAdmin
+          .from('orders')
+          .select('*, order_items(*, products(name, image_url))')
+          .eq('user_id', req.user.id)
+          .eq('idempotency_key', idempotency_key)
+          .maybeSingle();
+        if (existing) {
+          if (redemptionId) await supabaseAdmin.from('promotion_redemptions').delete().eq('id', redemptionId);
+          return res.status(200).json(existing);
+        }
+      }
+      throw oErr;
+    }
+
+    // Attach the now-known order_id to the redemption reserved above.
+    if (redemptionId) {
+      await supabaseAdmin.from('promotion_redemptions').update({ order_id: order.id }).eq('id', redemptionId);
+    }
 
     // 2️⃣ Insert each order item at its authoritative (server-computed) price
     const orderItems = pricedItems.map(item => ({
@@ -181,6 +288,39 @@ router.post('/', requireAuth, async (req, res) => {
     }));
     const { error: iErr } = await supabaseAdmin.from('order_items').insert(orderItems);
     if (iErr) throw iErr;
+
+    // If a gift_with_purchase promotion won, reserve the gift's stock the same
+    // compare-and-swap way paid items are below — but standalone, never part of the
+    // all-or-nothing loop that cancels the order. A failed reservation (out of stock)
+    // just means the shopper doesn't get the freebie this time, never a reason to
+    // cancel or fail the paid order. Stock IS decremented (not skipped) for a granted
+    // gift so inventory stays accurate — releaseReservedStock restocks it for free on
+    // cancellation since it already iterates every order_items row generically.
+    let giftGranted = null;
+    if (isGift && appliedPromotion.gift_product) {
+      const giftProduct = appliedPromotion.gift_product;
+      const newGiftQty = (giftProduct.stock_quantity ?? 0) - 1;
+      const giftReserved = newGiftQty >= 0 && await supabaseAdmin
+        .from('products')
+        .update({ stock_quantity: newGiftQty })
+        .eq('id', giftProduct.id)
+        .eq('stock_quantity', giftProduct.stock_quantity)
+        .select()
+        .single()
+        .then(({ data, error }) => !error && !!data);
+
+      if (giftReserved) {
+        const { error: giftItemErr } = await supabaseAdmin.from('order_items').insert([{
+          order_id: order.id,
+          product_id: giftProduct.id,
+          quantity: 1,
+          price_at_time: 0,
+          is_gift: true,
+        }]);
+        if (giftItemErr) throw giftItemErr;
+        giftGranted = giftProduct;
+      }
+    }
 
     // 3️⃣ Reserve stock (compare-and-swap so concurrent orders can't oversell). If any
     // item can't be reserved, cancel the order instead of leaving it pending with no stock held.
@@ -198,26 +338,12 @@ router.post('/', requireAuth, async (req, res) => {
 
       if (!reserved) {
         await supabaseAdmin.from('orders').update({ status: 'cancelled' }).eq('id', order.id);
+        // Release the promotion reservation too — a stock-cancelled order should
+        // never permanently consume a usage-limit slot.
+        if (redemptionId) {
+          await supabaseAdmin.from('promotion_redemptions').delete().eq('id', redemptionId);
+        }
         return res.status(409).json({ error: `Insufficient stock for product ${item.product_id}, order cancelled` });
-      }
-    }
-
-    // 3.5️⃣ Record the redemption now that the order is confirmed to hold stock — placed
-    // after stock reservation succeeds so an order cancelled for insufficient stock never
-    // counts against the promotion's usage limits. Best-effort: a failure here shouldn't
-    // fail an otherwise-successful order, but is logged since it means usage limits could
-    // under-count.
-    if (appliedPromotion) {
-      try {
-        const { error: redemptionErr } = await supabaseAdmin.from('promotion_redemptions').insert([{
-          promotion_id: appliedPromotion.id,
-          user_id: req.user.id,
-          order_id: order.id,
-          discount_amount_applied: appliedPromotion.amount,
-        }]);
-        if (redemptionErr) throw redemptionErr;
-      } catch (redemptionErr) {
-        console.error('Failed to record promotion redemption for order', order.id, redemptionErr);
       }
     }
 
@@ -227,6 +353,7 @@ router.post('/', requireAuth, async (req, res) => {
       quantity: item.quantity,
       price: item.price,
     }));
+    if (giftGranted) emailItems.push({ name: `${giftGranted.name} (free gift)`, quantity: 1, price: 0 });
     sendOrderConfirmationEmail(order, emailItems, req.user.email);
     notifyOrderStatus(order);
 
