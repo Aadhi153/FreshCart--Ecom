@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { PlaceOrderPayload, Order, ActivePromotion, PromotionValidationRequest, PromotionValidationResponse } from '@freshcart/types';
+import type { PlaceOrderPayload, Order, ActivePromotion, PromotionValidationRequest, PromotionValidationResponse, PublicOffer } from '@freshcart/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -63,6 +63,19 @@ export async function getActivePromotions(): Promise<ActivePromotion[]> {
 
 export const validateCoupon = (payload: PromotionValidationRequest): Promise<PromotionValidationResponse> =>
   authFetch('/api/coupons/validate', { method: 'POST', body: JSON.stringify(payload) });
+
+// No auth required — the /offers page and homepage banner are shown to logged-out
+// shoppers too. Swallows errors the same way getActivePromotions does: a marketing
+// surface failing to load shouldn't itself surface as an error to the shopper.
+export async function getPublicOffers(): Promise<PublicOffer[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/promotions/offers`);
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
 
 export async function getMyOrders(page = 1, limit = 10, status?: string): Promise<{ orders: Order[]; total: number }> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });

@@ -223,6 +223,7 @@ export function Navbar() {
           <nav className="desktop-nav" style={{ display: 'flex', gap: '1.5rem' }}>
             <Link href="/" className={`nav-link ${pathname === '/' ? 'nav-link-active' : ''}`}>Home</Link>
             <Link href="/shop" className={`nav-link ${pathname?.startsWith('/shop') ? 'nav-link-active' : ''}`}>Shop</Link>
+            <Link href="/offers" className={`nav-link ${pathname === '/offers' ? 'nav-link-active' : ''}`}>Offers</Link>
             <Link href="/about" className={`nav-link ${pathname === '/about' ? 'nav-link-active' : ''}`}>About</Link>
             <Link href="/contact" className={`nav-link ${pathname === '/contact' ? 'nav-link-active' : ''}`}>Contact Us</Link>
           </nav>
@@ -539,6 +540,7 @@ export function Navbar() {
         <nav className="mobile-nav-drawer" aria-label="Mobile navigation">
           <Link href="/" onClick={() => setMobileMenuOpen(false)}>Home</Link>
           <Link href="/shop" onClick={() => setMobileMenuOpen(false)}>Shop</Link>
+          <Link href="/offers" onClick={() => setMobileMenuOpen(false)}>Offers</Link>
           <Link href="/about" onClick={() => setMobileMenuOpen(false)}>About</Link>
           <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>Contact Us</Link>
         </nav>

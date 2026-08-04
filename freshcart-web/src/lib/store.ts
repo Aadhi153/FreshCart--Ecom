@@ -225,6 +225,9 @@ export interface AppliedPromotion {
   code: string | null;   // null for auto-applied offers
   discountAmount: number; // last server-confirmed amount, for display only
   source: 'coupon' | 'auto';
+  discountType: 'percentage' | 'flat' | 'bogo' | 'free_shipping' | 'gift_with_purchase';
+  discountValue: number;
+  freeItemName?: string; // the free item's name for bogo, or the gift's name for gift_with_purchase
 }
 
 interface PromotionState {

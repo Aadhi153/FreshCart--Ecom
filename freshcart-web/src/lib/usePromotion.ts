@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ActivePromotion } from '@freshcart/types';
 import { getActivePromotions, validateCoupon } from './api';
 import { usePromotionStore, type CartItem } from './store';
-import { bestAutoOffer } from './promotionMath';
+import { bestAutoOffer, findBogoFreeItem } from './promotionMath';
 
 // Shared by the cart sidebar, full cart page, and checkout page so all three read and
 // write the same applied-promotion state (fixes the bug where a coupon applied on one
@@ -32,7 +32,20 @@ export function usePromotion(items: CartItem[], subtotal: number) {
 
     const best = subtotal > 0 ? bestAutoOffer(activeOffers, items, subtotal) : null;
     if (best) {
-      const next = { id: best.promotion.id, name: best.promotion.name, code: null, discountAmount: best.amount, source: 'auto' as const };
+      const next = {
+        id: best.promotion.id,
+        name: best.promotion.name,
+        code: null,
+        discountAmount: best.amount,
+        source: 'auto' as const,
+        discountType: best.promotion.discount_type,
+        discountValue: best.promotion.discount_value,
+        freeItemName: best.promotion.discount_type === 'bogo'
+          ? findBogoFreeItem(best.promotion, items)?.name
+          : best.promotion.discount_type === 'gift_with_purchase'
+            ? best.promotion.gift_product?.name
+            : undefined,
+      };
       if (prevAutoRef.current !== `${next.id}:${next.discountAmount}`) {
         prevAutoRef.current = `${next.id}:${next.discountAmount}`;
         setApplied(next);
@@ -70,6 +83,9 @@ export function usePromotion(items: CartItem[], subtotal: number) {
         code: code.toUpperCase(),
         discountAmount: result.discount_amount,
         source: 'coupon',
+        discountType: result.discount_type ?? 'flat',
+        discountValue: result.discount_value ?? result.discount_amount,
+        freeItemName: result.free_item_name ?? result.gift_item_name,
       });
       setCouponInput('');
       return true;

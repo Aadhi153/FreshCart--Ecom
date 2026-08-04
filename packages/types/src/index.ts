@@ -22,15 +22,37 @@ export type Category = z.infer<typeof CategorySchema>;
 
 // ── Promotions ────────────────────────────────────────────────────────────────
 // A promotion is either a coupon (requires_code=true, shopper must type `code`) or an
-// auto-applied offer (requires_code=false, code is always null). Coupons are always
-// cart-wide (applicable_scope='cart'); offers can additionally be scoped to a category
-// or a specific set of products via applicable_ids.
+// auto-applied offer (requires_code=false, code is always null). Both can be scoped to
+// the whole cart, a category, or a specific set of products via applicable_ids/applicable_scope
+// — coupons are not restricted to cart-wide, despite requires_code implying "special".
+export const DiscountTypeSchema = z.enum(['percentage', 'flat', 'bogo', 'free_shipping', 'gift_with_purchase']);
+export type DiscountType = z.infer<typeof DiscountTypeSchema>;
+
+// One rung of a promotion's tiers ladder, e.g. "10% off ₹500+". When a promotion has a
+// non-empty tiers array, computeDiscountForCart uses only the highest tier whose
+// min_order_value the cart subtotal meets — the top-level discount_type/discount_value
+// are ignored. Tiers deliberately don't support bogo/free_shipping/gift_with_purchase.
+export const PromotionTierSchema = z.object({
+  min_order_value: z.number().min(0),
+  discount_type: z.enum(['flat', 'percentage']),
+  discount_value: z.number().min(0),
+});
+export type PromotionTier = z.infer<typeof PromotionTierSchema>;
+
+// Weekly recurrence only, matching the product's own example shape — the promotion is
+// only "within validity" on the matching weekday, checked live (no scheduler exists in
+// this repo; see isWithinValidity in freshcart-backend/lib/promotions.js).
+export const PromotionRecurrenceSchema = z.object({
+  day_of_week: z.number().int().min(0).max(6), // 0 = Sunday, matching Date#getDay()
+});
+export type PromotionRecurrence = z.infer<typeof PromotionRecurrenceSchema>;
+
 export const PromotionSchema = z.object({
   id: z.string().uuid().optional(),
   code: z.string().min(1, "Code is required").transform(v => v.toUpperCase()).optional().nullable(),
   name: z.string().min(1, "Name is required"),
   requires_code: z.boolean().default(true),
-  discount_type: z.enum(['percentage', 'flat', 'bogo']),
+  discount_type: DiscountTypeSchema,
   discount_value: z.number().min(0, "Discount value must be zero or positive"),
   min_order_value: z.number().min(0).optional().nullable(),
   max_discount_amount: z.number().positive().optional().nullable(),
@@ -41,6 +63,27 @@ export const PromotionSchema = z.object({
   valid_from: z.string().optional(),
   valid_until: z.string().optional().nullable(),
   is_active: z.boolean().default(true),
+  // Customer-facing copy for the /offers page and homepage banner, e.g. "10% off all
+  // dairy this weekend." Optional — /offers falls back to an auto-generated summary
+  // (discount + minimum spend) when it's blank.
+  description: z.string().optional().nullable(),
+  // Whether a coupon is listed on /offers and eligible for the homepage banner.
+  // Auto-offers (requires_code=false) are always listed regardless of this flag —
+  // they auto-apply with no code to keep secret, so there's nothing to gate. Coupons
+  // default to unlisted so a targeted/one-off code isn't accidentally broadcast to
+  // every shopper the moment it's created.
+  is_public: z.boolean().default(false),
+  // Eligible only for customers with zero prior non-cancelled orders — distinct from
+  // usage_limit_per_user, which counts redemptions of this specific promotion.
+  first_order_only: z.boolean().default(false),
+  // Which customers this promotion is offered to; see getUserEligibilityContext in
+  // freshcart-backend/lib/promotions.js for how each segment is resolved.
+  target_segment: z.enum(['all', 'vip', 'referral', 'inactive_30_days']).default('all'),
+  tiers: z.array(PromotionTierSchema).optional().nullable(),
+  recurrence: PromotionRecurrenceSchema.optional().nullable(),
+  // Required iff discount_type === 'gift_with_purchase'; the product auto-added to the
+  // order at price 0 (never a real, removable cart line — see usePromotion.ts).
+  gift_product_id: z.string().uuid().optional().nullable(),
   created_at: z.string().datetime().optional(),
   redemption_count: z.number().int().optional(), // admin list/detail responses only
 });
@@ -62,22 +105,59 @@ export const PromotionValidationResponseSchema = z.object({
   discount_amount: z.number().min(0).optional(),
   promotion_name: z.string().optional(),
   promotion_id: z.string().uuid().optional(),
+  discount_type: DiscountTypeSchema.optional(),
+  discount_value: z.number().optional(),
+  free_item_name: z.string().optional(),
+  gift_item_name: z.string().optional(),
   error_message: z.string().optional(),
 });
 export type PromotionValidationResponse = z.infer<typeof PromotionValidationResponseSchema>;
 
+// The product a gift_with_purchase promotion gives away — denormalized onto
+// ActivePromotion/PublicOffer so the client can rank and display the offer (e.g. "Free
+// {name} with orders over ₹X") without a second round-trip per offer.
+const GiftProductSchema = z.object({ id: z.string().uuid(), name: z.string(), price: z.number() });
+
 export const ActivePromotionSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  discount_type: z.enum(['percentage', 'flat', 'bogo']),
+  discount_type: DiscountTypeSchema,
   discount_value: z.number(),
   min_order_value: z.number().nullable().optional(),
   max_discount_amount: z.number().nullable().optional(),
   applicable_scope: z.enum(['cart', 'category', 'product']),
   applicable_ids: z.array(z.string().uuid()).nullable().optional(),
   valid_until: z.string().nullable().optional(),
+  gift_product: GiftProductSchema.nullable().optional(),
+  tiers: z.array(PromotionTierSchema).nullable().optional(),
+  // Deliberately no first_order_only/target_segment/recurrence here — eligibility
+  // filtering for those happens server-side before the client ever sees this list
+  // (GET /api/promotions/active), so a segment-gated offer's targeting criteria never
+  // needs to leak into a payload the client also uses for display.
 });
 export type ActivePromotion = z.infer<typeof ActivePromotionSchema>;
+
+// Shape returned by GET /api/promotions/offers — the customer-browsable list (the
+// /offers page and the homepage banner), as opposed to ActivePromotion which only
+// covers auto-offers for the silent auto-apply engine. Includes coupon `code` (only
+// public coupons and all active auto-offers are ever returned by that endpoint, so
+// there's nothing sensitive about exposing it here).
+export const PublicOfferSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  code: z.string().nullable().optional(),
+  requires_code: z.boolean(),
+  discount_type: DiscountTypeSchema,
+  discount_value: z.number(),
+  min_order_value: z.number().nullable().optional(),
+  max_discount_amount: z.number().nullable().optional(),
+  applicable_scope: z.enum(['cart', 'category', 'product']),
+  valid_until: z.string().nullable().optional(),
+  gift_product: GiftProductSchema.nullable().optional(),
+  tiers: z.array(PromotionTierSchema).nullable().optional(),
+});
+export type PublicOffer = z.infer<typeof PublicOfferSchema>;
 
 export const ReviewSchema = z.object({
   id: z.string().uuid().optional(),
@@ -123,6 +203,10 @@ export const OrderItemSchema = z.object({
   price_at_time: z.number().min(0),
   name: z.string().optional(), // Used in web store
   price: z.number().optional(), // Used in web store
+  // True for a gift-with-purchase freebie (price_at_time 0) — kept explicit rather than
+  // inferred from price, since a flat/percentage discount can also legitimately zero out
+  // a cheap item via rounding.
+  is_gift: z.boolean().optional(),
 });
 export type OrderItem = z.infer<typeof OrderItemSchema>;
 
@@ -137,6 +221,7 @@ export const OrderSchema = z.object({
   coupon_code: z.string().nullable().optional(),
   discount_amount: z.number().min(0).optional(),
   promotion_id: z.string().uuid().nullable().optional(),
+  delivery_fee: z.number().min(0).optional(),
 
   // Frontend specific fields
   total: z.number().optional(),
@@ -165,6 +250,12 @@ export const DELIVERY_SLOT_DAYS_AHEAD = 3; // today + next 2 days
 export const DELIVERY_SLOT_BOOKING_BUFFER_MINUTES = 60; // can't book a window starting <60min from now
 export const DELIVERY_SLOT_MAX_ORDERS_PER_WINDOW = 20; // simple fixed capacity, no separate table
 
+// Shared between freshcart-web (cart/checkout display) and freshcart-backend (order
+// pricing) so the two can't silently drift out of sync — the same reason the delivery
+// slot constants above live here rather than being redefined per app.
+export const FREE_DELIVERY_THRESHOLD = 299;
+export const DELIVERY_FEE = 40;
+
 export const DeliverySlotSelectionSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date'),
   window: z.enum(DELIVERY_SLOT_WINDOW_IDS),
@@ -182,6 +273,7 @@ export const PlaceOrderPayloadSchema = z.object({
   delivery_slot: DeliverySlotSelectionSchema,
   payment_method: z.string().optional(),
   coupon_code: z.string().optional(),
+  idempotency_key: z.string().uuid().optional(),
 });
 export type PlaceOrderPayload = z.infer<typeof PlaceOrderPayloadSchema>;
 
@@ -194,6 +286,9 @@ export const ProfileSchema = z.object({
   phone_number: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
   role: z.string().optional(),
+  is_vip: z.boolean().optional(),
+  referral_code: z.string().optional().nullable(),
+  referred_by: z.string().uuid().optional().nullable(),
   created_at: z.string().datetime().optional(),
   updated_at: z.string().datetime().optional(),
 });
