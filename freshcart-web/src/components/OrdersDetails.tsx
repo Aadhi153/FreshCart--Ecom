@@ -244,8 +244,11 @@ export function OrdersDetails() {
                             )}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <p className={styles.itemName}>{item.products?.name || 'Item'}</p>
-                            <p className={styles.itemQty}>Qty {item.quantity} &middot; Rs.{Number(item.price_at_time).toFixed(2)}</p>
+                            <p className={styles.itemName}>
+                              {item.products?.name || 'Item'}
+                              {item.is_gift && <span style={{ marginLeft: '0.4rem', color: 'var(--primary, #16a34a)', fontSize: '0.75rem', fontWeight: 600 }}>🎁 FREE GIFT</span>}
+                            </p>
+                            <p className={styles.itemQty}>Qty {item.quantity} &middot; {item.is_gift ? 'Free' : `Rs.${Number(item.price_at_time).toFixed(2)}`}</p>
                           </div>
                         </div>
                       ))}
@@ -262,6 +265,16 @@ export function OrdersDetails() {
                         Delivery slot: {order.delivery_slot}
                       </div>
                     )}
+                    {(order.discount_amount ? order.discount_amount > 0 : false) && (
+                      <div className={styles.breakdownRow}>
+                        <span>Discount</span>
+                        <span>-Rs.{Number(order.discount_amount).toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className={styles.breakdownRow}>
+                      <span>Delivery Fee</span>
+                      <span>{order.delivery_fee ? `Rs.${Number(order.delivery_fee).toFixed(2)}` : 'Free'}</span>
+                    </div>
                   </>
                 )}
 

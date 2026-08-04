@@ -8,6 +8,7 @@ import { usePromotion } from '../../../lib/usePromotion';
 import { formatPrice } from '../../../lib/formatPrice';
 import { ProductImage } from '../../../components/ProductImage';
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../../lib/constants';
+import { formatDiscountAttribution, nearestThresholdNudge } from '../../../lib/promotionMath';
 import styles from './CartSidebar.module.css';
 
 export function CartSidebar() {
@@ -19,10 +20,15 @@ export function CartSidebar() {
 
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const delivery = subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
-  const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
-  const { applied: appliedPromotion, couponInput, setCouponInput, validating, error, applyCoupon } = usePromotion(items, subtotal);
-  const discount = appliedPromotion?.discountAmount ?? 0;
+  const { applied: appliedPromotion, activeOffers, couponInput, setCouponInput, validating, error, applyCoupon } = usePromotion(items, subtotal);
+  const isFreeShipping = appliedPromotion?.discountType === 'free_shipping';
+  const isGift = appliedPromotion?.discountType === 'gift_with_purchase';
+  const delivery = !isFreeShipping && subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
+  const nudge = nearestThresholdNudge(activeOffers, subtotal, isFreeShipping);
+  // free_shipping's discountAmount represents the delivery fee it waives, already
+  // reflected in `delivery` above — it must not also be subtracted from the subtotal.
+  // gift_with_purchase's is a free product added as its own order_item at checkout.
+  const discount = (isFreeShipping || isGift) ? 0 : (appliedPromotion?.discountAmount ?? 0);
   const total = subtotal + delivery - discount;
 
   return (
@@ -91,9 +97,9 @@ export function CartSidebar() {
           </div>
 
           <div className={styles.footer}>
-            {amountToFreeDelivery > 0 && (
+            {nudge && (
               <p className={styles.deliveryNote}>
-                <Truck size={13} /> Add {formatPrice(amountToFreeDelivery)} more for free delivery
+                <Truck size={13} /> Add {formatPrice(nudge.gap)} more {nudge.text}
               </p>
             )}
             <div className={styles.couponBlock}>
@@ -117,7 +123,7 @@ export function CartSidebar() {
               {error && <p className={styles.couponError}>{error}</p>}
               {appliedPromotion && !error && (
                 <p className={styles.couponSuccess}>
-                  {appliedPromotion.source === 'coupon' ? `Coupon "${appliedPromotion.code}"` : appliedPromotion.name} applied!
+                  {formatDiscountAttribution(appliedPromotion)} applied!
                 </p>
               )}
             </div>
@@ -127,10 +133,22 @@ export function CartSidebar() {
                 <span>Subtotal</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
-              {appliedPromotion && (
+              {appliedPromotion && !isFreeShipping && !isGift && (
                 <div className={`${styles.priceRow} ${styles.discountRow}`}>
-                  <span><Tag size={12} /> {appliedPromotion.name}</span>
+                  <span><Tag size={12} /> {formatDiscountAttribution(appliedPromotion)}</span>
                   <span>−{formatPrice(discount)}</span>
+                </div>
+              )}
+              {appliedPromotion && isFreeShipping && (
+                <div className={`${styles.priceRow} ${styles.discountRow}`}>
+                  <span><Tag size={12} /> {formatDiscountAttribution(appliedPromotion)}</span>
+                  <span>Free delivery</span>
+                </div>
+              )}
+              {appliedPromotion && isGift && (
+                <div className={`${styles.priceRow} ${styles.discountRow}`}>
+                  <span><Tag size={12} /> {formatDiscountAttribution(appliedPromotion)}</span>
+                  <span>FREE</span>
                 </div>
               )}
               <div className={styles.priceRow}>

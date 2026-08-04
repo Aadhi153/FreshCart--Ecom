@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Calendar, Camera, CheckCircle2, KeyRound, LogOut, Mail, Phone, ShieldCheck, User as UserIcon, XCircle } from 'lucide-react';
+import { Calendar, Camera, CheckCircle2, Copy, Crown, Gift, KeyRound, LogOut, Mail, Phone, ShieldCheck, User as UserIcon, XCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { uploadAvatarImage } from '../lib/api';
 import { useProfileSummaryStore } from '../lib/store';
@@ -25,6 +25,8 @@ interface ProfileRow {
   } | null;
   avatar_url: string | null;
   preferred_payment: string | null;
+  referral_code: string | null;
+  is_vip: boolean | null;
 }
 
 const fieldStyle = {
@@ -81,7 +83,7 @@ export function ProfileDetails() {
 
       const { data, error: profileError } = await supabase
         .from('profiles')
-        .select('email, full_name, phone, role, created_at, notification_preferences, avatar_url, preferred_payment')
+        .select('email, full_name, phone, role, created_at, notification_preferences, avatar_url, preferred_payment, referral_code, is_vip')
         .eq('id', userData.user.id)
         .maybeSingle();
 
@@ -146,7 +148,7 @@ export function ProfileDetails() {
         preferred_payment: preferredPayment,
         updated_at: new Date().toISOString(),
       })
-      .select('email, full_name, phone, role, created_at, notification_preferences, avatar_url, preferred_payment')
+      .select('email, full_name, phone, role, created_at, notification_preferences, avatar_url, preferred_payment, referral_code, is_vip')
       .single();
 
     if (updateError) {
@@ -163,6 +165,16 @@ export function ProfileDetails() {
     setProfileSummary({ fullName: fullName.trim() });
     showToast('Profile saved successfully.', 'success');
     setSaving(false);
+  };
+
+  const handleCopyReferralCode = async () => {
+    if (!profile?.referral_code) return;
+    try {
+      await navigator.clipboard.writeText(profile.referral_code);
+      showToast('Referral code copied!', 'success');
+    } catch {
+      showToast('Could not copy — copy it manually.', 'error');
+    }
   };
 
   const handleSignOutEverywhere = async () => {
@@ -205,6 +217,7 @@ export function ProfileDetails() {
     { label: 'Account Role', value: profile?.role || 'customer', icon: ShieldCheck },
     { label: 'Email Status', value: emailVerified ? 'Verified' : 'Not verified', icon: emailVerified ? CheckCircle2 : XCircle },
     { label: 'Member Since', value: memberSince, icon: Calendar },
+    { label: 'Membership', value: profile?.is_vip ? 'VIP' : 'Standard', icon: Crown },
   ];
 
   return (
@@ -303,6 +316,44 @@ export function ProfileDetails() {
           />
         </div>
       </section>
+
+      {/* Referral code */}
+      {profile?.referral_code && (
+        <section
+          style={{
+            border: '1px solid var(--border-color)',
+            borderLeft: '3px solid var(--accent)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '0.85rem 1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
+            <Gift size={18} color="var(--accent)" />
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Your Referral Code</p>
+              <p style={{ margin: '0.15rem 0 0', fontSize: '1rem', fontWeight: 800, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
+                {profile.referral_code}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyReferralCode}
+            title="Copy referral code"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
+              padding: '0.5rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
+              background: 'var(--layer-0)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
+            }}
+          >
+            <Copy size={14} /> Copy
+          </button>
+        </section>
+      )}
 
       {/* Info cards */}
       <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.8rem' }}>
