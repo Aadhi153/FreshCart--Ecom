@@ -21,6 +21,7 @@ import { placeOrder as placeOrderApi, getDeliverySlots, type DeliverySlotDay } f
 import type { Session } from '@supabase/supabase-js';
 import { useAddressStore, useCartStore, type AddressType, type SavedAddress } from '../../lib/store';
 import { usePromotion } from '../../lib/usePromotion';
+import { formatDiscountAttribution, nearestThresholdNudge } from '../../lib/promotionMath';
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../lib/constants';
 import { CheckoutStepper } from '../../components/CheckoutStepper';
 import { Confetti } from '../../components/Confetti';
@@ -354,9 +355,6 @@ export default function CheckoutPage() {
 
   // ── Order summary / coupon ───────────────────────────────────────────
   const subtotal = useMemo(() => items.reduce((acc, item) => acc + item.price * item.quantity, 0), [items]);
-  const delivery = subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
-  const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
-  const freeDeliveryProgress = Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
 
   const {
     applied: appliedPromotion,
@@ -369,7 +367,17 @@ export default function CheckoutPage() {
     removeCoupon,
   } = usePromotion(items, subtotal);
 
-  const discount = appliedPromotion?.discountAmount ?? 0;
+  const isFreeShipping = appliedPromotion?.discountType === 'free_shipping';
+  const isGift = appliedPromotion?.discountType === 'gift_with_purchase';
+  const delivery = !isFreeShipping && subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
+  const freeDeliveryEarned = isFreeShipping || subtotal >= FREE_DELIVERY_THRESHOLD;
+  const nudge = nearestThresholdNudge(activeOffers, subtotal, isFreeShipping);
+  // free_shipping's discountAmount represents the delivery fee it waives, already
+  // reflected in `delivery` above — it must not also be subtracted from the subtotal.
+  // gift_with_purchase's is a free product added as its own order_item, never a
+  // subtraction either — see usePromotion.ts/orders.js for how the gift itself is
+  // granted; nothing here ever needs to touch the cart total for it.
+  const discount = (isFreeShipping || isGift) ? 0 : (appliedPromotion?.discountAmount ?? 0);
   const total = subtotal + delivery - discount;
 
   const handleSummarySubmit = () => {
@@ -403,6 +411,12 @@ export default function CheckoutPage() {
     return '';
   };
 
+  // Stable across retries of the same attempt (e.g. a failed submit the user
+  // resubmits) so the backend can dedupe a double-click or network retry, but a
+  // *new* checkout after navigating away/back gets a fresh key.
+  const idempotencyKeyRef = useRef<string | null>(null);
+  if (!idempotencyKeyRef.current) idempotencyKeyRef.current = crypto.randomUUID();
+
   const placeOrder = async () => {
     if (items.length === 0) {
       setError('Your cart is empty.');
@@ -432,6 +446,7 @@ export default function CheckoutPage() {
         delivery_slot: { date: selectedDate, window: selectedWindow },
         payment_method: paymentMethod,
         coupon_code: appliedPromotion?.code ?? undefined,
+        idempotency_key: idempotencyKeyRef.current ?? undefined,
       });
       clearCart();
       removeCoupon();
@@ -632,7 +647,7 @@ export default function CheckoutPage() {
               {appliedPromotion && (
                 <div className={styles.successBanner}>
                   <CheckCircle2 size={15} />
-                  {appliedPromotion.source === 'coupon' ? `Coupon "${appliedPromotion.code}"` : appliedPromotion.name} applied — ₹{discount.toFixed(2)} saved!
+                  {formatDiscountAttribution(appliedPromotion)}{isFreeShipping || isGift ? '!' : ` — ₹${discount.toFixed(2)} saved!`}
                   {appliedPromotion.source === 'coupon' && (
                     <button type="button" onClick={removeCoupon} className={styles.applyButton} style={{ marginLeft: '0.5rem' }}>
                       Remove
@@ -778,8 +793,8 @@ export default function CheckoutPage() {
               </div>
               {appliedPromotion && (
                 <div className={`${styles.priceRow} ${styles.priceRowDiscount}`}>
-                  <span>{appliedPromotion.name}</span>
-                  <span>−₹{discount.toFixed(2)}</span>
+                  <span>{formatDiscountAttribution(appliedPromotion)}</span>
+                  <span>{isFreeShipping ? 'Free' : isGift ? 'FREE' : `−₹${discount.toFixed(2)}`}</span>
                 </div>
               )}
               <div className={styles.priceRow}>
@@ -787,18 +802,18 @@ export default function CheckoutPage() {
                 <span className={delivery === 0 ? styles.freeTag : ''}>{delivery === 0 ? 'Free' : `₹${delivery.toFixed(2)}`}</span>
               </div>
 
-              {amountToFreeDelivery > 0 ? (
+              {nudge ? (
                 <div className={styles.progressWrap}>
-                  <span className={styles.progressText}>Add ₹{amountToFreeDelivery.toFixed(2)} more for free delivery</span>
+                  <span className={styles.progressText}>Add ₹{nudge.gap.toFixed(2)} more {nudge.text}</span>
                   <div className={styles.progressTrack}>
-                    <div className={styles.progressFill} style={{ width: `${freeDeliveryProgress}%` }} />
+                    <div className={styles.progressFill} style={{ width: `${nudge.progress}%` }} />
                   </div>
                 </div>
-              ) : (
+              ) : freeDeliveryEarned ? (
                 <div className={styles.progressWrap}>
                   <span className={styles.progressText} style={{ color: 'var(--success)' }}>🎉 You've unlocked free delivery!</span>
                 </div>
-              )}
+              ) : null}
 
               <hr className={styles.priceDivider} />
 

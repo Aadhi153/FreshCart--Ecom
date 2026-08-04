@@ -6,6 +6,7 @@ import type { ActivePromotion } from '@freshcart/types';
 import { supabase } from '../../lib/supabase';
 import { getCheapestVariant } from '../../lib/queries';
 import { getActivePromotions } from '../../lib/api';
+import { findCategoryOffer } from '../../lib/promotionMath';
 import { useCartStore, useWishlistStore } from '../../lib/store';
 import { useDebouncedValue } from '../../lib/useDebouncedValue';
 import { useToast } from '../../components/ToastProvider';

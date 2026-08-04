@@ -5,9 +5,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Session } from '@supabase/supabase-js';
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, Banknote, Clock3, Mail, MapPin, Phone, Quote, Radar, ShieldCheck, ShoppingBag, Sparkles, Star, Truck } from 'lucide-react';
+import { ArrowRight, Banknote, Clock3, Mail, MapPin, Phone, Quote, Radar, ShieldCheck, ShoppingBag, Sparkles, Star, Truck, Megaphone } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getFeaturedProducts, getBestSellers, getNewArrivals, getTopTestimonials, type HomeProductCard, type Testimonial } from '../lib/queries';
+import { getPublicOffers } from '../lib/api';
+import { pickFeaturedOffer, formatOfferHeadline } from '../lib/promotionMath';
+import type { PublicOffer } from '@freshcart/types';
 import { gridVariants, itemVariants } from '../lib/motion';
 import { ProductImage } from '../components/ProductImage';
 import styles from './page.module.css';
@@ -147,6 +150,11 @@ export default function LandingPage() {
   const [bestSellers, setBestSellers] = useState<HomeProductCard[]>([]);
   const [newArrivals, setNewArrivals] = useState<HomeProductCard[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [featuredOffer, setFeaturedOffer] = useState<PublicOffer | null>(null);
+
+  useEffect(() => {
+    getPublicOffers().then((offers) => setFeaturedOffer(pickFeaturedOffer(offers)));
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -252,6 +260,19 @@ export default function LandingPage() {
           </div>
         </motion.div>
       </section>
+
+      {featuredOffer && (
+        <Link href="/offers" className={styles.offerBanner}>
+          <span className={styles.offerBannerIcon}><Megaphone size={16} /></span>
+          <span>
+            <strong>{formatOfferHeadline(featuredOffer)}</strong>
+            {featuredOffer.requires_code && featuredOffer.code
+              ? ` — use code ${featuredOffer.code}`
+              : ` — ${featuredOffer.name}, auto-applied at checkout`}
+          </span>
+          <span className={styles.offerBannerCta}>See all offers <ArrowRight size={14} /></span>
+        </Link>
+      )}
 
       <section className={styles.trustBar} aria-label="Why shop with FreshCart">
         <div className={styles.trustItem}>

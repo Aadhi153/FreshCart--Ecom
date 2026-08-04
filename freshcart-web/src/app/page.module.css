@@ -353,6 +353,40 @@
   padding: 3.5rem 2rem;
 }
 
+.offerBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0.75rem 2rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.88rem;
+}
+
+.offerBannerIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  color: #fff;
+}
+
+.offerBannerCta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+  color: var(--primary);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .trustBar {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

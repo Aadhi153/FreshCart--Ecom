@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useCartStore } from '../../lib/store';
 import { usePromotion } from '../../lib/usePromotion';
+import { formatDiscountAttribution, nearestThresholdNudge } from '../../lib/promotionMath';
 import { gridVariants, itemVariants } from '../../lib/motion';
 import { useToast } from '../../components/ToastProvider';
 import { CartItemSkeleton } from '../../components/Skeleton';
@@ -62,12 +63,18 @@ export default function CartPage() {
 
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
-  const delivery = subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
-  const amountToFreeDelivery = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
-  const freeDeliveryProgress = Math.min(100, (subtotal / FREE_DELIVERY_THRESHOLD) * 100);
 
-  const { applied: appliedPromotion, couponInput, setCouponInput, validating: applyingCoupon, error: couponError, applyCoupon, removeCoupon } = usePromotion(items, subtotal);
-  const discount = appliedPromotion?.discountAmount ?? 0;
+  const { applied: appliedPromotion, activeOffers, couponInput, setCouponInput, validating: applyingCoupon, error: couponError, applyCoupon, removeCoupon } = usePromotion(items, subtotal);
+  const isFreeShipping = appliedPromotion?.discountType === 'free_shipping';
+  const isGift = appliedPromotion?.discountType === 'gift_with_purchase';
+  const delivery = !isFreeShipping && subtotal > 0 && subtotal < FREE_DELIVERY_THRESHOLD ? DELIVERY_FEE : 0;
+  const freeDeliveryEarned = isFreeShipping || subtotal >= FREE_DELIVERY_THRESHOLD;
+  const nudge = nearestThresholdNudge(activeOffers, subtotal, isFreeShipping);
+  // free_shipping's discountAmount represents the delivery fee it waives, already
+  // reflected in `delivery` above — it must not also be subtracted from the subtotal.
+  // gift_with_purchase's is a free product added as its own order_item at checkout,
+  // never a subtraction either — see usePromotion.ts for how it's tracked.
+  const discount = (isFreeShipping || isGift) ? 0 : (appliedPromotion?.discountAmount ?? 0);
   const total = subtotal + delivery - discount;
 
   useEffect(() => {
@@ -181,18 +188,18 @@ export default function CartPage() {
         Your Cart {hasHydrated && items.length > 0 && <span className={styles.headingCount}>({itemCount})</span>}
       </h1>
 
-      {hasHydrated && items.length > 0 && (
+      {hasHydrated && items.length > 0 && (nudge || freeDeliveryEarned) && (
         <div className={styles.deliveryBar}>
-          {amountToFreeDelivery > 0 ? (
+          {nudge ? (
             <>
               <p className={styles.deliveryBarText}>
-                <Truck size={15} /> Add ₹{amountToFreeDelivery.toFixed(2)} more for free delivery
+                <Truck size={15} /> Add ₹{nudge.gap.toFixed(2)} more {nudge.text}
               </p>
               <div className={styles.progressTrack}>
                 <motion.div
                   className={styles.progressFill}
                   initial={{ width: 0 }}
-                  animate={{ width: `${freeDeliveryProgress}%` }}
+                  animate={{ width: `${nudge.progress}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                 />
               </div>
@@ -314,8 +321,8 @@ export default function CartPage() {
                 </div>
                 {appliedPromotion && (
                   <div className={styles.summaryRow} style={{ color: 'var(--primary)' }}>
-                    <span><Tag size={14} /> {appliedPromotion.name}</span>
-                    <span className="price">−₹{discount.toFixed(2)}</span>
+                    <span><Tag size={14} /> {formatDiscountAttribution(appliedPromotion)}</span>
+                    <span className="price">{isFreeShipping ? 'Free delivery' : isGift ? 'FREE' : `−₹${discount.toFixed(2)}`}</span>
                   </div>
                 )}
                 <div className={styles.summaryRow}>
@@ -349,7 +356,7 @@ export default function CartPage() {
                   {couponError && <p className={styles.couponError}>{couponError}</p>}
                   {appliedPromotion && !couponError && (
                     <p className={styles.couponSuccess}>
-                      {appliedPromotion.source === 'coupon' ? `Coupon "${appliedPromotion.code}"` : appliedPromotion.name} applied! ₹{discount.toFixed(0)} off
+                      {formatDiscountAttribution(appliedPromotion)} applied!
                       {appliedPromotion.source === 'coupon' && (
                         <button type="button" onClick={removeCoupon} className={styles.couponApplyBtn} style={{ marginLeft: '0.5rem' }}>
                           Remove

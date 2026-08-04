@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Leaf, Loader2, Mail, Phone, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useOtpChallenge } from '../../lib/useOtpChallenge';
@@ -15,8 +15,20 @@ type Tab = 'email' | 'phone';
 
 const PHONE_REGEX = /^\d{10}$/;
 
+// useSearchParams() (for the ?ref= referral prefill below) opts this page out of
+// static rendering unless it's wrapped in Suspense — Next.js requires the boundary
+// even though there's no meaningful loading state to show here.
 export default function AuthPage() {
+  return (
+    <Suspense fallback={null}>
+      <AuthPageInner />
+    </Suspense>
+  );
+}
+
+function AuthPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
 
   const [mode, setMode] = useState<Mode>('login');
@@ -24,6 +36,9 @@ export default function AuthPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  // Prefilled from a shared referral link (?ref=CODE), but editable — a shopper who
+  // got a code some other way (word of mouth) can still type it in.
+  const [referralCode, setReferralCode] = useState(() => searchParams.get('ref') || '');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [sentAt, setSentAt] = useState(0);
   const [otpCode, setOtpCode] = useState('');
@@ -54,7 +69,11 @@ export default function AuthPage() {
           options: {
             shouldCreateUser: true,
             data: mode === 'signup'
-              ? { full_name: fullName.trim(), phone: cleanedPhone ? `+91${cleanedPhone}` : null }
+              ? {
+                  full_name: fullName.trim(),
+                  phone: cleanedPhone ? `+91${cleanedPhone}` : null,
+                  referred_by_code: referralCode.trim() || null,
+                }
               : undefined,
           },
         });
@@ -211,6 +230,24 @@ export default function AuthPage() {
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder="98765 43210"
                   inputMode="numeric"
+                  disabled={inputsLocked}
+                />
+              </div>
+            </div>
+          )}
+
+          {mode === 'signup' && (
+            <div className={styles.inputGroup}>
+              <label htmlFor="auth-referral">
+                Referral Code <span className={styles.optionalTag}>(optional)</span>
+              </label>
+              <div className={styles.inputWrapper}>
+                <User size={16} className={styles.inputIcon} />
+                <input
+                  id="auth-referral"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. AB12CD34"
                   disabled={inputsLocked}
                 />
               </div>
