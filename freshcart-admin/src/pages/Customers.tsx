@@ -1,41 +1,58 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { RefreshCw, Search, Eye, Download, Star } from 'lucide-react';
+import { RefreshCw, Search, Eye, Download, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import Modal from '../components/Modal';
 import { statusColors } from '../lib/orderStatus';
 import { useToast } from '../components/ToastProvider';
 import { exportToCsv } from '../lib/csv';
 import { updateCustomerVip } from '../lib/api';
 
+const PAGE_SIZE = 20;
+
 export default function Customers() {
   const { showToast } = useToast();
   const [customers, setCustomers] = useState<any[]>([]);
-  const [filtered, setFiltered] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [ordersByUser, setOrdersByUser] = useState<Record<string, any[]>>({});
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+  const [stats, setStats] = useState({ total: 0, newThisWeek: 0, admins: 0 });
 
-  useEffect(() => { fetchCustomers(); fetchOrderCounts(); }, []);
-
+  // Debounce search input so we're not hitting the DB on every keystroke.
   useEffect(() => {
-    if (!search) { setFiltered(customers); return; }
-    setFiltered(customers.filter(c =>
-      (c.full_name || '').toLowerCase().includes(search.toLowerCase()) ||
-      (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
-      (c.phone || '').includes(search)
-    ));
-  }, [search, customers]);
+    const timer = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Any new search resets us back to page 1.
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
+
+  useEffect(() => { fetchCustomers(); }, [debouncedSearch, page]);
+  useEffect(() => { fetchStats(); }, []);
 
   async function fetchCustomers() {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
+
+      if (debouncedSearch) {
+        const term = debouncedSearch.replace(/[%_]/g, '\\$&');
+        query = query.or(`full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`);
+      }
+
+      const from = (page - 1) * PAGE_SIZE;
+      const { data, error, count } = await query.range(from, from + PAGE_SIZE - 1);
       if (error) throw error;
       setCustomers(data || []);
+      setTotalCount(count ?? 0);
+      await fetchOrderCountsFor((data || []).map(c => c.id));
     } catch (err) {
       console.error('Error fetching customers:', err);
       showToast('Failed to load customers', 'error');
@@ -44,9 +61,28 @@ export default function Customers() {
     }
   }
 
-  async function fetchOrderCounts() {
+  async function fetchStats() {
     try {
-      const { data, error } = await supabase.from('orders').select('id, user_id, status, total_amount, created_at');
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const [{ count: total }, { count: newThisWeek }, { count: admins }] = await Promise.all([
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'admin'),
+      ]);
+      setStats({ total: total ?? 0, newThisWeek: newThisWeek ?? 0, admins: admins ?? 0 });
+    } catch (err) {
+      console.error('Error fetching customer stats:', err);
+    }
+  }
+
+  // Only fetch orders for the customers actually visible on this page, not the whole table.
+  async function fetchOrderCountsFor(userIds: string[]) {
+    if (userIds.length === 0) { setOrdersByUser({}); return; }
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, user_id, status, total_amount, created_at')
+        .in('user_id', userIds);
       if (error) throw error;
       const grouped: Record<string, any[]> = {};
       (data || []).forEach(o => {
@@ -58,15 +94,6 @@ export default function Customers() {
       console.error('Error fetching order counts:', err);
     }
   }
-
-  const stats = useMemo(() => {
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    return {
-      total: customers.length,
-      newThisWeek: customers.filter(c => new Date(c.created_at).getTime() >= weekAgo).length,
-      admins: customers.filter(c => c.role === 'admin').length,
-    };
-  }, [customers]);
 
   const handleToggleVip = async (customer: any) => {
     const next = !customer.is_vip;
@@ -80,10 +107,44 @@ export default function Customers() {
     }
   };
 
+  // CSV export needs the full matching set, not just the current page, so it runs
+  // its own unpaginated query on demand rather than reusing `customers`.
+  async function handleExportCsv() {
+    setExporting(true);
+    try {
+      let query = supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (debouncedSearch) {
+        const term = debouncedSearch.replace(/[%_]/g, '\\$&');
+        query = query.or(`full_name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      const rows = data || [];
+      const counts: Record<string, number> = {};
+      if (rows.length > 0) {
+        const { data: orderRows } = await supabase.from('orders').select('user_id').in('user_id', rows.map(r => r.id));
+        (orderRows || []).forEach(o => { if (o.user_id) counts[o.user_id] = (counts[o.user_id] || 0) + 1; });
+      }
+      exportToCsv('customers.csv', rows.map(c => ({
+        Name: c.full_name || '', Email: c.email || '', Phone: c.phone || '', Role: c.role, Orders: counts[c.id] || 0, Joined: c.created_at,
+      })));
+    } catch (err) {
+      console.error('Error exporting customers:', err);
+      showToast('Failed to export customers', 'error');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const avatarColor = (name: string) => {
     const colors = ['#4ADE80', '#38BDF8', '#FB923C', '#A78BFA', '#F472B6', '#FBBF24'];
     return colors[(name?.charCodeAt(0) || 0) % colors.length];
   };
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   return (
     <div>
@@ -91,24 +152,23 @@ export default function Customers() {
         <div>
           <h1 style={{ margin: 0 }}>Customers</h1>
           <p style={{ margin: '0.3rem 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            {filtered.length} customer{filtered.length !== 1 ? 's' : ''} registered
+            {totalCount} customer{totalCount !== 1 ? 's' : ''} registered
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button
-            onClick={fetchCustomers}
+            onClick={() => { fetchCustomers(); fetchStats(); }}
             disabled={loading}
             style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--layer-1)', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
           >
             <RefreshCw size={14} /> Refresh
           </button>
           <button
-            onClick={() => exportToCsv('customers.csv', filtered.map(c => ({
-              Name: c.full_name || '', Email: c.email || '', Phone: c.phone || '', Role: c.role, Orders: (ordersByUser[c.id] || []).length, Joined: c.created_at,
-            })))}
+            onClick={handleExportCsv}
+            disabled={exporting}
             style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--layer-1)', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
           >
-            <Download size={14} /> Export CSV
+            <Download size={14} /> {exporting ? 'Exporting…' : 'Export CSV'}
           </button>
         </div>
       </div>
@@ -161,12 +221,12 @@ export default function Customers() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={9} style={{ textAlign: 'center', padding: '2rem' }}>Loading customers...</td></tr>
-              ) : filtered.length === 0 ? (
+              ) : customers.length === 0 ? (
                 <tr><td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                  {search ? 'No customers match your search.' : 'No customers yet.'}
+                  {debouncedSearch ? 'No customers match your search.' : 'No customers yet.'}
                 </td></tr>
               ) : (
-                filtered.map(c => {
+                customers.map(c => {
                   const initials = (c.full_name || c.email || 'U').slice(0, 2).toUpperCase();
                   const color = avatarColor(c.full_name || c.email || '');
                   return (
@@ -225,6 +285,30 @@ export default function Customers() {
             </tbody>
           </table>
         </div>
+
+        {!loading && totalCount > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Page {page} of {totalPages}
+            </span>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                style={{ padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--layer-1)', color: 'var(--text-primary)', cursor: page <= 1 ? 'not-allowed' : 'pointer', opacity: page <= 1 ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                <ChevronLeft size={14} /> Prev
+              </button>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                style={{ padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--layer-1)', color: 'var(--text-primary)', cursor: page >= totalPages ? 'not-allowed' : 'pointer', opacity: page >= totalPages ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                Next <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Modal isOpen={!!selectedCustomer} onClose={() => setSelectedCustomer(null)} title={selectedCustomer?.full_name || 'Customer Details'}>

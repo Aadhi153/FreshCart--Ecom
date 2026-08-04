@@ -4,6 +4,12 @@ import type { Product, Order, Profile, Category, Promotion, Review } from '@fres
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  console.error(
+    'VITE_API_URL is not set in production — falling back to http://localhost:5000, which will not work. Set it in the deployment environment.'
+  );
+}
+
 // ── Categories ────────────────────────────────────────────────────────────────
 export async function getCategories(): Promise<Category[]> {
   const { data, error } = await supabase

@@ -3,6 +3,12 @@ import type { PlaceOrderPayload, Order, ActivePromotion, PromotionValidationRequ
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
+if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL) {
+  console.error(
+    'NEXT_PUBLIC_API_URL is not set in production — falling back to http://localhost:5000, which will not work. Set it in the deployment environment.'
+  );
+}
+
 async function request(path: string, options: RequestInit = {}): Promise<Response> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
