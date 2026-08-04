@@ -20,8 +20,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--border-color);
-  color: var(--text-secondary);
+  /* Deliberately a neutral gray, not var(--text-secondary)/var(--border-color) —
+     in the web app's green theme those resolve to green too, which made
+     not-yet-reached steps read as "done" at a glance. */
+  border: 2px solid #D1D5DB;
+  color: #9CA3AF;
   background: var(--layer-0);
   transition: border-color var(--transition-base), color var(--transition-base), background var(--transition-base);
 }
@@ -36,7 +39,7 @@
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: capitalize;
-  color: var(--text-secondary);
+  color: #9CA3AF;
 }
 
 .stepLabelDone {

@@ -22,7 +22,9 @@ import styles from './OrdersDetails.module.css';
 const STEPS = ['placed', 'packed', 'shipped', 'delivered'] as const;
 const FILTERS = ['all', ...STEPS, 'cancelled'] as const;
 const CANCELLABLE_STATUSES = new Set(['placed', 'packed']);
+const LIVE_STATUSES = new Set(['placed', 'packed', 'shipped']);
 const PAGE_SIZE = 10;
+const POLL_INTERVAL_MS = 20000;
 
 function statusBadgeClass(status: string) {
   if (status === 'cancelled') return styles.statusBadgeCancelled;
@@ -62,6 +64,23 @@ export function OrdersDetails() {
         setInitialLoading(false);
       });
   }, [page, filter]);
+
+  // Quietly re-fetch the current page while any visible order is still in flight,
+  // so a status change made elsewhere (e.g. by an admin) shows up without the
+  // customer having to reload. No loading spinner — this must not disrupt scroll
+  // position or an in-progress cancel/search interaction.
+  useEffect(() => {
+    if (!orders.some((o) => LIVE_STATUSES.has(o.status || ''))) return;
+    const interval = setInterval(() => {
+      getMyOrders(page, PAGE_SIZE, filter)
+        .then(({ orders: refreshed, total }) => {
+          setOrders(refreshed);
+          setTotalCount(total);
+        })
+        .catch(() => {});
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [orders, page, filter]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 

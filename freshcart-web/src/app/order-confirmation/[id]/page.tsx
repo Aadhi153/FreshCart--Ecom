@@ -10,6 +10,9 @@ import { Confetti } from '../../../components/Confetti';
 import { OrderTimeline } from '../../../components/OrderTimeline';
 import styles from './page.module.css';
 
+const LIVE_STATUSES = new Set(['placed', 'packed', 'shipped']);
+const POLL_INTERVAL_MS = 15000;
+
 export default function OrderConfirmationPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -25,6 +28,17 @@ export default function OrderConfirmationPage() {
     const timer = setTimeout(() => setShowConfetti(false), 4000);
     return () => clearTimeout(timer);
   }, [id]);
+
+  // Poll for status changes while the order is still in flight, so a customer who
+  // leaves this tab open sees "Packed"/"Shipped" land without a manual refresh.
+  // Stops once the order reaches a terminal state (delivered/cancelled).
+  useEffect(() => {
+    if (!order || !LIVE_STATUSES.has(order.status || '')) return;
+    const interval = setInterval(() => {
+      getOrderById(id).then(setOrder).catch(() => {});
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [id, order?.status]);
 
   if (error) {
     return (
