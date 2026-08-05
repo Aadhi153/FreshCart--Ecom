@@ -157,12 +157,12 @@ a {
      one-off section callouts (referral code, membership tier) go fully
      borderless, differentiated only by a light gray fill. */
   --acc-card-radius: 16px;
-  --acc-card-shadow: none;
-  --acc-card-shadow-hover: none;
-  --acc-card-border: 1px solid rgba(15,23,42,0.08);
+  --acc-card-shadow: 0 1px 2px rgba(16,24,32,0.04), 0 4px 12px rgba(16,24,32,0.06);
+  --acc-card-shadow-hover: 0 2px 4px rgba(16,24,32,0.06), 0 8px 24px rgba(16,24,32,0.10);
+  --acc-card-border: 1px solid var(--border-color);
 
-  /* Underline-style form fields (label above, bottom-border-only input) */
-  --acc-field-border: rgba(15,23,42,0.14);
+  /* Boxed form fields (label above, bordered box input) */
+  --acc-field-border: var(--border-color);
   --acc-field-border-focus: var(--primary);
 
   /* Buttons */
@@ -228,14 +228,14 @@ a {
   grid-template-columns: 30px 1fr;
   gap: 0.6rem;
   align-items: center;
-  padding: 0.62rem;
-  border: none;
-  border-radius: var(--radius-sm);
+  padding: 0.62rem 0.7rem;
+  border-left: 3px solid transparent;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   background: transparent;
   color: var(--text-secondary);
   font-weight: 600;
   text-decoration: none;
-  transition: background var(--transition-base), color var(--transition-base);
+  transition: background var(--transition-base), color var(--transition-base), border-color var(--transition-base);
 }
 
 .account-nav-link:hover {
@@ -244,7 +244,8 @@ a {
 
 .account-nav-link--active,
 .account-nav-link--active:hover {
-  background: transparent;
+  background: var(--primary-light);
+  border-left-color: var(--accent);
   color: var(--text-primary);
   font-weight: 800;
 }

@@ -101,6 +101,54 @@ export const getOrderById = (orderId: string): Promise<Order> =>
 export const submitReview = (productId: string, rating: number, comment: string) =>
   authFetch(`/api/products/${productId}/reviews`, { method: 'POST', body: JSON.stringify({ rating, comment }) });
 
+export interface MyReview {
+  id: string;
+  product_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  products?: { name: string; image_url: string | null };
+}
+
+export interface PendingReview {
+  order_item_id: string;
+  product_id: string;
+  product_name: string;
+  image_url: string | null;
+}
+
+export const getMyReviews = (): Promise<{ reviews: MyReview[]; pending: PendingReview[] }> =>
+  authFetch('/api/reviews/mine');
+
+export const deleteMyAccount = (): Promise<{ success: boolean }> =>
+  authFetch('/api/auth/me', { method: 'DELETE' });
+
+export interface ReferralSummary {
+  count: number;
+  referrals: { full_name: string | null; created_at: string }[];
+}
+
+export const getMyReferrals = (): Promise<ReferralSummary> => authFetch('/api/auth/me/referrals');
+
+export interface PaymentMethod {
+  id: string;
+  type: 'card' | 'upi' | 'wallet';
+  masked_display_value: string;
+  is_default: boolean;
+  created_at: string;
+}
+
+export const getPaymentMethods = (): Promise<PaymentMethod[]> => authFetch('/api/payment-methods');
+
+export const addPaymentMethod = (payload: { type: PaymentMethod['type']; masked_display_value: string; is_default?: boolean }): Promise<PaymentMethod> =>
+  authFetch('/api/payment-methods', { method: 'POST', body: JSON.stringify(payload) });
+
+export const setDefaultPaymentMethod = (id: string): Promise<PaymentMethod> =>
+  authFetch(`/api/payment-methods/${id}/default`, { method: 'PATCH' });
+
+export const removePaymentMethod = (id: string): Promise<{ success: boolean }> =>
+  authFetch(`/api/payment-methods/${id}`, { method: 'DELETE' });
+
 export const getMyReturnRequests = (): Promise<ReturnRequest[]> => authFetch('/api/returns');
 
 export const createReturnRequest = (payload: CreateReturnRequestPayload): Promise<ReturnRequest> =>

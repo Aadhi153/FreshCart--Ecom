@@ -30,9 +30,7 @@ export function AccountCard({
   return (
     <motion.div
       className={classes}
-      // Flat design has no shadow to "pop" on hover, so the affordance is a subtle
-      // border darkening instead of elevation — matches the reference's restraint.
-      whileHover={hoverable ? { borderColor: 'rgba(15,23,42,0.18)' } : undefined}
+      whileHover={hoverable ? { y: -2, boxShadow: 'var(--acc-card-shadow-hover)' } : undefined}
       transition={{ duration: 0.15, ease: 'easeOut' }}
       {...rest}
     >

@@ -4,7 +4,20 @@ import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { Session } from '@supabase/supabase-js';
-import { Heart, MapPin, Package, User } from 'lucide-react';
+import {
+  Bell,
+  CreditCard,
+  Gift,
+  Heart,
+  HelpCircle,
+  KeyRound,
+  LogOut,
+  MapPin,
+  Package,
+  Star,
+  Undo2,
+  User,
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useProfileSummaryStore } from '../lib/store';
 import { Avatar } from './Avatar';
@@ -15,19 +28,54 @@ interface AccountPageShellProps {
   children: ReactNode;
 }
 
+interface AccountNavItem {
+  href: string;
+  label: string;
+  icon: typeof User;
+}
+
+interface AccountNavGroup {
+  title: string | null;
+  items: AccountNavItem[];
+}
+
+const accountGroups: AccountNavGroup[] = [
+  { title: 'Account', items: [
+    { href: '/profile', label: 'Profile', icon: User },
+    { href: '/security', label: 'Security', icon: KeyRound },
+  ] },
+  { title: 'Shopping', items: [
+    { href: '/orders', label: 'Orders', icon: Package },
+    { href: '/returns', label: 'Returns & Refunds', icon: Undo2 },
+    { href: '/wishlist', label: 'Wishlist', icon: Heart },
+    { href: '/reviews', label: 'My Reviews', icon: Star },
+  ] },
+  { title: 'Payments & Rewards', items: [
+    { href: '/payment-methods', label: 'Payment Methods', icon: CreditCard },
+    { href: '/rewards', label: 'Coupons & Rewards', icon: Gift },
+  ] },
+  { title: 'Settings', items: [
+    { href: '/address', label: 'Address', icon: MapPin },
+    { href: '/notifications', label: 'Notifications', icon: Bell },
+  ] },
+  { title: 'Support', items: [
+    { href: '/help', label: 'Help & Support', icon: HelpCircle },
+  ] },
+];
+
 export function AccountPageShell({ title, description, children }: AccountPageShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [signingOut, setSigningOut] = useState(false);
   const { fullName, avatarUrl, hasLoaded, setProfileSummary } = useProfileSummaryStore();
 
-  const accountLinks = [
-    { href: '/profile', label: 'Profile', icon: User },
-    { href: '/orders', label: 'Orders', icon: Package },
-    { href: '/address', label: 'Address', icon: MapPin },
-    { href: '/wishlist', label: 'Wishlist', icon: Heart },
-  ];
+  const handleLogout = async () => {
+    setSigningOut(true);
+    await supabase.auth.signOut();
+    router.push('/');
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -114,25 +162,62 @@ export function AccountPageShell({ title, description, children }: AccountPageSh
               {session?.user.email}
             </p>
           </div>
-          <nav style={{ display: 'grid', gap: '0.2rem' }} aria-label="Account navigation">
-            {accountLinks.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href;
+          <nav aria-label="Account navigation">
+            {accountGroups.map((group, groupIndex) => (
+              <div key={group.title || groupIndex} style={{ marginTop: groupIndex === 0 ? 0 : '1rem' }}>
+                {group.title && (
+                  <p
+                    style={{
+                      margin: '0 0 0.35rem',
+                      padding: '0 0.7rem',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    {group.title}
+                  </p>
+                )}
+                <div>
+                  {group.items.map(({ href, label, icon: Icon }, itemIndex) => {
+                    const active = pathname === href;
 
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`account-nav-link${active ? ' account-nav-link--active' : ''}`}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <span className="account-nav-link-icon">
-                    <Icon size={16} />
-                  </span>
-                  <span style={{ fontSize: '0.9rem' }}>{label}</span>
-                </Link>
-              );
-            })}
+                    return (
+                      <Link
+                        key={href}
+                        href={href}
+                        className={`account-nav-link${active ? ' account-nav-link--active' : ''}`}
+                        aria-current={active ? 'page' : undefined}
+                        style={{ marginTop: itemIndex === 0 ? 0 : '0.2rem' }}
+                      >
+                        <span className="account-nav-link-icon">
+                          <Icon size={16} />
+                        </span>
+                        <span style={{ fontSize: '0.9rem' }}>{label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
+
+          <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)' }}>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={signingOut}
+              className="account-nav-link"
+              style={{ width: '100%', border: 'none', background: 'transparent', cursor: signingOut ? 'wait' : 'pointer' }}
+            >
+              <span className="account-nav-link-icon">
+                <LogOut size={16} />
+              </span>
+              <span style={{ fontSize: '0.9rem' }}>{signingOut ? 'Signing out...' : 'Log out'}</span>
+            </button>
+          </div>
         </aside>
 
         <section

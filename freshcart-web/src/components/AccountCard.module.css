@@ -10,12 +10,10 @@
 
 .cardVip {
   background: linear-gradient(120deg, color-mix(in srgb, #FBBF24 18%, transparent), color-mix(in srgb, #F59E0B 8%, transparent));
-  border: none;
 }
 
 .cardHighlight {
   background: var(--layer-1);
-  border: none;
 }
 
 .cardDanger {
