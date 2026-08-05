@@ -1,0 +1,35 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--acc-badge-radius, 999px);
+  padding: var(--acc-badge-padding, 4px 12px);
+  font-size: var(--acc-badge-font-size, 12px);
+  font-weight: var(--acc-badge-font-weight, 600);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.placed {
+  background: var(--acc-badge-placed-bg, rgba(59,130,246,0.1));
+  color: var(--acc-badge-placed-text, #3B82F6);
+}
+
+.packed {
+  background: var(--acc-badge-packed-bg, rgba(245,158,11,0.1));
+  color: var(--acc-badge-packed-text, #F59E0B);
+}
+
+.shipped {
+  background: var(--acc-badge-shipped-bg, rgba(139,92,246,0.1));
+  color: var(--acc-badge-shipped-text, #8B5CF6);
+}
+
+.delivered {
+  background: var(--acc-badge-delivered-bg, rgba(34,197,94,0.1));
+  color: var(--acc-badge-delivered-text, #22C55E);
+}
+
+.cancelled {
+  background: var(--acc-badge-cancelled-bg, rgba(239,68,68,0.1));
+  color: var(--acc-badge-cancelled-text, #EF4444);
+}

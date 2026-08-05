@@ -29,34 +29,9 @@
   border-bottom-color: var(--accent);
 }
 
-.securityCard {
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 1rem;
-  display: grid;
-  gap: 0.9rem;
-}
-
 .dangerCard {
-  border: 1px solid color-mix(in srgb, #B91C1C 35%, var(--border-color));
-  border-radius: var(--radius-sm);
-  padding: 1rem;
   display: grid;
   gap: 0.6rem;
-}
-
-.dangerButton {
-  justify-self: start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.6rem 1rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid #B91C1C;
-  background: transparent;
-  color: #B91C1C;
-  font-weight: 800;
-  cursor: pointer;
 }
 
 .linkRow {
@@ -102,29 +77,6 @@
   font-weight: 800;
   color: var(--text-primary);
   overflow-wrap: anywhere;
-}
-
-.linkActionButton {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.4rem 0.8rem;
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 0.82rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.linkCancelButton {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.4rem 0.8rem;
-  color: var(--text-secondary);
-  font-weight: 700;
-  font-size: 0.82rem;
-  cursor: pointer;
 }
 
 .linkEditRow {

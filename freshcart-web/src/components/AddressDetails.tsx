@@ -1,10 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Briefcase, CheckCircle2, Home, LocateFixed, MapPin, Star, XCircle } from 'lucide-react';
 import { useAddressStore, type AddressType, type SavedAddress } from '../lib/store';
 import { EmptyState } from './Skeleton';
 import { ToggleSwitch } from './ToggleSwitch';
+import { AccountCard } from './AccountCard';
+import { AccountButton } from './AccountButton';
+import { useToast } from './ToastProvider';
 import { getCurrentPosition, reverseGeocode, geocodeAddress, isWithinDeliveryZone } from '../lib/serviceability';
 import styles from './AddressDetails.module.css';
 
@@ -34,6 +38,8 @@ const TYPE_OPTIONS: { value: AddressType; label: string; icon: typeof Home }[] =
 
 export function AddressDetails() {
   const { addresses, upsertAddress, removeAddress, setDefaultAddress } = useAddressStore();
+  const { showToast } = useToast();
+  const reduceMotion = useReducedMotion();
   const [editing, setEditing] = useState<SavedAddress>(addresses[0] || emptyAddress);
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<{ phone?: string; pincode?: string }>({});
@@ -115,6 +121,7 @@ export function AddressDetails() {
     setErrors({});
     upsertAddress({ ...editing, phone, pincode, id: editing.id || crypto.randomUUID() });
     setMessage('Address saved.');
+    showToast('Address saved.', 'success');
   };
 
   const startEdit = (address: SavedAddress) => {
@@ -147,10 +154,9 @@ export function AddressDetails() {
         </div>
 
         <div className={styles.locationRow}>
-          <button type="button" onClick={handleUseLocation} disabled={locating} className={styles.locationButton}>
-            <LocateFixed size={15} />
+          <AccountButton compact variant="secondary" onClick={handleUseLocation} disabled={locating} leftIcon={<LocateFixed size={15} />}>
             {locating ? 'Locating…' : 'Use my current location'}
-          </button>
+          </AccountButton>
           {editing.latitude != null && <p className={styles.attributionText}>Location data &copy; OpenStreetMap contributors</p>}
         </div>
         {locationError && <p className={styles.errorText}>{locationError}</p>}
@@ -200,19 +206,34 @@ export function AddressDetails() {
         {errors.pincode && <p className={styles.errorText}>{errors.pincode}</p>}
 
         <div className={styles.locationRow}>
-          <button type="button" onClick={handleCheckAvailability} disabled={zoneStatus === 'checking' || !editing.line1} className={styles.locationButton}>
+          <AccountButton
+            compact
+            variant="secondary"
+            onClick={handleCheckAvailability}
+            disabled={zoneStatus === 'checking' || !editing.line1}
+          >
             {zoneStatus === 'checking' ? 'Checking…' : 'Check delivery availability'}
-          </button>
+          </AccountButton>
         </div>
         {zoneStatus === 'ok' && (
-          <div className={`${styles.zoneBanner} ${styles.zoneBannerOk}`}>
+          <motion.div
+            className={`${styles.zoneBanner} ${styles.zoneBannerOk}`}
+            initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+          >
             <CheckCircle2 size={16} /> We deliver here
-          </div>
+          </motion.div>
         )}
         {zoneStatus === 'fail' && (
-          <div className={`${styles.zoneBanner} ${styles.zoneBannerFail}`}>
+          <motion.div
+            className={`${styles.zoneBanner} ${styles.zoneBannerFail}`}
+            initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+          >
             <XCircle size={16} /> Sorry, we don&apos;t deliver to this address yet
-          </div>
+          </motion.div>
         )}
 
         <div className={styles.defaultToggleRow}>
@@ -226,9 +247,9 @@ export function AddressDetails() {
 
         {message && <p className={styles.message}>{message}</p>}
 
-        <button type="submit" className={styles.submitButton}>
+        <AccountButton type="submit" variant="primary" style={{ justifySelf: 'start' }}>
           Save Address
-        </button>
+        </AccountButton>
       </form>
 
       {addresses.length === 0 ? (
@@ -244,7 +265,12 @@ export function AddressDetails() {
             const isConfirming = confirmingId === address.id;
 
             return (
-              <article key={address.id} className={`${styles.card} ${address.isDefault ? styles.cardDefault : ''}`}>
+              <AccountCard
+                key={address.id}
+                hoverable
+                accent={address.isDefault ? 'default-highlight' : 'default'}
+                className={`${styles.addressCard} ${address.isDefault ? styles.cardDefault : ''}`}
+              >
                 <div className={styles.cardTop}>
                   <div className={styles.typeIcon}>
                     <TypeIcon size={16} />
@@ -263,29 +289,29 @@ export function AddressDetails() {
                 {isConfirming ? (
                   <div className={styles.confirmRow}>
                     <span className={styles.confirmText}>Remove this address?</span>
-                    <button type="button" onClick={() => { removeAddress(address.id); setConfirmingId(null); }} className={`${styles.actionButton} ${styles.actionButtonDanger}`}>
+                    <AccountButton compact variant="danger-solid" onClick={() => { removeAddress(address.id); setConfirmingId(null); }}>
                       Yes, remove
-                    </button>
-                    <button type="button" onClick={() => setConfirmingId(null)} className={styles.actionButton}>
+                    </AccountButton>
+                    <AccountButton compact variant="secondary" onClick={() => setConfirmingId(null)}>
                       Cancel
-                    </button>
+                    </AccountButton>
                   </div>
                 ) : (
                   <div className={styles.cardActions}>
                     {!address.isDefault && (
-                      <button type="button" onClick={() => setDefaultAddress(address.id)} className={styles.actionButton}>
+                      <AccountButton compact variant="secondary" onClick={() => setDefaultAddress(address.id)}>
                         Set default
-                      </button>
+                      </AccountButton>
                     )}
-                    <button type="button" onClick={() => startEdit(address)} className={styles.actionButton}>
+                    <AccountButton compact variant="secondary" onClick={() => startEdit(address)}>
                       Edit
-                    </button>
-                    <button type="button" onClick={() => setConfirmingId(address.id)} className={`${styles.actionButton} ${styles.actionButtonDanger}`}>
+                    </AccountButton>
+                    <AccountButton compact variant="danger" onClick={() => setConfirmingId(address.id)}>
                       Remove
-                    </button>
+                    </AccountButton>
                   </div>
                 )}
-              </article>
+              </AccountCard>
             );
           })}
         </section>

@@ -12,6 +12,9 @@ import { useToast } from './ToastProvider';
 import { Avatar } from './Avatar';
 import { OtpInput } from './OtpInput';
 import { ToggleSwitch } from './ToggleSwitch';
+import { AccountCard } from './AccountCard';
+import { AccountButton } from './AccountButton';
+import { AccountTabs } from './AccountTabs';
 import styles from './ProfileDetails.module.css';
 
 interface ProfileRow {
@@ -251,7 +254,7 @@ export function ProfileDetails() {
   ];
 
   return (
-    <div style={{ display: 'grid', gap: '1rem' }}>
+    <div style={{ display: 'grid', gap: '1rem', marginBottom: '2rem' }}>
       {loadError && <p style={{ margin: 0, color: '#B91C1C', fontSize: '0.88rem', fontWeight: 700 }}>{loadError}</p>}
 
       <div className={styles.tabRow}>
@@ -273,8 +276,9 @@ export function ProfileDetails() {
         </button>
       </div>
 
-      {activeTab === 'overview' && (
-      <>
+      <AccountTabs activeKey={activeTab}>
+      {activeTab === 'overview' ? (
+      <div style={{ display: 'grid', gap: 'var(--acc-card-gap, 1rem)' }}>
       {/* Avatar */}
       <section style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{ position: 'relative' }}>
@@ -318,14 +322,7 @@ export function ProfileDetails() {
       </section>
 
       {/* Profile completion */}
-      <section
-        style={{
-          border: '1px solid var(--border-color)',
-          borderLeft: '3px solid var(--accent)',
-          borderRadius: 'var(--radius-sm)',
-          padding: '0.85rem 1rem',
-        }}
-      >
+      <AccountCard accent="default-highlight">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
           <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Profile {completion.percent}% complete
@@ -345,16 +342,13 @@ export function ProfileDetails() {
             }}
           />
         </div>
-      </section>
+      </AccountCard>
 
       {/* Referral code */}
       {profile?.referral_code && (
-        <section
+        <AccountCard
+          accent="default-highlight"
           style={{
-            border: '1px solid var(--border-color)',
-            borderLeft: '3px solid var(--accent)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '0.85rem 1rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -371,32 +365,21 @@ export function ProfileDetails() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={handleCopyReferralCode}
-              title="Copy referral code"
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-                padding: '0.5rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
-                background: 'var(--layer-0)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
-              }}
-            >
-              <Copy size={14} /> Copy
-            </button>
-            <button
-              type="button"
+            <AccountButton compact variant="secondary" onClick={handleCopyReferralCode} title="Copy referral code" leftIcon={<Copy size={14} />}>
+              Copy
+            </AccountButton>
+            <AccountButton
+              compact
+              variant="secondary"
               onClick={handleShareReferralWhatsApp}
               title="Share via WhatsApp"
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-                padding: '0.5rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid #25D366',
-                background: '#25D366', color: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
-              }}
+              leftIcon={<MessageCircle size={14} />}
+              style={{ borderColor: '#25D366', background: '#25D366', color: '#fff' }}
             >
-              <MessageCircle size={14} /> Share
-            </button>
+              Share
+            </AccountButton>
           </div>
-        </section>
+        </AccountCard>
       )}
 
       {/* Info cards */}
@@ -404,13 +387,11 @@ export function ProfileDetails() {
         {infoCards.map((item) => {
           const Icon = item.icon;
           return (
-            <div
+            <AccountCard
               key={item.label}
+              accent="default-highlight"
+              hoverable
               style={{
-                border: '1px solid var(--border-color)',
-                borderLeft: '3px solid var(--accent)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '0.85rem',
                 display: 'flex',
                 gap: '0.7rem',
                 alignItems: 'flex-start',
@@ -435,25 +416,21 @@ export function ProfileDetails() {
                 <p style={{ margin: '0 0 0.2rem', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 700 }}>{item.label}</p>
                 <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.92rem', fontWeight: 800, overflowWrap: 'anywhere' }}>{item.value}</p>
               </div>
-            </div>
+            </AccountCard>
           );
         })}
       </section>
 
       {/* Membership tier */}
-      <section
+      <AccountCard
+        accent={profile?.is_vip ? 'vip' : 'default-highlight'}
+        hoverable
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '1rem',
           flexWrap: 'wrap',
-          border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-sm)',
-          padding: '0.85rem 1rem',
-          background: profile?.is_vip
-            ? 'linear-gradient(120deg, color-mix(in srgb, #FBBF24 18%, transparent), color-mix(in srgb, #F59E0B 8%, transparent))'
-            : 'var(--layer-0)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
@@ -488,7 +465,7 @@ export function ProfileDetails() {
         >
           <Sparkles size={14} /> See VIP benefits
         </button>
-      </section>
+      </AccountCard>
 
       {showVipBenefits && (
         <div
@@ -530,7 +507,18 @@ export function ProfileDetails() {
         </div>
       )}
 
-      <form onSubmit={handleSave} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', padding: '1rem', display: 'grid', gap: '0.9rem' }}>
+      <form
+        onSubmit={handleSave}
+        style={{
+          border: 'var(--acc-card-border, 1px solid var(--border-color))',
+          borderRadius: 'var(--acc-card-radius, var(--radius-sm))',
+          boxShadow: 'var(--acc-card-shadow, none)',
+          background: 'var(--layer-0)',
+          padding: 'var(--acc-card-padding, 1rem)',
+          display: 'grid',
+          gap: '0.9rem',
+        }}
+      >
         <h2 style={{ margin: 0, fontSize: '1.05rem' }}>Edit Profile</h2>
 
         <label style={{ display: 'grid', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700 }}>
@@ -579,30 +567,15 @@ export function ProfileDetails() {
           </label>
         </div>
 
-        <button
-          type="submit"
-          disabled={saving}
-          style={{
-            justifySelf: 'start',
-            padding: '0.68rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--accent)',
-            background: 'var(--gradient-primary)',
-            color: '#fff',
-            cursor: saving ? 'wait' : 'pointer',
-            fontSize: '0.92rem',
-            fontWeight: 800,
-          }}
-        >
+        <AccountButton type="submit" variant="primary" disabled={saving} style={{ justifySelf: 'start' }}>
           {saving ? 'Saving...' : 'Save Profile'}
-        </button>
+        </AccountButton>
       </form>
-      </>
-      )}
-
-      {activeTab === 'security' && (
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          <div className={styles.securityCard}>
+      </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 'var(--acc-card-gap, 1rem)' }}>
+          <AccountCard>
+            <div style={{ display: 'grid', gap: '0.9rem' }}>
             <h2 style={{ margin: 0, fontSize: '1.05rem' }}>Linked Contact Methods</h2>
             <p style={{ margin: '-0.4rem 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
               You sign in with a one-time code. Link both an email and a phone number so you can use either.
@@ -627,20 +600,21 @@ export function ProfileDetails() {
                 setProfile((prev) => prev ? { ...prev, phone: value } : prev);
               }}
             />
-          </div>
+            </div>
+          </AccountCard>
 
-          <div className={styles.dangerCard}>
+          <AccountCard accent="danger" className={styles.dangerCard}>
             <h2 style={{ margin: 0, fontSize: '1.05rem' }}>Sign Out Everywhere</h2>
             <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
               End your session on this device and every other device you&apos;re signed in on.
             </p>
-            <button type="button" disabled={signingOut} onClick={handleSignOutEverywhere} className={styles.dangerButton}>
-              <LogOut size={15} />
+            <AccountButton variant="danger" disabled={signingOut} onClick={handleSignOutEverywhere} leftIcon={<LogOut size={15} />} style={{ justifySelf: 'start' }}>
               {signingOut ? 'Signing out...' : 'Sign out everywhere'}
-            </button>
-          </div>
+            </AccountButton>
+          </AccountCard>
         </div>
       )}
+      </AccountTabs>
     </div>
   );
 }
@@ -723,9 +697,9 @@ function ContactLinkRow({ icon: Icon, label, currentValue, placeholder, prefix, 
           <p className={styles.linkValue}>{currentValue || 'Not linked'}</p>
         </div>
         {!editing && otp.stage === 'idle' && (
-          <button type="button" onClick={() => setEditing(true)} className={styles.linkActionButton}>
+          <AccountButton compact variant="secondary" onClick={() => setEditing(true)}>
             {currentValue ? 'Change' : 'Add'}
-          </button>
+          </AccountButton>
         )}
       </div>
 
@@ -751,8 +725,8 @@ function ContactLinkRow({ icon: Icon, label, currentValue, placeholder, prefix, 
             />
           )}
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button type="button" onClick={otp.send} className={styles.linkActionButton}>Send OTP</button>
-            <button type="button" onClick={cancel} className={styles.linkCancelButton}>Cancel</button>
+            <AccountButton compact variant="primary" onClick={otp.send}>Send OTP</AccountButton>
+            <AccountButton compact variant="secondary" onClick={cancel}>Cancel</AccountButton>
           </div>
         </div>
       )}
@@ -771,13 +745,13 @@ function ContactLinkRow({ icon: Icon, label, currentValue, placeholder, prefix, 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             {otp.stage !== 'success' && (
               otp.canResend ? (
-                <button type="button" onClick={otp.send} className={styles.linkActionButton}>Resend OTP</button>
+                <AccountButton compact variant="secondary" onClick={otp.send}>Resend OTP</AccountButton>
               ) : (
                 <span className={styles.linkHint}>Resend in {otp.secondsLeft}s</span>
               )
             )}
             {otp.stage !== 'success' && (
-              <button type="button" onClick={cancel} className={styles.linkCancelButton}>Cancel</button>
+              <AccountButton compact variant="secondary" onClick={cancel}>Cancel</AccountButton>
             )}
           </div>
         </div>

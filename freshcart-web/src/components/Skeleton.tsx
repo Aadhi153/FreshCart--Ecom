@@ -1,5 +1,8 @@
+'use client';
+
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import styles from './Skeleton.module.css';
 
 export function Skeleton({ style, className }: { style?: React.CSSProperties; className?: string }) {
@@ -28,8 +31,15 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, heading, subtext, ctaHref, ctaLabel, ctaOnClick }: EmptyStateProps) {
+  const reduceMotion = useReducedMotion();
+
   return (
-    <div className={styles.emptyState}>
+    <motion.div
+      className={styles.emptyState}
+      initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: reduceMotion ? 0 : 0.3, ease: 'easeOut' }}
+    >
       <div className={styles.emptyStateIcon}>{icon}</div>
       <h3 className={styles.emptyStateHeading}>{heading}</h3>
       {subtext && <p className={styles.emptyStateSubtext}>{subtext}</p>}
@@ -41,7 +51,7 @@ export function EmptyState({ icon, heading, subtext, ctaHref, ctaLabel, ctaOnCli
           {ctaLabel}
         </button>
       )}
-    </div>
+    </motion.div>
   );
 }
 

@@ -1,7 +1,9 @@
 .formCard {
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 1rem;
+  border: var(--acc-card-border, 1px solid var(--border-color));
+  border-radius: var(--acc-card-radius, var(--radius-sm));
+  box-shadow: var(--acc-card-shadow, none);
+  background: var(--layer-0);
+  padding: var(--acc-card-padding, 1rem);
   display: grid;
   gap: 0.8rem;
 }
@@ -101,25 +103,6 @@
   flex-wrap: wrap;
 }
 
-.locationButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 0.85rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--accent);
-  background: transparent;
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.locationButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .attributionText {
   margin: 0;
   font-size: 0.7rem;
@@ -146,17 +129,6 @@
   color: #B91C1C;
 }
 
-.submitButton {
-  justify-self: start;
-  padding: 0.65rem 1.1rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--accent);
-  background: var(--gradient-primary);
-  color: #fff;
-  cursor: pointer;
-  font-weight: 800;
-}
-
 .message {
   margin: 0;
   color: var(--accent);
@@ -170,19 +142,14 @@
   gap: 0.8rem;
 }
 
-.card {
+.addressCard {
   position: relative;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.95rem;
   display: grid;
   gap: 0.4rem;
-  transition: border-color var(--transition-base);
 }
 
 .cardDefault {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
 }
 
 .cardTop {
@@ -236,21 +203,6 @@
   gap: 0.6rem;
   margin-top: 0.6rem;
   flex-wrap: wrap;
-}
-
-.actionButton {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.4rem 0.7rem;
-  cursor: pointer;
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: 0.82rem;
-}
-
-.actionButtonDanger {
-  color: #B91C1C;
 }
 
 .confirmRow {
