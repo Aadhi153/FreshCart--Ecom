@@ -8,7 +8,8 @@ import {
   Star,
   Settings,
   LogOut,
-  Leaf
+  Leaf,
+  RotateCcw
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 
@@ -16,6 +17,7 @@ const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/products', label: 'Products', icon: Package },
   { path: '/orders', label: 'Orders', icon: ShoppingBag },
+  { path: '/returns', label: 'Returns', icon: RotateCcw },
   { path: '/customers', label: 'Customers', icon: Users },
   { path: '/promotions', label: 'Promotions', icon: Tag },
   { path: '/reviews', label: 'Reviews', icon: Star },

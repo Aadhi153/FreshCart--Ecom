@@ -10,6 +10,7 @@ import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import ProductNew from './pages/ProductNew';
 import Orders from './pages/Orders';
+import Returns from './pages/Returns';
 import Customers from './pages/Customers';
 import Promotions from './pages/Promotions';
 import PromotionNew from './pages/PromotionNew';
@@ -25,6 +26,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',
   '/products': 'Products',
   '/orders': 'Orders',
+  '/returns': 'Returns',
   '/customers': 'Customers',
   '/promotions': 'Promotions',
   '/reviews': 'Reviews',
@@ -131,6 +133,7 @@ export default function App() {
                     <Route path="products" element={<Products />} />
                     <Route path="products/:id" element={<ProductDetail />} />
                     <Route path="orders" element={<Orders />} />
+                    <Route path="returns" element={<Returns />} />
                     <Route path="customers" element={<Customers />} />
                     <Route path="promotions" element={<Promotions />} />
                     <Route path="reviews" element={<Reviews />} />

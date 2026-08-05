@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-import type { Product, Order, Profile, Category, Promotion, Review } from '@freshcart/types';
+import type { Product, Order, Profile, Category, Promotion, Review, ReturnRequest, ReturnRequestStatus } from '@freshcart/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -266,6 +266,29 @@ export async function deleteReview(id: string): Promise<void> {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.error || 'Failed to delete review');
   }
+}
+
+// ── Returns ───────────────────────────────────────────────────────────────────
+export async function getReturnRequests(): Promise<ReturnRequest[]> {
+  const res = await fetch(`${API_URL}/api/returns`, { headers: await authHeaders() });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to fetch return requests');
+  }
+  return res.json();
+}
+
+export async function updateReturnRequestStatus(id: string, status: ReturnRequestStatus): Promise<ReturnRequest> {
+  const res = await fetch(`${API_URL}/api/returns/${id}/status`, {
+    method: 'PATCH',
+    headers: await authHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to update return request');
+  }
+  return res.json();
 }
 
 // ── Orders ────────────────────────────────────────────────────────────────────
