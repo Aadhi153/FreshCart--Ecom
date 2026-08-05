@@ -2,19 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Calendar, Camera, CheckCircle2, Copy, Crown, Gift, KeyRound, LogOut, Mail, MessageCircle, Phone, ShieldCheck, Sparkles, User as UserIcon, X, XCircle } from 'lucide-react';
+import { Calendar, Camera, CheckCircle2, Crown, Mail, Phone, ShieldCheck, Sparkles, X, XCircle } from 'lucide-react';
 import type { PublicOffer } from '@freshcart/types';
 import { supabase } from '../lib/supabase';
 import { uploadAvatarImage, getPublicOffers } from '../lib/api';
 import { useProfileSummaryStore } from '../lib/store';
-import { useOtpChallenge } from '../lib/useOtpChallenge';
 import { useToast } from './ToastProvider';
 import { Avatar } from './Avatar';
-import { OtpInput } from './OtpInput';
-import { ToggleSwitch } from './ToggleSwitch';
 import { AccountCard } from './AccountCard';
 import { AccountButton } from './AccountButton';
-import { AccountTabs } from './AccountTabs';
 import styles from './ProfileDetails.module.css';
 
 interface ProfileRow {
@@ -23,31 +19,23 @@ interface ProfileRow {
   phone: string | null;
   role: string;
   created_at: string;
-  notification_preferences: {
-    email?: boolean;
-    push?: boolean;
-  } | null;
   avatar_url: string | null;
   preferred_payment: string | null;
-  referral_code: string | null;
   is_vip: boolean | null;
 }
 
-// Underline-only field: no box, just a bottom border — the .underlineField class in
-// ProfileDetails.module.css supplies the focus-state border color (can't do :focus in
-// an inline style object), this is the shared base for layout/typography.
+// Boxed field: the .underlineField class in ProfileDetails.module.css supplies the
+// focus-state border color (can't do :focus in an inline style object), this is the
+// shared base for layout/typography.
 const fieldStyle = {
   width: '100%',
-  padding: '0.5rem 0',
-  border: 'none',
-  borderBottom: '1px solid var(--acc-field-border, var(--border-color))',
-  borderRadius: 0,
-  background: 'transparent',
+  padding: '0.7rem 0.8rem',
+  border: '1px solid var(--acc-field-border, var(--border-color))',
+  borderRadius: 'var(--radius-sm)',
+  background: 'var(--layer-0)',
   color: 'var(--text-primary)',
   fontSize: '0.95rem',
 };
-
-const PHONE_REGEX = /^\d{10}$/;
 
 const PAYMENT_OPTIONS = [
   { value: 'cod', label: 'Cash on Delivery' },
@@ -66,14 +54,10 @@ export function ProfileDetails() {
   const [phone, setPhone] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [emailNotif, setEmailNotif] = useState(true);
-  const [pushNotif, setPushNotif] = useState(true);
   const [preferredPayment, setPreferredPayment] = useState('cod');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'security'>('overview');
-  const [signingOut, setSigningOut] = useState(false);
   const [showVipBenefits, setShowVipBenefits] = useState(false);
   const [vipOffers, setVipOffers] = useState<PublicOffer[] | null>(null);
 
@@ -114,7 +98,7 @@ export function ProfileDetails() {
 
       const { data, error: profileError } = await supabase
         .from('profiles')
-        .select('email, full_name, phone, role, created_at, notification_preferences, avatar_url, preferred_payment, referral_code, is_vip')
+        .select('email, full_name, phone, role, created_at, avatar_url, preferred_payment, is_vip')
         .eq('id', userData.user.id)
         .maybeSingle();
 
@@ -126,8 +110,6 @@ export function ProfileDetails() {
       setFullName(data?.full_name || String(userData.user.user_metadata?.full_name || ''));
       setPhone(data?.phone || userData.user.phone || '');
       setAvatarUrl(data?.avatar_url || null);
-      setEmailNotif(data?.notification_preferences?.email !== false);
-      setPushNotif(data?.notification_preferences?.push !== false);
       setPreferredPayment(data?.preferred_payment || 'cod');
       setProfileSummary({
         fullName: data?.full_name || String(userData.user.user_metadata?.full_name || ''),
@@ -175,11 +157,10 @@ export function ProfileDetails() {
         id: user.id,
         email: user.email || null,
         full_name: fullName.trim() || null,
-        notification_preferences: { email: emailNotif, push: pushNotif },
         preferred_payment: preferredPayment,
         updated_at: new Date().toISOString(),
       })
-      .select('email, full_name, phone, role, created_at, notification_preferences, avatar_url, preferred_payment, referral_code, is_vip')
+      .select('email, full_name, phone, role, created_at, avatar_url, preferred_payment, is_vip')
       .single();
 
     if (updateError) {
@@ -196,32 +177,6 @@ export function ProfileDetails() {
     setProfileSummary({ fullName: fullName.trim() });
     showToast('Profile saved successfully.', 'success');
     setSaving(false);
-  };
-
-  const handleCopyReferralCode = async () => {
-    if (!profile?.referral_code) return;
-    try {
-      await navigator.clipboard.writeText(profile.referral_code);
-      showToast('Referral code copied!', 'success');
-    } catch {
-      showToast('Could not copy — copy it manually.', 'error');
-    }
-  };
-
-  const handleShareReferralWhatsApp = () => {
-    if (!profile?.referral_code) return;
-    const link = `${window.location.origin}/auth?ref=${profile.referral_code}`;
-    const message = `Hey! Use my code ${profile.referral_code} to get ₹50 off your first FreshCart order 🛒 ${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleSignOutEverywhere = async () => {
-    setSigningOut(true);
-    const { error } = await supabase.auth.signOut({ scope: 'global' });
-    if (error) {
-      showToast(error.message, 'error');
-      setSigningOut(false);
-    }
   };
 
   const email = profile?.email || user?.email || 'No email stored';
@@ -261,134 +216,87 @@ export function ProfileDetails() {
     <div style={{ display: 'grid', gap: '1rem', marginBottom: '2rem' }}>
       {loadError && <p style={{ margin: 0, color: '#B91C1C', fontSize: '0.88rem', fontWeight: 700 }}>{loadError}</p>}
 
-      <div className={styles.tabRow}>
-        <button
-          type="button"
-          onClick={() => setActiveTab('overview')}
-          className={`${styles.tabButton} ${activeTab === 'overview' ? styles.tabButtonActive : ''}`}
-        >
-          <UserIcon size={15} />
-          Overview
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('security')}
-          className={`${styles.tabButton} ${activeTab === 'security' ? styles.tabButtonActive : ''}`}
-        >
-          <KeyRound size={15} />
-          Security
-        </button>
-      </div>
-
-      <AccountTabs activeKey={activeTab}>
-      {activeTab === 'overview' ? (
-      <div style={{ display: 'grid', gap: '1.75rem' }}>
-      {/* Avatar */}
-      <section style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ position: 'relative' }}>
-          <Avatar name={fullName} email={email} avatarUrl={avatarUrl} size={84} />
-          <label
-            title="Change profile photo"
-            style={{
-              position: 'absolute',
-              bottom: -2,
-              right: -2,
-              width: 30,
-              height: 30,
-              borderRadius: '50%',
-              background: 'var(--gradient-primary)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '2px solid var(--layer-0)',
-              cursor: uploadingAvatar ? 'wait' : 'pointer',
-            }}
-          >
-            <Camera size={14} />
-            <input
-              type="file"
-              accept="image/*"
-              disabled={uploadingAvatar}
-              style={{ display: 'none' }}
-              onChange={handleAvatarChange}
-            />
-          </label>
-        </div>
-        <div>
-          <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            {fullName || 'Add your name'}
-          </p>
-          <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            {uploadingAvatar ? 'Uploading photo...' : 'Click the camera icon to update your photo'}
-          </p>
-        </div>
-      </section>
-
-      {/* Profile completion */}
-      <section>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
-          <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            Profile {completion.percent}% complete
-          </p>
-          {completion.next && (
-            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{completion.next}</p>
-          )}
-        </div>
-        <div style={{ height: 8, borderRadius: 'var(--radius-full)', background: 'var(--layer-2)', overflow: 'hidden' }}>
-          <div
-            style={{
-              height: '100%',
-              width: `${completion.percent}%`,
-              background: 'var(--gradient-primary)',
-              borderRadius: 'var(--radius-full)',
-              transition: 'width 0.3s ease',
-            }}
-          />
-        </div>
-      </section>
-
-      {/* Referral code */}
-      {profile?.referral_code && (
-        <section
+      <div style={{ display: 'grid', gap: '1.25rem' }}>
+      {/* Hero: cover banner + avatar + name + profile completion */}
+      <AccountCard style={{ padding: 0, overflow: 'hidden' }}>
+        <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '1rem',
-            paddingBottom: '1.5rem',
-            borderBottom: '1px solid var(--border-color)',
+            height: 96,
+            background: 'var(--gradient-hero, var(--gradient-primary))',
           }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
-            <Gift size={18} color="var(--accent)" />
-            <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Your Referral Code</p>
-              <p style={{ margin: '0.15rem 0 0', fontSize: '1rem', fontWeight: 800, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
-                {profile.referral_code}
-              </p>
+          aria-hidden="true"
+        />
+        <div style={{ padding: '0 1.5rem 1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', marginTop: -40 }}>
+            <div style={{ position: 'relative' }}>
+              <div style={{ border: '4px solid var(--layer-0)', borderRadius: '50%', background: 'var(--layer-0)' }}>
+                <Avatar name={fullName} email={email} avatarUrl={avatarUrl} size={84} />
+              </div>
+              <label
+                title="Change profile photo"
+                style={{
+                  position: 'absolute',
+                  bottom: -2,
+                  right: -2,
+                  width: 30,
+                  height: 30,
+                  borderRadius: '50%',
+                  background: 'var(--gradient-primary)',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid var(--layer-0)',
+                  cursor: uploadingAvatar ? 'wait' : 'pointer',
+                }}
+              >
+                <Camera size={14} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingAvatar}
+                  style={{ display: 'none' }}
+                  onChange={handleAvatarChange}
+                />
+              </label>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-            <AccountButton compact variant="secondary" onClick={handleCopyReferralCode} title="Copy referral code" leftIcon={<Copy size={14} />}>
-              Copy
-            </AccountButton>
-            <AccountButton
-              compact
-              variant="secondary"
-              onClick={handleShareReferralWhatsApp}
-              title="Share via WhatsApp"
-              leftIcon={<MessageCircle size={14} />}
-              style={{ borderColor: '#25D366', background: '#25D366', color: '#fff' }}
-            >
-              Share
-            </AccountButton>
+          <div style={{ marginTop: '0.75rem' }}>
+            <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              {fullName || 'Add your name'}
+            </p>
+            <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              {uploadingAvatar ? 'Uploading photo...' : 'Click the camera icon to update your photo'}
+            </p>
           </div>
-        </section>
-      )}
+
+          {/* Profile completion */}
+          <div style={{ marginTop: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
+              <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Profile {completion.percent}% complete
+              </p>
+              {completion.next && (
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{completion.next}</p>
+              )}
+            </div>
+            <div style={{ height: 8, borderRadius: 'var(--radius-full)', background: 'var(--layer-2)', overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%',
+                  width: `${completion.percent}%`,
+                  background: 'var(--gradient-primary)',
+                  borderRadius: 'var(--radius-full)',
+                  transition: 'width 0.3s ease',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </AccountCard>
 
       {/* Info cards */}
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.5rem 1.25rem' }}>
+      <AccountCard style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.5rem 1.25rem' }}>
         {infoCards.map((item) => {
           const Icon = item.icon;
           return (
@@ -413,19 +321,18 @@ export function ProfileDetails() {
             </div>
           );
         })}
-      </section>
+      </AccountCard>
 
       {/* Membership tier */}
-      <section
+      <AccountCard
+        accent={profile?.is_vip ? 'vip' : 'default'}
+        hoverable
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '1rem',
           flexWrap: 'wrap',
-          padding: '1.25rem 0',
-          borderTop: '1px solid var(--border-color)',
-          borderBottom: '1px solid var(--border-color)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
@@ -460,7 +367,7 @@ export function ProfileDetails() {
         >
           <Sparkles size={14} /> See VIP benefits
         </button>
-      </section>
+      </AccountCard>
 
       {showVipBenefits && (
         <div
@@ -505,13 +412,16 @@ export function ProfileDetails() {
       <form
         onSubmit={handleSave}
         style={{
+          border: 'var(--acc-card-border, 1px solid var(--border-color))',
+          borderRadius: 'var(--acc-card-radius, var(--radius-sm))',
+          boxShadow: 'var(--acc-card-shadow, none)',
+          background: 'var(--layer-0)',
+          padding: 'var(--acc-card-padding, 1.5rem)',
           display: 'grid',
-          gap: '1.6rem',
-          paddingTop: '0.5rem',
-          borderTop: '1px solid var(--border-color)',
+          gap: '1.1rem',
         }}
       >
-        <h2 style={{ margin: '0.5rem 0 0', fontSize: 'var(--acc-text-section-title-size, 1.05rem)', fontWeight: 700 }}>Edit Profile</h2>
+        <h2 style={{ margin: 0, fontSize: 'var(--acc-text-section-title-size, 1.05rem)', fontWeight: 700 }}>Edit Profile</h2>
 
         <label style={{ display: 'grid', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700 }}>
           Full Name
@@ -528,23 +438,13 @@ export function ProfileDetails() {
           Email
           <input value={email} readOnly className={styles.underlineField} style={{ ...fieldStyle, color: 'var(--text-secondary)' }} />
           <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
-            Manage email and phone number in the Security tab.
+            Manage email and phone number on the Security page.
           </span>
         </label>
 
         {/* Preferences */}
         <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.9rem', display: 'grid', gap: '0.8rem' }}>
           <h2 style={{ margin: 0, fontSize: '1.05rem' }}>Preferences</h2>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>Email notifications</span>
-            <ToggleSwitch checked={emailNotif} onChange={setEmailNotif} label="Toggle email notifications" />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>Push notifications</span>
-            <ToggleSwitch checked={pushNotif} onChange={setPushNotif} label="Toggle push notifications" />
-          </div>
 
           <label style={{ display: 'grid', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700 }}>
             Preferred Payment
@@ -566,191 +466,6 @@ export function ProfileDetails() {
         </AccountButton>
       </form>
       </div>
-      ) : (
-        <div style={{ display: 'grid', gap: 'var(--acc-card-gap, 1rem)' }}>
-          <AccountCard>
-            <div style={{ display: 'grid', gap: '0.9rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1.05rem' }}>Linked Contact Methods</h2>
-            <p style={{ margin: '-0.4rem 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-              You sign in with a one-time code. Link both an email and a phone number so you can use either.
-            </p>
-            <ContactLinkRow
-              icon={Mail}
-              label="Email"
-              currentValue={profile?.email || null}
-              placeholder="you@example.com"
-              onLinked={(value) => {
-                setProfile((prev) => prev ? { ...prev, email: value } : prev);
-              }}
-            />
-            <ContactLinkRow
-              icon={Phone}
-              label="Phone Number"
-              currentValue={phone || null}
-              placeholder="98765 43210"
-              prefix="+91"
-              onLinked={(value) => {
-                setPhone(value);
-                setProfile((prev) => prev ? { ...prev, phone: value } : prev);
-              }}
-            />
-            </div>
-          </AccountCard>
-
-          <AccountCard accent="danger" className={styles.dangerCard}>
-            <h2 style={{ margin: 0, fontSize: '1.05rem' }}>Sign Out Everywhere</h2>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
-              End your session on this device and every other device you&apos;re signed in on.
-            </p>
-            <AccountButton variant="danger" disabled={signingOut} onClick={handleSignOutEverywhere} leftIcon={<LogOut size={15} />} style={{ justifySelf: 'start' }}>
-              {signingOut ? 'Signing out...' : 'Sign out everywhere'}
-            </AccountButton>
-          </AccountCard>
-        </div>
-      )}
-      </AccountTabs>
-    </div>
-  );
-}
-
-interface ContactLinkRowProps {
-  icon: typeof Mail;
-  label: string;
-  currentValue: string | null;
-  placeholder: string;
-  prefix?: string;
-  onLinked: (value: string) => void;
-}
-
-function ContactLinkRow({ icon: Icon, label, currentValue, placeholder, prefix, onLinked }: ContactLinkRowProps) {
-  const { showToast } = useToast();
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState('');
-  const isPhone = Boolean(prefix);
-
-  const otp = useOtpChallenge({
-    cooldownSeconds: 30,
-    sendOtp: async () => {
-      const cleaned = value.trim();
-      if (isPhone) {
-        if (!PHONE_REGEX.test(cleaned)) throw new Error('Enter a valid 10-digit phone number.');
-        const { error } = await supabase.auth.updateUser({ phone: `${prefix}${cleaned}` });
-        if (error) throw error;
-      } else {
-        if (!cleaned) throw new Error('Enter an email address.');
-        const { error } = await supabase.auth.updateUser({ email: cleaned });
-        if (error) throw error;
-      }
-    },
-    verifyOtp: async (code) => {
-      const cleaned = value.trim();
-      const finalValue = isPhone ? `${prefix}${cleaned}` : cleaned;
-      const { error } = isPhone
-        ? await supabase.auth.verifyOtp({ phone: finalValue, token: code, type: 'phone_change' })
-        : await supabase.auth.verifyOtp({ email: finalValue, token: code, type: 'email_change' });
-      if (error) throw error;
-
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData.user) {
-        await supabase
-          .from('profiles')
-          .update({ [isPhone ? 'phone' : 'email']: finalValue, updated_at: new Date().toISOString() })
-          .eq('id', userData.user.id);
-      }
-
-      onLinked(finalValue);
-      showToast(`${label} linked successfully.`, 'success');
-    },
-  });
-
-  useEffect(() => {
-    if (otp.stage !== 'success') return;
-    const timeout = setTimeout(() => {
-      setEditing(false);
-      setValue('');
-      otp.reset();
-    }, 1200);
-    return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [otp.stage]);
-
-  const cancel = () => {
-    setEditing(false);
-    setValue('');
-    otp.reset();
-  };
-
-  return (
-    <div className={styles.linkRow}>
-      <div className={styles.linkRowHeader}>
-        <div className={styles.linkIcon}>
-          <Icon size={16} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p className={styles.linkLabel}>{label}</p>
-          <p className={styles.linkValue}>{currentValue || 'Not linked'}</p>
-        </div>
-        {!editing && otp.stage === 'idle' && (
-          <AccountButton compact variant="secondary" onClick={() => setEditing(true)}>
-            {currentValue ? 'Change' : 'Add'}
-          </AccountButton>
-        )}
-      </div>
-
-      {editing && otp.stage === 'idle' && (
-        <div className={styles.linkEditRow}>
-          {isPhone ? (
-            <div className={styles.phoneWrapperSmall}>
-              <span>{prefix}</span>
-              <input
-                value={value}
-                onChange={(event) => setValue(event.target.value.replace(/\D/g, '').slice(0, 10))}
-                placeholder={placeholder}
-                inputMode="numeric"
-              />
-            </div>
-          ) : (
-            <input
-              value={value}
-              onChange={(event) => setValue(event.target.value)}
-              placeholder={placeholder}
-              type="email"
-              className={styles.underlineField}
-              style={fieldStyle}
-            />
-          )}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <AccountButton compact variant="primary" onClick={otp.send}>Send OTP</AccountButton>
-            <AccountButton compact variant="secondary" onClick={cancel}>Cancel</AccountButton>
-          </div>
-        </div>
-      )}
-
-      {otp.stage === 'sending' && <p className={styles.linkHint}>Sending code...</p>}
-
-      {(otp.stage === 'sent' || otp.stage === 'verifying' || otp.stage === 'success') && (
-        <div className={styles.linkOtpBlock}>
-          {otp.error && <p className={styles.linkError}>{otp.error}</p>}
-          <OtpInput
-            onComplete={otp.verify}
-            status={otp.stage === 'success' ? 'success' : otp.error ? 'error' : 'idle'}
-            errorKey={otp.errorKey}
-            disabled={otp.stage === 'verifying' || otp.stage === 'success'}
-          />
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            {otp.stage !== 'success' && (
-              otp.canResend ? (
-                <AccountButton compact variant="secondary" onClick={otp.send}>Resend OTP</AccountButton>
-              ) : (
-                <span className={styles.linkHint}>Resend in {otp.secondsLeft}s</span>
-              )
-            )}
-            {otp.stage !== 'success' && (
-              <AccountButton compact variant="secondary" onClick={cancel}>Cancel</AccountButton>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

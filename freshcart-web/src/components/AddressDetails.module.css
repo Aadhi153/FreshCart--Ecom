@@ -37,23 +37,23 @@
 
 .field {
   width: 100%;
-  padding: 0.55rem 0.1rem;
-  border: none;
-  border-bottom: 1px solid var(--acc-field-border, var(--border-color));
-  border-radius: 0;
-  background: transparent;
+  padding: 0.68rem 0.8rem;
+  border: 1px solid var(--acc-field-border, var(--border-color));
+  border-radius: var(--radius-sm);
+  background: var(--layer-0);
   color: var(--text-primary);
   font-size: 0.92rem;
   outline: none;
-  transition: border-color var(--acc-transition-fast, 150ms ease-out);
+  transition: border-color var(--acc-transition-fast, 150ms ease-out), box-shadow var(--acc-transition-fast, 150ms ease-out);
 }
 
 .field:focus {
-  border-bottom-color: var(--acc-field-border-focus, var(--primary));
+  border-color: var(--acc-field-border-focus, var(--primary));
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .fieldError {
-  border-bottom-color: #B91C1C;
+  border-color: #B91C1C;
 }
 
 .errorText {

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import type { Session } from '@supabase/supabase-js';
-import { Heart, LogOut, MapPin, Moon, Package, ShoppingCart, Sun, User, Leaf, Menu, Search, X } from 'lucide-react';
+import { Moon, ShoppingCart, Sun, User, Leaf, Menu, Search, X } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useCartStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
@@ -17,14 +17,12 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [session, setSession] = useState<Session | null>(null);
-  const [accountOpen, setAccountOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  
-  const accountRef = useRef<HTMLDivElement>(null);
+
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const cartItems = useCartStore((state) => state.items);
@@ -61,9 +59,6 @@ export function Navbar() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
-      if (!nextSession) {
-        setAccountOpen(false);
-      }
     });
 
     return () => listener.subscription.unsubscribe();
@@ -71,9 +66,6 @@ export function Navbar() {
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
-      if (!accountRef.current?.contains(event.target as Node)) {
-        setAccountOpen(false);
-      }
       if (!searchContainerRef.current?.contains(event.target as Node)) {
         setSearchOpen(false);
       }
@@ -113,26 +105,8 @@ export function Navbar() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  const accountItems = [
-    { href: '/profile', label: 'Profile', icon: User },
-    { href: '/orders', label: 'Orders', icon: Package },
-    { href: '/address', label: 'Address', icon: MapPin },
-    { href: '/wishlist', label: 'Wishlist', icon: Heart },
-  ];
-
   const handleAccountClick = () => {
-    if (!session) {
-      router.push('/auth');
-      return;
-    }
-
-    setAccountOpen((open) => !open);
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setAccountOpen(false);
-    router.push('/auth');
+    router.push(session ? '/profile' : '/auth');
   };
 
   // Secondary actions (search, theme toggle): unbordered, lighter-weight.
@@ -440,62 +414,16 @@ export function Navbar() {
 
           <span style={iconDividerStyle} aria-hidden="true" />
 
-          {/* Auth / profile */}
-          <div ref={accountRef} style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={handleAccountClick}
-              style={iconBtnStyle}
-              title={session ? 'Account menu' : 'Sign in'}
-              aria-label={session ? 'Account menu' : 'Sign in'}
-              aria-haspopup={session ? 'menu' : undefined}
-              aria-expanded={session ? accountOpen : undefined}
-            >
-              <User size={17} />
-            </button>
-
-            {session && accountOpen && (
-              <div
-                role="menu"
-                style={{
-                  position: 'absolute',
-                  top: 46,
-                  right: 0,
-                  width: 190,
-                  padding: '0.45rem',
-                  background: 'var(--layer-0)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-sm)',
-                  boxShadow: 'var(--shadow-sm)',
-                  zIndex: 300,
-                }}
-              >
-                {accountItems.map(({ href, label, icon: Icon }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => setAccountOpen(false)}
-                    role="menuitem"
-                    className="dropdown-item"
-                  >
-                    <Icon size={16} />
-                    {label}
-                  </Link>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  role="menuitem"
-                  className="dropdown-item"
-                  style={{ borderTop: '1px solid var(--border-color)', marginTop: '0.25rem', borderRadius: '0 0 var(--radius-sm) var(--radius-sm)' }}
-                >
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Auth / profile — navigates straight to the account section, no dropdown */}
+          <button
+            type="button"
+            onClick={handleAccountClick}
+            style={iconBtnStyle}
+            title={session ? 'My Account' : 'Sign in'}
+            aria-label={session ? 'My Account' : 'Sign in'}
+          >
+            <User size={17} />
+          </button>
 
           <NotificationBell session={session} iconBtnStyle={iconBtnStyle} />
 

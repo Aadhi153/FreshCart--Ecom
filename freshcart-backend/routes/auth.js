@@ -102,4 +102,36 @@ router.post('/logout', requireAuth, async (_req, res) => {
   }
 });
 
+// DELETE /api/auth/me — permanently delete the caller's own account.
+// profiles.id -> auth.users(id) ON DELETE CASCADE removes the profile row too;
+// orders.user_id -> profiles(id) ON DELETE SET NULL keeps order history intact
+// (just unlinked from any identity), which is the right behavior for an
+// e-commerce app's accounting/records — see 00000_schema_and_seed.sql.
+router.delete('/me', requireAuth, async (req, res) => {
+  try {
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(req.user.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// GET /api/auth/me/referrals — count + light list of profiles this user referred.
+// Needs supabaseAdmin: a customer's own RLS policy only lets them read their own
+// profile row, not other customers' rows filtered by referred_by.
+router.get('/me/referrals', requireAuth, async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('full_name, created_at')
+      .eq('referred_by', req.user.id)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json({ count: data.length, referrals: data });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 module.exports = router;
