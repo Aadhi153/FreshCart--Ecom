@@ -6,6 +6,8 @@ import { useCartStore, useWishlistStore } from '../lib/store';
 import { useToast } from './ToastProvider';
 import { EmptyState, ProductCardSkeleton } from './Skeleton';
 import { ProductImage } from './ProductImage';
+import { AccountCard } from './AccountCard';
+import { AccountButton } from './AccountButton';
 import { supabase } from '../lib/supabase';
 import styles from './WishlistDetails.module.css';
 
@@ -102,14 +104,12 @@ export function WishlistDetails() {
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
-          <button type="button" onClick={addAllToCart} className={`${styles.actionButton} ${styles.actionButtonPrimary}`}>
-            <ShoppingCart size={14} />
+          <AccountButton compact variant="primary" onClick={addAllToCart} leftIcon={<ShoppingCart size={14} />}>
             Move all to cart
-          </button>
-          <button type="button" onClick={clearAll} className={`${styles.actionButton} ${styles.actionButtonDanger}`}>
-            <Trash2 size={14} />
+          </AccountButton>
+          <AccountButton compact variant="danger" onClick={clearAll} leftIcon={<Trash2 size={14} />}>
             Clear all
-          </button>
+          </AccountButton>
         </div>
       </div>
 
@@ -117,8 +117,8 @@ export function WishlistDetails() {
         {sortedItems.map((item) => {
           const outOfStock = stockById[String(item.id)] === false;
           return (
-            <article key={item.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', padding: '0.9rem', display: 'grid', gap: '0.55rem' }}>
-              <div style={{ position: 'relative', width: '100%', height: 110, borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+            <AccountCard key={item.id} hoverable style={{ display: 'grid', gap: '0.55rem' }}>
+              <div style={{ position: 'relative', width: '100%', height: 110, borderRadius: 'var(--acc-thumbnail-radius, var(--radius-sm))', overflow: 'hidden' }}>
                 <ProductImage src={item.image} alt={item.name} sizes="190px" imageStyle={{ objectFit: 'cover' }} />
               </div>
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 700 }}>{item.category || 'Product'}</p>
@@ -128,31 +128,30 @@ export function WishlistDetails() {
                 <p style={{ margin: 0, color: '#B91C1C', fontWeight: 700, fontSize: '0.78rem' }}>Out of stock</p>
               )}
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
+                <AccountButton
+                  compact
+                  variant="primary"
                   disabled={outOfStock}
                   onClick={() => {
                     addCartItem({ id: item.id, productId: String(item.id), name: item.name, price: item.price, image: item.image, category: item.category });
                     showToast(`${item.name} added to cart`, 'success');
                   }}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--accent)', background: outOfStock ? 'var(--layer-1)' : 'var(--gradient-primary)',
-                    color: outOfStock ? 'var(--text-secondary)' : '#fff', cursor: outOfStock ? 'not-allowed' : 'pointer', fontWeight: 800,
-                    opacity: outOfStock ? 0.7 : 1,
+                  leftIcon={<ShoppingCart size={15} />}
+                >
+                  Add
+                </AccountButton>
+                <AccountButton
+                  compact
+                  variant="danger"
+                  onClick={() => {
+                    removeWishlistItem(item.id);
+                    showToast('Removed from wishlist', 'success');
                   }}
                 >
-                  <ShoppingCart size={15} />
-                  Add
-                </button>
-                <button type="button" onClick={() => {
-                  removeWishlistItem(item.id);
-                  showToast('Removed from wishlist', 'success');
-                }} style={{ padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'transparent', color: '#B91C1C', cursor: 'pointer', fontWeight: 800 }}>
                   Remove
-                </button>
+                </AccountButton>
               </div>
-            </article>
+            </AccountCard>
           );
         })}
       </div>
