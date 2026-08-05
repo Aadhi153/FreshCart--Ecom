@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { Session } from '@supabase/supabase-js';
-import { Apple, Carrot, Cherry, Citrus, Heart, Leaf, MapPin, Package, User } from 'lucide-react';
+import { Heart, MapPin, Package, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useProfileSummaryStore } from '../lib/store';
 import { Avatar } from './Avatar';
@@ -23,10 +23,10 @@ export function AccountPageShell({ title, description, children }: AccountPageSh
   const { fullName, avatarUrl, hasLoaded, setProfileSummary } = useProfileSummaryStore();
 
   const accountLinks = [
-    { href: '/profile', label: 'Profile', detail: 'Personal details', icon: User },
-    { href: '/orders', label: 'Orders', detail: 'Purchases and status', icon: Package },
-    { href: '/address', label: 'Address', detail: 'Delivery locations', icon: MapPin },
-    { href: '/wishlist', label: 'Wishlist', detail: 'Saved products', icon: Heart },
+    { href: '/profile', label: 'Profile', icon: User },
+    { href: '/orders', label: 'Orders', icon: Package },
+    { href: '/address', label: 'Address', icon: MapPin },
+    { href: '/wishlist', label: 'Wishlist', icon: Heart },
   ];
 
   useEffect(() => {
@@ -85,14 +85,6 @@ export function AccountPageShell({ title, description, children }: AccountPageSh
 
   return (
     <main className="account-page" style={{ minHeight: '70vh', padding: '2rem 1.5rem' }}>
-      <div className="account-floaters" aria-hidden="true">
-        <span className="account-floater account-floater--apple"><Apple /></span>
-        <span className="account-floater account-floater--leaf"><Leaf /></span>
-        <span className="account-floater account-floater--citrus"><Citrus /></span>
-        <span className="account-floater account-floater--carrot"><Carrot /></span>
-        <span className="account-floater account-floater--cherry"><Cherry /></span>
-        <span className="account-floater account-floater--leaf-small"><Leaf /></span>
-      </div>
       <section
         className="account-layout"
         style={{
@@ -108,23 +100,22 @@ export function AccountPageShell({ title, description, children }: AccountPageSh
             background: 'var(--layer-0)',
             border: 'var(--acc-card-border, 1px solid var(--border-color))',
             borderRadius: 'var(--acc-card-radius, var(--radius-lg))',
-            boxShadow: 'var(--acc-card-shadow, var(--shadow-sm))',
-            padding: '0.85rem',
+            padding: '1.5rem 1rem',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '1rem', paddingBottom: '0.85rem', borderBottom: '1px solid var(--border-color)' }}>
-            <Avatar name={fullName} email={session?.user.email} avatarUrl={avatarUrl} size={44} />
-            <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {fullName || session?.user.email || 'My Account'}
-              </p>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {session?.user.email}
-              </p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.15rem', marginBottom: '1.75rem' }}>
+            <div style={{ marginBottom: '0.65rem' }}>
+              <Avatar name={fullName} email={session?.user.email} avatarUrl={avatarUrl} size={64} />
             </div>
+            <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.92rem', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+              {fullName || session?.user.email || 'My Account'}
+            </p>
+            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.76rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+              {session?.user.email}
+            </p>
           </div>
-          <nav style={{ display: 'grid', gap: '0.35rem' }} aria-label="Account navigation">
-            {accountLinks.map(({ href, label, detail, icon: Icon }) => {
+          <nav style={{ display: 'grid', gap: '0.2rem' }} aria-label="Account navigation">
+            {accountLinks.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;
 
               return (
@@ -135,14 +126,9 @@ export function AccountPageShell({ title, description, children }: AccountPageSh
                   aria-current={active ? 'page' : undefined}
                 >
                   <span className="account-nav-link-icon">
-                    <Icon size={15} />
+                    <Icon size={16} />
                   </span>
-                  <span>
-                    <span style={{ display: 'block', fontSize: '0.9rem' }}>{label}</span>
-                    <span style={{ display: 'block', marginTop: 2, fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                      {detail}
-                    </span>
-                  </span>
+                  <span style={{ fontSize: '0.9rem' }}>{label}</span>
                 </Link>
               );
             })}
@@ -152,11 +138,8 @@ export function AccountPageShell({ title, description, children }: AccountPageSh
         <section
           style={{
             background: 'var(--layer-0)',
-            border: 'var(--acc-card-border, 1px solid var(--border-color))',
-            borderRadius: 'var(--acc-card-radius, var(--radius-lg))',
-            boxShadow: 'var(--acc-card-shadow, var(--shadow-sm))',
-            padding: 'var(--acc-card-padding, 1.5rem)',
             minWidth: 0,
+            padding: 'var(--acc-card-padding, 1.5rem) 0',
           }}
         >
           <h1 style={{ margin: '0 0 0.35rem', fontFamily: 'var(--acc-font-display, var(--font-display))', fontSize: 'var(--acc-text-page-title-size, 2rem)', fontWeight: 'var(--acc-text-page-title-weight, 700)', letterSpacing: 'var(--acc-text-page-title-tracking, normal)', lineHeight: 1.1 }}>{title}</h1>

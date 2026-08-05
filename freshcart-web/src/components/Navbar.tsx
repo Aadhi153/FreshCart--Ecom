@@ -466,7 +466,7 @@ export function Navbar() {
                   background: 'var(--layer-0)',
                   border: '1px solid var(--border-color)',
                   borderRadius: 'var(--radius-sm)',
-                  boxShadow: 'var(--shadow-lg)',
+                  boxShadow: 'var(--shadow-sm)',
                   zIndex: 300,
                 }}
               >

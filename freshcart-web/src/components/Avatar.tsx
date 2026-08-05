@@ -21,7 +21,7 @@ interface AvatarProps {
 export function Avatar({ name, email, avatarUrl, size = 44 }: AvatarProps) {
   if (avatarUrl) {
     return (
-      <div style={{ position: 'relative', width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '2px solid var(--accent)' }}>
+      <div style={{ position: 'relative', width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
         <Image src={avatarUrl} alt={name || 'Profile photo'} fill sizes={`${size}px`} style={{ objectFit: 'cover' }} />
       </div>
     );

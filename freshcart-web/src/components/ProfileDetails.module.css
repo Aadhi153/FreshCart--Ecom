@@ -1,3 +1,12 @@
+.underlineField {
+  outline: none;
+  transition: border-color var(--acc-transition-fast, 150ms ease-out);
+}
+
+.underlineField:focus {
+  border-bottom-color: var(--acc-field-border-focus, var(--primary));
+}
+
 .tabRow {
   display: flex;
   gap: 0.4rem;

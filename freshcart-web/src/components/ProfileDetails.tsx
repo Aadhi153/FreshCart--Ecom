@@ -33,12 +33,16 @@ interface ProfileRow {
   is_vip: boolean | null;
 }
 
+// Underline-only field: no box, just a bottom border — the .underlineField class in
+// ProfileDetails.module.css supplies the focus-state border color (can't do :focus in
+// an inline style object), this is the shared base for layout/typography.
 const fieldStyle = {
   width: '100%',
-  padding: '0.7rem 0.8rem',
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--border-color)',
-  background: 'var(--layer-0)',
+  padding: '0.5rem 0',
+  border: 'none',
+  borderBottom: '1px solid var(--acc-field-border, var(--border-color))',
+  borderRadius: 0,
+  background: 'transparent',
   color: 'var(--text-primary)',
   fontSize: '0.95rem',
 };
@@ -278,7 +282,7 @@ export function ProfileDetails() {
 
       <AccountTabs activeKey={activeTab}>
       {activeTab === 'overview' ? (
-      <div style={{ display: 'grid', gap: 'var(--acc-card-gap, 1rem)' }}>
+      <div style={{ display: 'grid', gap: '1.75rem' }}>
       {/* Avatar */}
       <section style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{ position: 'relative' }}>
@@ -322,7 +326,7 @@ export function ProfileDetails() {
       </section>
 
       {/* Profile completion */}
-      <AccountCard accent="default-highlight">
+      <section>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
           <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Profile {completion.percent}% complete
@@ -342,17 +346,18 @@ export function ProfileDetails() {
             }}
           />
         </div>
-      </AccountCard>
+      </section>
 
       {/* Referral code */}
       {profile?.referral_code && (
-        <AccountCard
-          accent="default-highlight"
+        <section
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '1rem',
+            paddingBottom: '1.5rem',
+            borderBottom: '1px solid var(--border-color)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
@@ -379,58 +384,48 @@ export function ProfileDetails() {
               Share
             </AccountButton>
           </div>
-        </AccountCard>
+        </section>
       )}
 
       {/* Info cards */}
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.8rem' }}>
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.5rem 1.25rem' }}>
         {infoCards.map((item) => {
           const Icon = item.icon;
           return (
-            <AccountCard
-              key={item.label}
-              accent="default-highlight"
-              hoverable
-              style={{
-                display: 'flex',
-                gap: '0.7rem',
-                alignItems: 'flex-start',
-              }}
-            >
-              <div
+            <div key={item.label} style={{ minWidth: 0 }}>
+              <p
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'var(--primary-light)',
-                  color: 'var(--accent)',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
+                  gap: '0.35rem',
+                  margin: '0 0 0.3rem',
+                  color: 'var(--text-secondary)',
+                  fontSize: 'var(--acc-text-label-size, 0.72rem)',
+                  fontWeight: 'var(--acc-text-label-weight, 700)',
+                  textTransform: 'uppercase',
+                  letterSpacing: 'var(--acc-text-label-tracking, 0.04em)',
                 }}
               >
-                <Icon size={16} />
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <p style={{ margin: '0 0 0.2rem', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 700 }}>{item.label}</p>
-                <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.92rem', fontWeight: 800, overflowWrap: 'anywhere' }}>{item.value}</p>
-              </div>
-            </AccountCard>
+                <Icon size={13} />
+                {item.label}
+              </p>
+              <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.92rem', fontWeight: 800, overflowWrap: 'anywhere' }}>{item.value}</p>
+            </div>
           );
         })}
       </section>
 
       {/* Membership tier */}
-      <AccountCard
-        accent={profile?.is_vip ? 'vip' : 'default-highlight'}
-        hoverable
+      <section
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '1rem',
           flexWrap: 'wrap',
+          padding: '1.25rem 0',
+          borderTop: '1px solid var(--border-color)',
+          borderBottom: '1px solid var(--border-color)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
@@ -465,7 +460,7 @@ export function ProfileDetails() {
         >
           <Sparkles size={14} /> See VIP benefits
         </button>
-      </AccountCard>
+      </section>
 
       {showVipBenefits && (
         <div
@@ -510,16 +505,13 @@ export function ProfileDetails() {
       <form
         onSubmit={handleSave}
         style={{
-          border: 'var(--acc-card-border, 1px solid var(--border-color))',
-          borderRadius: 'var(--acc-card-radius, var(--radius-sm))',
-          boxShadow: 'var(--acc-card-shadow, none)',
-          background: 'var(--layer-0)',
-          padding: 'var(--acc-card-padding, 1rem)',
           display: 'grid',
-          gap: '0.9rem',
+          gap: '1.6rem',
+          paddingTop: '0.5rem',
+          borderTop: '1px solid var(--border-color)',
         }}
       >
-        <h2 style={{ margin: 0, fontSize: '1.05rem' }}>Edit Profile</h2>
+        <h2 style={{ margin: '0.5rem 0 0', fontSize: 'var(--acc-text-section-title-size, 1.05rem)', fontWeight: 700 }}>Edit Profile</h2>
 
         <label style={{ display: 'grid', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700 }}>
           Full Name
@@ -527,13 +519,14 @@ export function ProfileDetails() {
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
             placeholder="Enter your name"
+            className={styles.underlineField}
             style={fieldStyle}
           />
         </label>
 
         <label style={{ display: 'grid', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700 }}>
           Email
-          <input value={email} readOnly style={{ ...fieldStyle, color: 'var(--text-secondary)' }} />
+          <input value={email} readOnly className={styles.underlineField} style={{ ...fieldStyle, color: 'var(--text-secondary)' }} />
           <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
             Manage email and phone number in the Security tab.
           </span>
@@ -558,6 +551,7 @@ export function ProfileDetails() {
             <select
               value={preferredPayment}
               onChange={(event) => setPreferredPayment(event.target.value)}
+              className={styles.underlineField}
               style={{ ...fieldStyle, cursor: 'pointer' }}
             >
               {PAYMENT_OPTIONS.map((opt) => (
@@ -721,6 +715,7 @@ function ContactLinkRow({ icon: Icon, label, currentValue, placeholder, prefix, 
               onChange={(event) => setValue(event.target.value)}
               placeholder={placeholder}
               type="email"
+              className={styles.underlineField}
               style={fieldStyle}
             />
           )}
