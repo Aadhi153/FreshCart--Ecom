@@ -1,0 +1,10 @@
+.thumb {
+  position: relative;
+  width: var(--acc-thumbnail-size, 64px);
+  height: var(--acc-thumbnail-size, 64px);
+  border-radius: var(--acc-thumbnail-radius, 12px);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+  background: var(--layer-1);
+}

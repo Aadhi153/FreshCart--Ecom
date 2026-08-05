@@ -1,0 +1,62 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: var(--acc-button-height, 44px);
+  padding: 0 var(--acc-button-padding-x, 20px);
+  border-radius: var(--acc-button-radius, 12px);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1.5px solid transparent;
+  transition: background var(--acc-transition-fast, 150ms ease-out),
+    border-color var(--acc-transition-fast, 150ms ease-out),
+    color var(--acc-transition-fast, 150ms ease-out),
+    box-shadow var(--acc-transition-fast, 150ms ease-out);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.compact {
+  height: calc(var(--acc-button-height, 44px) * 0.75);
+  padding: 0 calc(var(--acc-button-padding-x, 20px) * 0.7);
+  font-size: 0.82rem;
+}
+
+.variant-primary {
+  background: var(--acc-btn-primary-bg, var(--gradient-primary));
+  color: var(--acc-btn-primary-text, #fff);
+  box-shadow: var(--acc-card-shadow, var(--shadow-sm));
+}
+
+.variant-secondary {
+  background: var(--acc-btn-secondary-bg, var(--layer-0));
+  border-color: var(--acc-btn-secondary-border, var(--primary));
+  color: var(--acc-btn-secondary-text, var(--primary));
+}
+
+.variant-secondary:hover:not(:disabled) {
+  background: var(--primary-light);
+}
+
+.variant-danger {
+  background: var(--acc-btn-danger-bg, var(--layer-0));
+  border-color: var(--acc-btn-danger-border, #EF4444);
+  color: var(--acc-btn-danger-text, #EF4444);
+}
+
+.variant-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, #EF4444 8%, transparent);
+}
+
+.variant-danger-solid {
+  background: var(--acc-btn-danger-solid-bg, #EF4444);
+  border-color: var(--acc-btn-danger-solid-bg, #EF4444);
+  color: #fff;
+}

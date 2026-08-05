@@ -1,0 +1,21 @@
+.card {
+  background: var(--layer-0);
+  border-radius: var(--acc-card-radius, var(--radius-lg));
+  box-shadow: var(--acc-card-shadow, var(--shadow-sm));
+  border: var(--acc-card-border, 1px solid var(--border-color));
+  padding: var(--acc-card-padding, 1.5rem);
+  transition: box-shadow var(--acc-transition-base, 250ms ease-out),
+    transform var(--acc-transition-base, 250ms ease-out);
+}
+
+.cardVip {
+  background: linear-gradient(120deg, color-mix(in srgb, #FBBF24 18%, transparent), color-mix(in srgb, #F59E0B 8%, transparent));
+}
+
+.cardHighlight {
+  background: var(--layer-1);
+}
+
+.cardDanger {
+  border-color: color-mix(in srgb, #EF4444 35%, transparent);
+}

@@ -98,19 +98,17 @@ export function AccountPageShell({ title, description, children }: AccountPageSh
         style={{
           maxWidth: 1080,
           margin: '0 auto',
-          gap: '1.5rem',
+          gap: 'var(--acc-sidebar-gap, 2rem)',
           alignItems: 'start',
         }}
       >
         <aside
           className="account-sidebar"
           style={{
-            background: 'color-mix(in srgb, var(--layer-0) 84%, transparent)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid color-mix(in srgb, var(--border-color) 86%, transparent)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-sm)',
+            background: 'var(--layer-0)',
+            border: 'var(--acc-card-border, 1px solid var(--border-color))',
+            borderRadius: 'var(--acc-card-radius, var(--radius-lg))',
+            boxShadow: 'var(--acc-card-shadow, var(--shadow-sm))',
             padding: '0.85rem',
           }}
         >
@@ -153,17 +151,15 @@ export function AccountPageShell({ title, description, children }: AccountPageSh
 
         <section
           style={{
-            background: 'color-mix(in srgb, var(--layer-0) 84%, transparent)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid color-mix(in srgb, var(--border-color) 86%, transparent)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-sm)',
-            padding: '1.5rem',
+            background: 'var(--layer-0)',
+            border: 'var(--acc-card-border, 1px solid var(--border-color))',
+            borderRadius: 'var(--acc-card-radius, var(--radius-lg))',
+            boxShadow: 'var(--acc-card-shadow, var(--shadow-sm))',
+            padding: 'var(--acc-card-padding, 1.5rem)',
             minWidth: 0,
           }}
         >
-          <h1 style={{ margin: '0 0 0.35rem', fontFamily: 'var(--font-display)', fontSize: '2rem', lineHeight: 1.1 }}>{title}</h1>
+          <h1 style={{ margin: '0 0 0.35rem', fontFamily: 'var(--acc-font-display, var(--font-display))', fontSize: 'var(--acc-text-page-title-size, 2rem)', fontWeight: 'var(--acc-text-page-title-weight, 700)', letterSpacing: 'var(--acc-text-page-title-tracking, normal)', lineHeight: 1.1 }}>{title}</h1>
           <p style={{ margin: '0 0 1.25rem', color: 'var(--text-secondary)', fontSize: '0.98rem' }}>{description}</p>
           {children}
         </section>

@@ -121,6 +121,93 @@ a {
   }
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   ACCOUNT SECTION — scoped design tokens
+   Applies only under .account-page (Profile/Security/Orders/Returns/
+   Address/Wishlist). Deliberately separate from the sitewide tokens in
+   @freshcart/ui/tokens.css (shared with freshcart-admin + the rest of
+   the storefront) so this redesign can't regress unrelated pages.
+───────────────────────────────────────────────────────────────── */
+.account-page {
+  /* Typography */
+  --acc-font-display: var(--font-display);
+  --acc-font-body: var(--font-body);
+  --acc-text-page-title-size: 28px;
+  --acc-text-page-title-weight: 700;
+  --acc-text-page-title-tracking: -0.02em;
+  --acc-text-section-title-size: 15px;
+  --acc-text-section-title-weight: 600;
+  --acc-text-body-size: 14px;
+  --acc-text-body-weight: 400;
+  --acc-text-label-size: 12px;
+  --acc-text-label-weight: 500;
+  --acc-text-label-tracking: 0.04em;
+  --acc-text-caption-size: 12px;
+  --acc-text-caption-weight: 400;
+
+  /* Spacing */
+  --acc-space-xs: 4px;
+  --acc-space-sm: 8px;
+  --acc-space-md: 16px;
+  --acc-space-lg: 24px;
+  --acc-space-xl: 32px;
+  --acc-space-2xl: 48px;
+  --acc-card-padding: 24px;
+  --acc-card-gap: 16px;
+  --acc-sidebar-gap: 32px;
+
+  /* Cards — shadow does the separation work, not the border */
+  --acc-card-radius: 16px;
+  --acc-card-shadow: 0 1px 2px rgba(16,24,32,0.04), 0 4px 12px rgba(16,24,32,0.04);
+  --acc-card-shadow-hover: 0 2px 4px rgba(16,24,32,0.06), 0 8px 24px rgba(16,24,32,0.08);
+  --acc-card-border: 1px solid rgba(0,0,0,0.04);
+
+  /* Buttons */
+  --acc-button-height: 44px;
+  --acc-button-radius: 12px;
+  --acc-button-padding-x: 20px;
+  --acc-btn-primary-bg: var(--gradient-primary);
+  --acc-btn-primary-text: #fff;
+  --acc-btn-secondary-bg: var(--layer-0);
+  --acc-btn-secondary-border: var(--primary);
+  --acc-btn-secondary-text: var(--primary);
+  --acc-btn-danger-bg: var(--layer-0);
+  --acc-btn-danger-border: #EF4444;
+  --acc-btn-danger-text: #EF4444;
+  --acc-btn-danger-solid-bg: #EF4444;
+
+  /* Status badges — pill-shaped */
+  --acc-badge-radius: 999px;
+  --acc-badge-padding: 4px 12px;
+  --acc-badge-font-size: 12px;
+  --acc-badge-font-weight: 600;
+  --acc-badge-placed-bg: rgba(59,130,246,0.1);
+  --acc-badge-placed-text: #3B82F6;
+  --acc-badge-packed-bg: rgba(245,158,11,0.1);
+  --acc-badge-packed-text: #F59E0B;
+  --acc-badge-shipped-bg: rgba(139,92,246,0.1);
+  --acc-badge-shipped-text: #8B5CF6;
+  --acc-badge-delivered-bg: rgba(34,197,94,0.1);
+  --acc-badge-delivered-text: #22C55E;
+  --acc-badge-cancelled-bg: rgba(239,68,68,0.1);
+  --acc-badge-cancelled-text: #EF4444;
+
+  /* Thumbnails */
+  --acc-thumbnail-size: 64px;
+  --acc-thumbnail-radius: 12px;
+
+  /* Order progress tracker */
+  --acc-step-circle-size: 36px;
+  --acc-step-line-height: 3px;
+  --acc-step-line-inactive: #E5E7EB;
+  --acc-step-line-active: linear-gradient(90deg, var(--primary-hover, var(--primary)), var(--accent));
+
+  /* Motion */
+  --acc-transition-fast: 150ms ease-out;
+  --acc-transition-base: 250ms ease-out;
+  --acc-transition-slow: 400ms ease-out;
+}
+
 .account-layout {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
@@ -359,7 +446,7 @@ nextjs-portal, #next-build-indicator, [data-nextjs-toast], .__next-indicator { d
 /* ── Toasts ── */
 .toast-container {
   position: fixed;
-  bottom: 1.5rem;
+  top: 1.5rem;
   right: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -376,7 +463,6 @@ nextjs-portal, #next-build-indicator, [data-nextjs-toast], .__next-indicator { d
   box-shadow: var(--shadow-lg);
   font-size: 0.85rem;
   font-weight: 600;
-  animation: fadeIn 0.2s ease;
   background: var(--layer-0);
   border: 1px solid var(--border-color);
 }
