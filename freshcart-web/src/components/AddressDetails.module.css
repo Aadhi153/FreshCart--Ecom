@@ -94,6 +94,58 @@
   gap: 1rem;
 }
 
+.locationRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.locationButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.locationButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.attributionText {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.zoneBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.zoneBannerOk {
+  background: color-mix(in srgb, #16A34A 12%, transparent);
+  color: #16A34A;
+}
+
+.zoneBannerFail {
+  background: color-mix(in srgb, #B91C1C 10%, transparent);
+  color: #B91C1C;
+}
+
 .submitButton {
   justify-self: start;
   padding: 0.65rem 1.1rem;

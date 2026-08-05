@@ -166,6 +166,8 @@ export interface SavedAddress {
   state: string;
   pincode: string;
   isDefault?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface AddressState {

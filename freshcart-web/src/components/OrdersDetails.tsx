@@ -6,17 +6,22 @@ import { useRouter } from 'next/navigation';
 import {
   CheckCircle2,
   ChevronDown,
+  Download,
   Package,
   Search,
   ShoppingCart,
+  Truck,
   XCircle,
 } from 'lucide-react';
-import { cancelOrder, getMyOrders } from '../lib/api';
+import { cancelOrder, getMyOrders, getMyReturnRequests } from '../lib/api';
 import { useCartStore } from '../lib/store';
-import type { Order } from '@freshcart/types';
+import { RETURN_WINDOW_DAYS, type Order, type ReturnRequest } from '@freshcart/types';
 import { EmptyState, Skeleton } from './Skeleton';
 import { OrderTimeline } from './OrderTimeline';
+import { ReturnRequestModal } from './ReturnRequestModal';
+import { RateItemPrompt } from './RateItemPrompt';
 import { useToast } from './ToastProvider';
+import { downloadInvoice } from '../lib/invoice';
 import styles from './OrdersDetails.module.css';
 
 const STEPS = ['placed', 'packed', 'shipped', 'delivered'] as const;
@@ -25,6 +30,12 @@ const CANCELLABLE_STATUSES = new Set(['placed', 'packed']);
 const LIVE_STATUSES = new Set(['placed', 'packed', 'shipped']);
 const PAGE_SIZE = 10;
 const POLL_INTERVAL_MS = 20000;
+
+function isWithinReturnWindow(order: Order) {
+  if (order.status !== 'delivered' || !order.delivered_at) return false;
+  const deadline = new Date(order.delivered_at).getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  return Date.now() <= deadline;
+}
 
 function statusBadgeClass(status: string) {
   if (status === 'cancelled') return styles.statusBadgeCancelled;
@@ -44,9 +55,25 @@ export function OrdersDetails() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [requestedItemIds, setRequestedItemIds] = useState<Set<string>>(new Set());
+  const [returnTarget, setReturnTarget] = useState<{ orderId: string; orderItemId: string; itemName: string } | null>(null);
+  const [ratedItemIds, setRatedItemIds] = useState<Set<string>>(new Set());
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const addItem = useCartStore((state) => state.addItem);
   const router = useRouter();
   const { showToast } = useToast();
+
+  // Fetched once (not paginated with the orders list) — a customer's total return/replace
+  // history is small, and this only needs to answer "does this item already have an
+  // active request" to hide the Return/Replace buttons for it.
+  useEffect(() => {
+    getMyReturnRequests()
+      .then((requests: ReturnRequest[]) => {
+        const ids = new Set(requests.filter((r) => r.status !== 'rejected').map((r) => r.order_item_id));
+        setRequestedItemIds(ids);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -118,6 +145,17 @@ export function OrdersDetails() {
       });
     });
     router.push('/cart');
+  };
+
+  const handleDownloadInvoice = async (order: Order) => {
+    setDownloadingId(order.id || '');
+    try {
+      await downloadInvoice(order);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to generate invoice.', 'error');
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const handleCancelOrder = async (orderId: string) => {
@@ -225,6 +263,19 @@ export function OrdersDetails() {
                   {order.created_at && new Date(order.created_at).toLocaleString()}
                 </p>
 
+                {!cancelled && order.status !== 'delivered' && order.delivery_slot && (
+                  <p className={styles.meta} style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                    <Truck size={13} style={{ verticalAlign: '-2px', marginRight: '0.3rem' }} />
+                    Arriving: {order.delivery_slot}
+                  </p>
+                )}
+
+                {order.status === 'shipped' && (
+                  <p className={styles.meta} style={{ color: 'var(--accent)', fontWeight: 700 }}>
+                    Out for delivery — your order is on its way.
+                  </p>
+                )}
+
                 {!cancelled && <OrderTimeline status={order.status || ''} />}
 
                 <button
@@ -255,22 +306,40 @@ export function OrdersDetails() {
                 {isOpen && (
                   <>
                     <div className={styles.itemsList}>
-                      {items.map((item: any, i: number) => (
-                        <div key={item.id || i} className={styles.itemRow}>
-                          <div className={styles.itemImage}>
-                            {item.products?.image_url && (
-                              <Image src={item.products.image_url} alt={item.products?.name || 'Item'} fill sizes="42px" style={{ objectFit: 'cover' }} />
+                      {items.map((item: any, i: number) => {
+                        const eligible = !item.is_gift && isWithinReturnWindow(order) && !requestedItemIds.has(item.id);
+                        const alreadyRequested = !item.is_gift && isWithinReturnWindow(order) && requestedItemIds.has(item.id);
+                        return (
+                          <div key={item.id || i} className={styles.itemRow} style={{ flexWrap: 'wrap' }}>
+                            <div className={styles.itemImage}>
+                              {item.products?.image_url && (
+                                <Image src={item.products.image_url} alt={item.products?.name || 'Item'} fill sizes="42px" style={{ objectFit: 'cover' }} />
+                              )}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p className={styles.itemName}>
+                                {item.products?.name || 'Item'}
+                                {item.is_gift && <span style={{ marginLeft: '0.4rem', color: 'var(--primary, #16a34a)', fontSize: '0.75rem', fontWeight: 600 }}>🎁 FREE GIFT</span>}
+                              </p>
+                              <p className={styles.itemQty}>Qty {item.quantity} &middot; {item.is_gift ? 'Free' : `Rs.${Number(item.price_at_time).toFixed(2)}`}</p>
+                            </div>
+                            {eligible && (
+                              <button
+                                type="button"
+                                className={styles.ghostButton}
+                                onClick={() =>
+                                  setReturnTarget({ orderId: order.id || '', orderItemId: item.id, itemName: item.products?.name || 'Item' })
+                                }
+                              >
+                                Return / Replace
+                              </button>
+                            )}
+                            {alreadyRequested && (
+                              <span className={`${styles.statusBadge} ${styles.statusBadgeActive}`}>Return requested</span>
                             )}
                           </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p className={styles.itemName}>
-                              {item.products?.name || 'Item'}
-                              {item.is_gift && <span style={{ marginLeft: '0.4rem', color: 'var(--primary, #16a34a)', fontSize: '0.75rem', fontWeight: 600 }}>🎁 FREE GIFT</span>}
-                            </p>
-                            <p className={styles.itemQty}>Qty {item.quantity} &middot; {item.is_gift ? 'Free' : `Rs.${Number(item.price_at_time).toFixed(2)}`}</p>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     {deliveryAddress && (
                       <div className={styles.addressBox}>
@@ -322,6 +391,15 @@ export function OrdersDetails() {
                         Cancel order
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadInvoice(order)}
+                      disabled={downloadingId === order.id}
+                      className={styles.ghostButton}
+                    >
+                      <Download size={14} />
+                      {downloadingId === order.id ? 'Preparing…' : 'Invoice'}
+                    </button>
                     <button onClick={() => buyAgain(order)} className={styles.primaryButton}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                         <ShoppingCart size={14} />
@@ -330,10 +408,39 @@ export function OrdersDetails() {
                     </button>
                   </div>
                 </div>
+
+                {order.status === 'delivered' && items.some((item: any) => !item.is_gift && item.product_id && !ratedItemIds.has(item.id)) && (
+                  <div style={{ marginTop: '0.7rem' }}>
+                    {items
+                      .filter((item: any) => !item.is_gift && item.product_id && !ratedItemIds.has(item.id))
+                      .map((item: any, i: number) => (
+                        <RateItemPrompt
+                          key={item.id || i}
+                          productId={item.product_id}
+                          productName={item.products?.name || 'this item'}
+                          onDone={() => setRatedItemIds((prev) => new Set(prev).add(item.id))}
+                        />
+                      ))}
+                  </div>
+                )}
               </article>
             );
           })}
         </div>
+      )}
+
+      {returnTarget && (
+        <ReturnRequestModal
+          orderId={returnTarget.orderId}
+          orderItemId={returnTarget.orderItemId}
+          itemName={returnTarget.itemName}
+          onClose={() => setReturnTarget(null)}
+          onSuccess={(request) => {
+            setRequestedItemIds((prev) => new Set(prev).add(request.order_item_id));
+            setReturnTarget(null);
+            showToast(request.type === 'replace' ? 'Replacement requested.' : 'Return requested.', 'success');
+          }}
+        />
       )}
 
       {!loading && totalPages > 1 && (

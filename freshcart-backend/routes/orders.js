@@ -435,9 +435,14 @@ router.patch('/:id/status', requireAdmin, async (req, res) => {
       if (order.status !== 'cancelled') await releaseReservedStock(order);
     }
 
+    const updates = { status };
+    // Recorded once here since nothing else timestamps a per-status transition — the
+    // return/replace window (see routes/returns.js) is computed from this field.
+    if (status === 'delivered') updates.delivered_at = new Date().toISOString();
+
     const { data, error } = await supabaseAdmin
       .from('orders')
-      .update({ status })
+      .update(updates)
       .eq('id', req.params.id)
       .select().single();
     if (error) throw error;

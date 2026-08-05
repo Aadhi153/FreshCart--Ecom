@@ -76,7 +76,7 @@ router.get('/promotions/offers', async (_req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('promotions')
-      .select('id, name, description, code, requires_code, discount_type, discount_value, min_order_value, max_discount_amount, applicable_scope, valid_from, valid_until, tiers, gift_product_id')
+      .select('id, name, description, code, requires_code, discount_type, discount_value, min_order_value, max_discount_amount, applicable_scope, valid_from, valid_until, tiers, gift_product_id, target_segment')
       .eq('is_active', true)
       .or('requires_code.eq.false,is_public.eq.true');
     if (error) throw error;

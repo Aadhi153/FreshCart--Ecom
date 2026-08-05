@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { Calendar, Camera, CheckCircle2, Copy, Crown, Gift, KeyRound, LogOut, Mail, Phone, ShieldCheck, User as UserIcon, XCircle } from 'lucide-react';
+import { Calendar, Camera, CheckCircle2, Copy, Crown, Gift, KeyRound, LogOut, Mail, MessageCircle, Phone, ShieldCheck, Sparkles, User as UserIcon, X, XCircle } from 'lucide-react';
+import type { PublicOffer } from '@freshcart/types';
 import { supabase } from '../lib/supabase';
-import { uploadAvatarImage } from '../lib/api';
+import { uploadAvatarImage, getPublicOffers } from '../lib/api';
 import { useProfileSummaryStore } from '../lib/store';
 import { useOtpChallenge } from '../lib/useOtpChallenge';
 import { useToast } from './ToastProvider';
@@ -66,6 +67,29 @@ export function ProfileDetails() {
   const [loadError, setLoadError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'security'>('overview');
   const [signingOut, setSigningOut] = useState(false);
+  const [showVipBenefits, setShowVipBenefits] = useState(false);
+  const [vipOffers, setVipOffers] = useState<PublicOffer[] | null>(null);
+
+  const handleOpenVipBenefits = async () => {
+    setShowVipBenefits(true);
+    if (vipOffers !== null) return;
+    try {
+      const offers = await getPublicOffers();
+      setVipOffers(offers.filter((o) => o.target_segment === 'vip'));
+    } catch {
+      setVipOffers([]);
+    }
+  };
+
+  const describeOffer = (offer: PublicOffer) => {
+    if (offer.tiers && offer.tiers.length > 0) return `${offer.name} — tiered discount`;
+    if (offer.discount_type === 'percentage') return `${offer.name} — ${offer.discount_value}% off`;
+    if (offer.discount_type === 'flat') return `${offer.name} — ₹${offer.discount_value} off`;
+    if (offer.discount_type === 'free_shipping') return `${offer.name} — free shipping`;
+    if (offer.discount_type === 'gift_with_purchase') return `${offer.name} — free gift`;
+    if (offer.discount_type === 'bogo') return `${offer.name} — buy one get one`;
+    return offer.name;
+  };
 
   useEffect(() => {
     async function loadProfile() {
@@ -177,6 +201,13 @@ export function ProfileDetails() {
     }
   };
 
+  const handleShareReferralWhatsApp = () => {
+    if (!profile?.referral_code) return;
+    const link = `${window.location.origin}/auth?ref=${profile.referral_code}`;
+    const message = `Hey! Use my code ${profile.referral_code} to get ₹50 off your first FreshCart order 🛒 ${link}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+  };
+
   const handleSignOutEverywhere = async () => {
     setSigningOut(true);
     const { error } = await supabase.auth.signOut({ scope: 'global' });
@@ -217,7 +248,6 @@ export function ProfileDetails() {
     { label: 'Account Role', value: profile?.role || 'customer', icon: ShieldCheck },
     { label: 'Email Status', value: emailVerified ? 'Verified' : 'Not verified', icon: emailVerified ? CheckCircle2 : XCircle },
     { label: 'Member Since', value: memberSince, icon: Calendar },
-    { label: 'Membership', value: profile?.is_vip ? 'VIP' : 'Standard', icon: Crown },
   ];
 
   return (
@@ -340,18 +370,32 @@ export function ProfileDetails() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleCopyReferralCode}
-            title="Copy referral code"
-            style={{
-              display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-              padding: '0.5rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
-              background: 'var(--layer-0)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
-            }}
-          >
-            <Copy size={14} /> Copy
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={handleCopyReferralCode}
+              title="Copy referral code"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
+                padding: '0.5rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)',
+                background: 'var(--layer-0)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
+              }}
+            >
+              <Copy size={14} /> Copy
+            </button>
+            <button
+              type="button"
+              onClick={handleShareReferralWhatsApp}
+              title="Share via WhatsApp"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
+                padding: '0.5rem 0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid #25D366',
+                background: '#25D366', color: '#fff', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700,
+              }}
+            >
+              <MessageCircle size={14} /> Share
+            </button>
+          </div>
         </section>
       )}
 
@@ -395,6 +439,96 @@ export function ProfileDetails() {
           );
         })}
       </section>
+
+      {/* Membership tier */}
+      <section
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          flexWrap: 'wrap',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '0.85rem 1rem',
+          background: profile?.is_vip
+            ? 'linear-gradient(120deg, color-mix(in srgb, #FBBF24 18%, transparent), color-mix(in srgb, #F59E0B 8%, transparent))'
+            : 'var(--layer-0)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.4rem 0.85rem',
+              borderRadius: 'var(--radius-full)',
+              fontWeight: 800,
+              fontSize: '0.85rem',
+              background: profile?.is_vip ? '#F59E0B' : 'var(--layer-1)',
+              color: profile?.is_vip ? '#fff' : 'var(--text-secondary)',
+            }}
+          >
+            <Crown size={15} fill={profile?.is_vip ? 'currentColor' : 'none'} />
+            {profile?.is_vip ? 'VIP Member' : 'Standard Member'}
+          </div>
+          {!profile?.is_vip && (
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Unlock more with VIP</span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={handleOpenVipBenefits}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+            background: 'transparent', border: 'none', color: 'var(--accent)',
+            cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', padding: 0,
+          }}
+        >
+          <Sparkles size={14} /> See VIP benefits
+        </button>
+      </section>
+
+      {showVipBenefits && (
+        <div
+          onClick={() => setShowVipBenefits(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', zIndex: 200 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: '24rem', maxHeight: '80vh', overflowY: 'auto', background: 'var(--layer-0)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '1.5rem' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Crown size={18} color="#F59E0B" /> VIP Benefits
+              </h2>
+              <button type="button" onClick={() => setShowVipBenefits(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                <X size={18} />
+              </button>
+            </div>
+            {!profile?.is_vip && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 0 }}>
+                VIP status is granted by FreshCart — here&apos;s what&apos;s unlocked once you have it.
+              </p>
+            )}
+            {vipOffers === null ? (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>Loading…</p>
+            ) : vipOffers.length === 0 ? (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>No VIP-exclusive offers are live right now — check back soon.</p>
+            ) : (
+              <ul style={{ margin: '0.75rem 0 0', padding: 0, listStyle: 'none', display: 'grid', gap: '0.6rem' }}>
+                {vipOffers.map((offer) => (
+                  <li key={offer.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                    <Sparkles size={14} color="#F59E0B" style={{ marginTop: 2, flexShrink: 0 }} />
+                    <span>{describeOffer(offer)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSave} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', padding: '1rem', display: 'grid', gap: '0.9rem' }}>
         <h2 style={{ margin: 0, fontSize: '1.05rem' }}>Edit Profile</h2>

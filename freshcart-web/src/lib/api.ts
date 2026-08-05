@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { PlaceOrderPayload, Order, ActivePromotion, PromotionValidationRequest, PromotionValidationResponse, PublicOffer } from '@freshcart/types';
+import type { PlaceOrderPayload, Order, ActivePromotion, PromotionValidationRequest, PromotionValidationResponse, PublicOffer, ReturnRequest, CreateReturnRequestPayload } from '@freshcart/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -100,6 +100,11 @@ export const getOrderById = (orderId: string): Promise<Order> =>
 
 export const submitReview = (productId: string, rating: number, comment: string) =>
   authFetch(`/api/products/${productId}/reviews`, { method: 'POST', body: JSON.stringify({ rating, comment }) });
+
+export const getMyReturnRequests = (): Promise<ReturnRequest[]> => authFetch('/api/returns');
+
+export const createReturnRequest = (payload: CreateReturnRequestPayload): Promise<ReturnRequest> =>
+  authFetch('/api/returns', { method: 'POST', body: JSON.stringify(payload) });
 
 interface ServerWishlistRow {
   product_id: string;

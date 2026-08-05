@@ -1,0 +1,83 @@
+.wrap {
+  margin-top: 0.7rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--layer-1);
+  border: 1px dashed var(--border-color);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.label {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stars {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.starButton {
+  background: transparent;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--border-color);
+}
+
+.starButtonFilled {
+  color: #FBBF24;
+}
+
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--layer-0);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  resize: vertical;
+  min-height: 2.4rem;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.submitButton {
+  border: none;
+  background: var(--gradient-primary);
+  color: #fff;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.submitButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.errorText {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: #B91C1C;
+}

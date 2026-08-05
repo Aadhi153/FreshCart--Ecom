@@ -153,7 +153,14 @@ router.post('/:id/reviews', requireAuth, async (req, res) => {
       .insert([{ product_id: req.params.id, user_id: req.user.id, rating, comment }])
       .select()
       .single();
-    if (error) throw error;
+    if (error) {
+      // reviews has a UNIQUE(product_id, user_id) constraint — surface that as a clean
+      // message instead of the raw Postgres constraint-violation text.
+      if (error.code === '23505') {
+        return res.status(409).json({ error: 'You have already reviewed this product.' });
+      }
+      throw error;
+    }
     res.status(201).json(data);
   } catch (err) {
     res.status(400).json({ error: err.message });

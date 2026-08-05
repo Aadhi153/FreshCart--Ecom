@@ -156,6 +156,7 @@ export const PublicOfferSchema = z.object({
   valid_until: z.string().nullable().optional(),
   gift_product: GiftProductSchema.nullable().optional(),
   tiers: z.array(PromotionTierSchema).nullable().optional(),
+  target_segment: z.enum(['all', 'vip', 'referral', 'inactive_30_days']).optional(),
 });
 export type PublicOffer = z.infer<typeof PublicOfferSchema>;
 
@@ -222,6 +223,8 @@ export const OrderSchema = z.object({
   discount_amount: z.number().min(0).optional(),
   promotion_id: z.string().uuid().nullable().optional(),
   delivery_fee: z.number().min(0).optional(),
+  delivered_at: z.string().datetime().nullable().optional(),
+  payment_method: z.string().nullable().optional(),
 
   // Frontend specific fields
   total: z.number().optional(),
@@ -256,6 +259,12 @@ export const DELIVERY_SLOT_MAX_ORDERS_PER_WINDOW = 20; // simple fixed capacity,
 export const FREE_DELIVERY_THRESHOLD = 299;
 export const DELIVERY_FEE = 40;
 
+// Placeholder warehouse location (Bengaluru) — no real store location has been
+// configured anywhere in this codebase yet. Update alongside a real admin-configurable
+// setting if/when one is built (see RETURN_WINDOW_DAYS above for the same caveat).
+export const DELIVERY_ZONE_CENTER = { lat: 12.9716, lng: 77.5946 };
+export const DELIVERY_ZONE_RADIUS_KM = 15;
+
 export const DeliverySlotSelectionSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date'),
   window: z.enum(DELIVERY_SLOT_WINDOW_IDS),
@@ -276,6 +285,57 @@ export const PlaceOrderPayloadSchema = z.object({
   idempotency_key: z.string().uuid().optional(),
 });
 export type PlaceOrderPayload = z.infer<typeof PlaceOrderPayloadSchema>;
+
+// ── Returns ───────────────────────────────────────────────────────────────────
+// No admin-configurable settings mechanism exists in this codebase yet (Settings.tsx
+// is localStorage-only, unwired to the backend) — follow the same precedent as
+// FREE_DELIVERY_THRESHOLD/DELIVERY_FEE above: a shared constant, not a DB-backed setting.
+export const RETURN_WINDOW_DAYS = 7;
+
+export const RETURN_REASONS = [
+  'Damaged',
+  'Wrong item received',
+  "Doesn't match description",
+  'No longer needed',
+  'Other',
+] as const;
+export const ReturnReasonSchema = z.enum(RETURN_REASONS);
+export type ReturnReason = z.infer<typeof ReturnReasonSchema>;
+
+export const RETURN_REQUEST_STATUSES = ['requested', 'approved', 'rejected', 'picked_up', 'completed'] as const;
+export const ReturnRequestStatusSchema = z.enum(RETURN_REQUEST_STATUSES);
+export type ReturnRequestStatus = z.infer<typeof ReturnRequestStatusSchema>;
+
+export const ReturnRequestSchema = z.object({
+  id: z.string().uuid().optional(),
+  order_id: z.string().uuid(),
+  order_item_id: z.string().uuid(),
+  user_id: z.string().uuid().optional().nullable(),
+  type: z.enum(['return', 'replace']),
+  reason: ReturnReasonSchema,
+  refund_method: z.enum(['original_payment', 'store_credit']).optional().nullable(),
+  status: ReturnRequestStatusSchema.default('requested'),
+  refund_amount: z.number().min(0).optional().nullable(),
+  created_at: z.string().datetime().optional(),
+  updated_at: z.string().datetime().optional(),
+  // Joined data for admin/customer list views
+  orders: z.any().optional(),
+  order_items: z.any().optional(),
+  profiles: z.any().optional(),
+});
+export type ReturnRequest = z.infer<typeof ReturnRequestSchema>;
+
+export const CreateReturnRequestPayloadSchema = z.object({
+  order_id: z.string().uuid(),
+  order_item_id: z.string().uuid(),
+  type: z.enum(['return', 'replace']),
+  reason: ReturnReasonSchema,
+  refund_method: z.enum(['original_payment', 'store_credit']).optional(),
+}).refine(
+  (data) => data.type !== 'return' || !!data.refund_method,
+  { message: 'refund_method is required for a return', path: ['refund_method'] }
+);
+export type CreateReturnRequestPayload = z.infer<typeof CreateReturnRequestPayloadSchema>;
 
 // ── Profiles ──────────────────────────────────────────────────────────────────
 export const ProfileSchema = z.object({

@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
 import { useCartStore, useWishlistStore } from '../lib/store';
 import { useToast } from './ToastProvider';
 import { EmptyState, ProductCardSkeleton } from './Skeleton';
 import { ProductImage } from './ProductImage';
+import { supabase } from '../lib/supabase';
 import styles from './WishlistDetails.module.css';
 
 const SORT_OPTIONS = [
@@ -23,6 +24,22 @@ export function WishlistDetails() {
   const hasHydrated = useWishlistStore((state) => state.hasHydrated);
   const { showToast } = useToast();
   const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]['value']>('recent');
+  // Wishlisted items only carry the price/stock snapshot from whenever they were added,
+  // which can go stale — fetch current stock live so "move all to cart" only grabs what's
+  // actually purchasable right now, not a months-old cached flag.
+  const [stockById, setStockById] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (wishlistItems.length === 0) return;
+    supabase
+      .from('products')
+      .select('id, in_stock')
+      .in('id', wishlistItems.map((item) => String(item.id)))
+      .then(({ data }) => {
+        if (!data) return;
+        setStockById(Object.fromEntries(data.map((p) => [p.id, p.in_stock])));
+      });
+  }, [wishlistItems]);
 
   const sortedItems = useMemo(() => {
     const items = [...wishlistItems];
@@ -33,10 +50,19 @@ export function WishlistDetails() {
   }, [wishlistItems, sort]);
 
   const addAllToCart = () => {
-    wishlistItems.forEach((item) => {
+    // stockById[id] === false is the only thing that excludes an item — undefined (still
+    // loading, or a product Supabase didn't return) is treated as includable rather than
+    // silently dropping items while the stock check is in flight.
+    const inStockItems = wishlistItems.filter((item) => stockById[String(item.id)] !== false);
+    inStockItems.forEach((item) => {
       addCartItem({ id: item.id, productId: String(item.id), name: item.name, price: item.price, image: item.image, category: item.category });
     });
-    showToast(`Added ${wishlistItems.length} item${wishlistItems.length === 1 ? '' : 's'} to cart`, 'success');
+    const skipped = wishlistItems.length - inStockItems.length;
+    showToast(
+      `Added ${inStockItems.length} item${inStockItems.length === 1 ? '' : 's'} to cart` +
+        (skipped > 0 ? ` (${skipped} out of stock skipped)` : ''),
+      'success'
+    );
   };
 
   const clearAll = () => {
@@ -78,7 +104,7 @@ export function WishlistDetails() {
           </select>
           <button type="button" onClick={addAllToCart} className={`${styles.actionButton} ${styles.actionButtonPrimary}`}>
             <ShoppingCart size={14} />
-            Add all to cart
+            Move all to cart
           </button>
           <button type="button" onClick={clearAll} className={`${styles.actionButton} ${styles.actionButtonDanger}`}>
             <Trash2 size={14} />
@@ -88,31 +114,47 @@ export function WishlistDetails() {
       </div>
 
       <div className={styles.grid}>
-        {sortedItems.map((item) => (
-          <article key={item.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', padding: '0.9rem', display: 'grid', gap: '0.55rem' }}>
-            <div style={{ position: 'relative', width: '100%', height: 110, borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-              <ProductImage src={item.image} alt={item.name} sizes="190px" imageStyle={{ objectFit: 'cover' }} />
-            </div>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 700 }}>{item.category || 'Product'}</p>
-            <h2 style={{ margin: 0, fontSize: '1rem' }}>{item.name}</h2>
-            <p style={{ margin: 0, color: 'var(--accent)', fontWeight: 900 }}>Rs.{item.price.toFixed(2)}</p>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button type="button" onClick={() => {
-                addCartItem({ id: item.id, productId: String(item.id), name: item.name, price: item.price, image: item.image, category: item.category });
-                showToast(`${item.name} added to cart`, 'success');
-              }} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--accent)', background: 'var(--gradient-primary)', color: '#fff', cursor: 'pointer', fontWeight: 800 }}>
-                <ShoppingCart size={15} />
-                Add
-              </button>
-              <button type="button" onClick={() => {
-                removeWishlistItem(item.id);
-                showToast('Removed from wishlist', 'success');
-              }} style={{ padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'transparent', color: '#B91C1C', cursor: 'pointer', fontWeight: 800 }}>
-                Remove
-              </button>
-            </div>
-          </article>
-        ))}
+        {sortedItems.map((item) => {
+          const outOfStock = stockById[String(item.id)] === false;
+          return (
+            <article key={item.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', padding: '0.9rem', display: 'grid', gap: '0.55rem' }}>
+              <div style={{ position: 'relative', width: '100%', height: 110, borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                <ProductImage src={item.image} alt={item.name} sizes="190px" imageStyle={{ objectFit: 'cover' }} />
+              </div>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 700 }}>{item.category || 'Product'}</p>
+              <h2 style={{ margin: 0, fontSize: '1rem' }}>{item.name}</h2>
+              <p style={{ margin: 0, color: 'var(--accent)', fontWeight: 900 }}>Rs.{item.price.toFixed(2)}</p>
+              {outOfStock && (
+                <p style={{ margin: 0, color: '#B91C1C', fontWeight: 700, fontSize: '0.78rem' }}>Out of stock</p>
+              )}
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  disabled={outOfStock}
+                  onClick={() => {
+                    addCartItem({ id: item.id, productId: String(item.id), name: item.name, price: item.price, image: item.image, category: item.category });
+                    showToast(`${item.name} added to cart`, 'success');
+                  }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--accent)', background: outOfStock ? 'var(--layer-1)' : 'var(--gradient-primary)',
+                    color: outOfStock ? 'var(--text-secondary)' : '#fff', cursor: outOfStock ? 'not-allowed' : 'pointer', fontWeight: 800,
+                    opacity: outOfStock ? 0.7 : 1,
+                  }}
+                >
+                  <ShoppingCart size={15} />
+                  Add
+                </button>
+                <button type="button" onClick={() => {
+                  removeWishlistItem(item.id);
+                  showToast('Removed from wishlist', 'success');
+                }} style={{ padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'transparent', color: '#B91C1C', cursor: 'pointer', fontWeight: 800 }}>
+                  Remove
+                </button>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </div>
   );

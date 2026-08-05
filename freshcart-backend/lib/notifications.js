@@ -24,4 +24,27 @@ async function notifyOrderStatus(order) {
   }
 }
 
-module.exports = { notifyOrderStatus };
+const RETURN_STATUS_MESSAGES = {
+  requested: 'has been received and is awaiting review.',
+  approved: 'has been approved.',
+  rejected: 'was not approved.',
+  picked_up: 'item has been picked up.',
+  completed: 'has been completed.',
+};
+
+// Same best-effort, fire-and-forget contract as notifyOrderStatus above.
+async function notifyReturnStatus(returnRequest) {
+  try {
+    const label = returnRequest.type === 'replace' ? 'Replacement' : 'Return';
+    await supabaseAdmin.from('notifications').insert([{
+      user_id: returnRequest.user_id,
+      title: `${label} request: ${returnRequest.status}`,
+      body: `Your ${label.toLowerCase()} request ${RETURN_STATUS_MESSAGES[returnRequest.status] || `status changed to ${returnRequest.status}.`}`,
+      link: `/orders`,
+    }]);
+  } catch (err) {
+    console.error('Failed to create return status notification:', err.message);
+  }
+}
+
+module.exports = { notifyOrderStatus, notifyReturnStatus };

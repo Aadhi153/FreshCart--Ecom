@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Briefcase, Home, MapPin, Star } from 'lucide-react';
+import { Briefcase, CheckCircle2, Home, LocateFixed, MapPin, Star, XCircle } from 'lucide-react';
 import { useAddressStore, type AddressType, type SavedAddress } from '../lib/store';
 import { EmptyState } from './Skeleton';
 import { ToggleSwitch } from './ToggleSwitch';
+import { getCurrentPosition, reverseGeocode, geocodeAddress, isWithinDeliveryZone } from '../lib/serviceability';
 import styles from './AddressDetails.module.css';
 
 const emptyAddress: SavedAddress = {
@@ -19,6 +20,8 @@ const emptyAddress: SavedAddress = {
   pincode: '',
   isDefault: false,
 };
+
+type ZoneStatus = 'unknown' | 'checking' | 'ok' | 'fail';
 
 const PHONE_REGEX = /^\d{10}$/;
 const PINCODE_REGEX = /^\d{6}$/;
@@ -35,6 +38,61 @@ export function AddressDetails() {
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<{ phone?: string; pincode?: string }>({});
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  const [zoneStatus, setZoneStatus] = useState<ZoneStatus>('unknown');
+
+  const updateEditingField = (patch: Partial<SavedAddress>) => {
+    setEditing((prev) => ({ ...prev, ...patch }));
+    setZoneStatus('unknown');
+  };
+
+  const handleUseLocation = async () => {
+    setLocating(true);
+    setLocationError('');
+    try {
+      const position = await getCurrentPosition();
+      const { latitude, longitude } = position.coords;
+      const geo = await reverseGeocode(latitude, longitude);
+      setEditing((prev) => ({
+        ...prev,
+        latitude,
+        longitude,
+        line1: geo?.line1 || prev.line1,
+        city: geo?.city || prev.city,
+        state: geo?.state || prev.state,
+        pincode: geo?.pincode || prev.pincode,
+      }));
+      setZoneStatus(isWithinDeliveryZone(latitude, longitude) ? 'ok' : 'fail');
+    } catch (err) {
+      setLocationError(err instanceof Error ? err.message : 'Could not determine your location.');
+    } finally {
+      setLocating(false);
+    }
+  };
+
+  const handleCheckAvailability = async () => {
+    setZoneStatus('checking');
+    setLocationError('');
+    try {
+      let { latitude: lat, longitude: lng } = editing;
+      if (!lat || !lng) {
+        const query = [editing.line1, editing.city, editing.state, editing.pincode].filter(Boolean).join(', ');
+        const geo = await geocodeAddress(query);
+        if (!geo) {
+          setZoneStatus('unknown');
+          setLocationError("Couldn't verify delivery availability for this address — we'll confirm at checkout.");
+          return;
+        }
+        lat = geo.lat;
+        lng = geo.lng;
+      }
+      setZoneStatus(isWithinDeliveryZone(lat, lng) ? 'ok' : 'fail');
+    } catch {
+      setZoneStatus('unknown');
+      setLocationError("Couldn't verify delivery availability right now.");
+    }
+  };
 
   const saveAddress = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -64,12 +122,16 @@ export function AddressDetails() {
     setMessage('');
     setErrors({});
     setConfirmingId(null);
+    setZoneStatus('unknown');
+    setLocationError('');
   };
 
   const startNew = () => {
     setEditing(emptyAddress);
     setMessage('');
     setErrors({});
+    setZoneStatus('unknown');
+    setLocationError('');
   };
 
   return (
@@ -83,6 +145,15 @@ export function AddressDetails() {
             </button>
           )}
         </div>
+
+        <div className={styles.locationRow}>
+          <button type="button" onClick={handleUseLocation} disabled={locating} className={styles.locationButton}>
+            <LocateFixed size={15} />
+            {locating ? 'Locating…' : 'Use my current location'}
+          </button>
+          {editing.latitude != null && <p className={styles.attributionText}>Location data &copy; OpenStreetMap contributors</p>}
+        </div>
+        {locationError && <p className={styles.errorText}>{locationError}</p>}
 
         <div className={styles.typeRow}>
           {TYPE_OPTIONS.map(({ value, label, icon: Icon }) => (
@@ -113,20 +184,36 @@ export function AddressDetails() {
         </div>
         {errors.phone && <p className={styles.errorText}>{errors.phone}</p>}
 
-        <input value={editing.line1} onChange={(event) => setEditing({ ...editing, line1: event.target.value })} placeholder="House number, street, area" className={styles.field} />
+        <input value={editing.line1} onChange={(event) => updateEditingField({ line1: event.target.value })} placeholder="House number, street, area" className={styles.field} />
 
         <div className={styles.grid3}>
-          <input value={editing.city} onChange={(event) => setEditing({ ...editing, city: event.target.value })} placeholder="City" className={styles.field} />
-          <input value={editing.state} onChange={(event) => setEditing({ ...editing, state: event.target.value })} placeholder="State" className={styles.field} />
+          <input value={editing.city} onChange={(event) => updateEditingField({ city: event.target.value })} placeholder="City" className={styles.field} />
+          <input value={editing.state} onChange={(event) => updateEditingField({ state: event.target.value })} placeholder="State" className={styles.field} />
           <input
             value={editing.pincode}
-            onChange={(event) => setEditing({ ...editing, pincode: event.target.value })}
+            onChange={(event) => updateEditingField({ pincode: event.target.value })}
             placeholder="PIN code"
             inputMode="numeric"
             className={`${styles.field} ${errors.pincode ? styles.fieldError : ''}`}
           />
         </div>
         {errors.pincode && <p className={styles.errorText}>{errors.pincode}</p>}
+
+        <div className={styles.locationRow}>
+          <button type="button" onClick={handleCheckAvailability} disabled={zoneStatus === 'checking' || !editing.line1} className={styles.locationButton}>
+            {zoneStatus === 'checking' ? 'Checking…' : 'Check delivery availability'}
+          </button>
+        </div>
+        {zoneStatus === 'ok' && (
+          <div className={`${styles.zoneBanner} ${styles.zoneBannerOk}`}>
+            <CheckCircle2 size={16} /> We deliver here
+          </div>
+        )}
+        {zoneStatus === 'fail' && (
+          <div className={`${styles.zoneBanner} ${styles.zoneBannerFail}`}>
+            <XCircle size={16} /> Sorry, we don&apos;t deliver to this address yet
+          </div>
+        )}
 
         <div className={styles.defaultToggleRow}>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>Set as default address</span>
