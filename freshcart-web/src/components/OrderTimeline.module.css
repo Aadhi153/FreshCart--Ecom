@@ -1,32 +1,35 @@
 .stepper {
   display: flex;
-  gap: 0.35rem;
-  margin: 0.6rem 0;
+  align-items: flex-start;
+  margin: 0.8rem 0;
 }
 
 .step {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.3rem;
   text-align: center;
+  position: relative;
 }
 
 .stepIcon {
-  width: 26px;
-  height: 26px;
+  width: var(--acc-step-circle-size, 36px);
+  height: var(--acc-step-circle-size, 36px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   /* Deliberately a neutral gray, not var(--text-secondary)/var(--border-color) —
      in the web app's green theme those resolve to green too, which made
      not-yet-reached steps read as "done" at a glance. */
   border: 2px solid #D1D5DB;
   color: #9CA3AF;
   background: var(--layer-0);
-  transition: border-color var(--transition-base), color var(--transition-base), background var(--transition-base);
+  transition: border-color var(--acc-transition-base, 250ms ease-out),
+    color var(--acc-transition-base, 250ms ease-out),
+    background var(--acc-transition-base, 250ms ease-out);
 }
 
 .stepIconDone {
@@ -44,6 +47,45 @@
 
 .stepLabelDone {
   color: var(--text-primary);
+}
+
+.stepStamp {
+  position: absolute;
+  top: calc(var(--acc-step-circle-size, 36px) + 1.1rem);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.64rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--layer-0);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.4rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--acc-transition-fast, 150ms ease-out);
+  z-index: 1;
+}
+
+.step:hover .stepStamp,
+.step:focus-within .stepStamp {
+  opacity: 1;
+}
+
+.line {
+  flex: 1;
+  height: var(--acc-step-line-height, 3px);
+  border-radius: var(--acc-step-line-height, 3px);
+  background: var(--acc-step-line-inactive, #E5E7EB);
+  margin-top: calc(var(--acc-step-circle-size, 36px) / 2 - var(--acc-step-line-height, 3px) / 2);
+  overflow: hidden;
+}
+
+.lineFill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--acc-step-line-active, var(--gradient-primary));
 }
 
 @media (max-width: 520px) {

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Star } from 'lucide-react';
 import { submitReview } from '../lib/api';
+import { AccountButton } from './AccountButton';
 import styles from './RateItemPrompt.module.css';
 
 interface RateItemPromptProps {
@@ -70,9 +71,9 @@ export function RateItemPrompt({ productId, productName, onDone }: RateItemPromp
             onChange={(e) => setComment(e.target.value)}
           />
           <div className={styles.footer}>
-            <button type="button" className={styles.submitButton} onClick={handleSubmit} disabled={submitting}>
+            <AccountButton compact variant="primary" onClick={handleSubmit} disabled={submitting}>
               {submitting ? 'Submitting…' : 'Submit rating'}
-            </button>
+            </AccountButton>
           </div>
         </>
       )}

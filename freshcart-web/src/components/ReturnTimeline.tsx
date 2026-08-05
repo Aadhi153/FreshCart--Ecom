@@ -1,3 +1,5 @@
+import { Fragment } from 'react';
+import { motion } from 'framer-motion';
 import { CheckCircle2, ClipboardList, PackageCheck, ThumbsUp, XCircle } from 'lucide-react';
 import type { ReturnRequestStatus } from '@freshcart/types';
 import styles from './OrderTimeline.module.css';
@@ -31,13 +33,26 @@ export function ReturnTimeline({ status }: ReturnTimelineProps) {
       {STEPS.map((s, i) => {
         const Icon = STEP_ICONS[s];
         const done = i <= stepIndex;
+        const lineFilled = i < stepIndex;
         return (
-          <div key={s} className={styles.step}>
-            <span className={`${styles.stepIcon} ${done ? styles.stepIconDone : ''}`}>
-              <Icon size={13} />
-            </span>
-            <span className={`${styles.stepLabel} ${done ? styles.stepLabelDone : ''}`}>{STEP_LABELS[s]}</span>
-          </div>
+          <Fragment key={s}>
+            <div className={styles.step} title={STEP_LABELS[s]}>
+              <span className={`${styles.stepIcon} ${done ? styles.stepIconDone : ''}`}>
+                <Icon size={14} />
+              </span>
+              <span className={`${styles.stepLabel} ${done ? styles.stepLabelDone : ''}`}>{STEP_LABELS[s]}</span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className={styles.line}>
+                <motion.div
+                  className={styles.lineFill}
+                  initial={false}
+                  animate={{ width: lineFilled ? '100%' : '0%' }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                />
+              </div>
+            )}
+          </Fragment>
         );
       })}
     </div>

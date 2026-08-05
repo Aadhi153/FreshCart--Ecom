@@ -1,17 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
-  CheckCircle2,
   ChevronDown,
   Download,
   Package,
   Search,
   ShoppingCart,
   Truck,
-  XCircle,
 } from 'lucide-react';
 import { cancelOrder, getMyOrders, getMyReturnRequests } from '../lib/api';
 import { useCartStore } from '../lib/store';
@@ -21,6 +18,10 @@ import { OrderTimeline } from './OrderTimeline';
 import { ReturnRequestModal } from './ReturnRequestModal';
 import { RateItemPrompt } from './RateItemPrompt';
 import { useToast } from './ToastProvider';
+import { AccountCard } from './AccountCard';
+import { AccountButton } from './AccountButton';
+import { AccountThumbnail } from './AccountThumbnail';
+import { StatusBadge } from './StatusBadge';
 import { downloadInvoice } from '../lib/invoice';
 import styles from './OrdersDetails.module.css';
 
@@ -35,12 +36,6 @@ function isWithinReturnWindow(order: Order) {
   if (order.status !== 'delivered' || !order.delivered_at) return false;
   const deadline = new Date(order.delivered_at).getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000;
   return Date.now() <= deadline;
-}
-
-function statusBadgeClass(status: string) {
-  if (status === 'cancelled') return styles.statusBadgeCancelled;
-  if (status === 'delivered') return styles.statusBadgeDelivered;
-  return styles.statusBadgeActive;
 }
 
 export function OrdersDetails() {
@@ -151,6 +146,7 @@ export function OrdersDetails() {
     setDownloadingId(order.id || '');
     try {
       await downloadInvoice(order);
+      showToast('Invoice downloaded.', 'success');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to generate invoice.', 'error');
     } finally {
@@ -250,13 +246,10 @@ export function OrdersDetails() {
             const deliveryAddress = (order as any).deliveryAddress || (order as any).delivery_address;
 
             return (
-              <article key={order.id} className={styles.card}>
+              <AccountCard key={order.id} hoverable>
                 <div className={styles.cardTop}>
                   <strong className={styles.orderId}>#{order.id?.slice(0, 8).toUpperCase()}</strong>
-                  <span className={`${styles.statusBadge} ${statusBadgeClass(order.status || '')}`}>
-                    {cancelled ? <XCircle size={13} /> : <CheckCircle2 size={13} />}
-                    {order.status}
-                  </span>
+                  <StatusBadge kind="order" status={order.status || ''} />
                 </div>
 
                 <p className={styles.meta}>
@@ -276,26 +269,27 @@ export function OrdersDetails() {
                   </p>
                 )}
 
-                {!cancelled && <OrderTimeline status={order.status || ''} />}
+                {!cancelled && (
+                  <OrderTimeline
+                    status={order.status || ''}
+                    timestamps={{ placed: order.created_at, delivered: order.delivered_at }}
+                  />
+                )}
 
-                <button
-                  type="button"
+                <AccountButton
+                  compact
+                  variant="secondary"
                   onClick={() => toggleExpanded(order.id || '')}
-                  className={styles.ghostButton}
                   style={{ marginBottom: '0.5rem' }}
+                  leftIcon={<ChevronDown size={14} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform var(--acc-transition-base, 250ms ease-out)' }} />}
                 >
-                  <ChevronDown size={14} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform var(--transition-base)' }} />
                   {isOpen ? 'Hide details' : `${items.length} item${items.length === 1 ? '' : 's'}`}
-                </button>
+                </AccountButton>
 
                 {!isOpen && items.length > 0 && (
                   <div className={styles.thumbRow}>
                     {items.slice(0, 4).map((item: any, i: number) => (
-                      <div key={item.id || i} className={styles.thumb}>
-                        {item.products?.image_url && (
-                          <Image src={item.products.image_url} alt={item.products?.name || 'Item'} fill sizes="44px" style={{ objectFit: 'cover' }} />
-                        )}
-                      </div>
+                      <AccountThumbnail key={item.id || i} src={item.products?.image_url} alt={item.products?.name || 'Item'} />
                     ))}
                     {items.length > 4 && (
                       <div className={`${styles.thumb} ${styles.thumbMore}`}>+{items.length - 4}</div>
@@ -311,11 +305,7 @@ export function OrdersDetails() {
                         const alreadyRequested = !item.is_gift && isWithinReturnWindow(order) && requestedItemIds.has(item.id);
                         return (
                           <div key={item.id || i} className={styles.itemRow} style={{ flexWrap: 'wrap' }}>
-                            <div className={styles.itemImage}>
-                              {item.products?.image_url && (
-                                <Image src={item.products.image_url} alt={item.products?.name || 'Item'} fill sizes="42px" style={{ objectFit: 'cover' }} />
-                              )}
-                            </div>
+                            <AccountThumbnail src={item.products?.image_url} alt={item.products?.name || 'Item'} />
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <p className={styles.itemName}>
                                 {item.products?.name || 'Item'}
@@ -324,18 +314,18 @@ export function OrdersDetails() {
                               <p className={styles.itemQty}>Qty {item.quantity} &middot; {item.is_gift ? 'Free' : `Rs.${Number(item.price_at_time).toFixed(2)}`}</p>
                             </div>
                             {eligible && (
-                              <button
-                                type="button"
-                                className={styles.ghostButton}
+                              <AccountButton
+                                compact
+                                variant="secondary"
                                 onClick={() =>
                                   setReturnTarget({ orderId: order.id || '', orderItemId: item.id, itemName: item.products?.name || 'Item' })
                                 }
                               >
                                 Return / Replace
-                              </button>
+                              </AccountButton>
                             )}
                             {alreadyRequested && (
-                              <span className={`${styles.statusBadge} ${styles.statusBadgeActive}`}>Return requested</span>
+                              <StatusBadge kind="return" status="requested" />
                             )}
                           </div>
                         );
@@ -369,17 +359,17 @@ export function OrdersDetails() {
                 {cancellingId === order.id && (
                   <div className={styles.confirmRow} style={{ marginBottom: '0.6rem' }}>
                     <span className={styles.confirmText}>Cancel this order?</span>
-                    <button
-                      type="button"
+                    <AccountButton
+                      compact
+                      variant="danger-solid"
                       disabled={processingId === order.id}
                       onClick={() => handleCancelOrder(order.id || '')}
-                      className={styles.dangerButton}
                     >
                       {processingId === order.id ? 'Cancelling...' : 'Yes, cancel'}
-                    </button>
-                    <button type="button" onClick={() => setCancellingId(null)} className={styles.ghostButton}>
+                    </AccountButton>
+                    <AccountButton compact variant="secondary" onClick={() => setCancellingId(null)}>
                       Keep order
-                    </button>
+                    </AccountButton>
                   </div>
                 )}
 
@@ -387,25 +377,22 @@ export function OrdersDetails() {
                   <p className={styles.total}>Total: Rs.{Number(order.total_amount).toFixed(2)}</p>
                   <div className={styles.actions}>
                     {CANCELLABLE_STATUSES.has(order.status || '') && cancellingId !== order.id && (
-                      <button type="button" onClick={() => setCancellingId(order.id || '')} className={styles.dangerButton}>
+                      <AccountButton compact variant="danger" onClick={() => setCancellingId(order.id || '')}>
                         Cancel order
-                      </button>
+                      </AccountButton>
                     )}
-                    <button
-                      type="button"
+                    <AccountButton
+                      compact
+                      variant="secondary"
                       onClick={() => handleDownloadInvoice(order)}
                       disabled={downloadingId === order.id}
-                      className={styles.ghostButton}
+                      leftIcon={<Download size={14} />}
                     >
-                      <Download size={14} />
                       {downloadingId === order.id ? 'Preparing…' : 'Invoice'}
-                    </button>
-                    <button onClick={() => buyAgain(order)} className={styles.primaryButton}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <ShoppingCart size={14} />
-                        Buy again
-                      </span>
-                    </button>
+                    </AccountButton>
+                    <AccountButton compact variant="primary" onClick={() => buyAgain(order)} leftIcon={<ShoppingCart size={14} />}>
+                      Buy again
+                    </AccountButton>
                   </div>
                 </div>
 
@@ -423,7 +410,7 @@ export function OrdersDetails() {
                       ))}
                   </div>
                 )}
-              </article>
+              </AccountCard>
             );
           })}
         </div>
@@ -445,23 +432,23 @@ export function OrdersDetails() {
 
       {!loading && totalPages > 1 && (
         <div className={styles.pagination}>
-          <button
-            type="button"
+          <AccountButton
+            compact
+            variant="secondary"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className={styles.pageButton}
           >
             Previous
-          </button>
+          </AccountButton>
           <span className={styles.pageStatus}>Page {page} of {totalPages}</span>
-          <button
-            type="button"
+          <AccountButton
+            compact
+            variant="secondary"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className={styles.pageButton}
           >
             Next
-          </button>
+          </AccountButton>
         </div>
       )}
     </div>

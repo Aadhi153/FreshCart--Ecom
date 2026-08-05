@@ -1,18 +1,42 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { RefreshCcw } from 'lucide-react';
+import { Package, CornerUpLeft } from 'lucide-react';
 import type { ReturnRequest } from '@freshcart/types';
 import { getMyReturnRequests } from '../lib/api';
 import { EmptyState, Skeleton } from './Skeleton';
 import { ReturnTimeline } from './ReturnTimeline';
+import { AccountCard } from './AccountCard';
+import { AccountThumbnail } from './AccountThumbnail';
+import { StatusBadge } from './StatusBadge';
 import styles from './OrdersDetails.module.css';
 
-function statusBadgeClass(status: string) {
-  if (status === 'rejected') return styles.statusBadgeCancelled;
-  if (status === 'completed') return styles.statusBadgeDelivered;
-  return styles.statusBadgeActive;
+// Lucide has no single "package being returned" glyph — a Package base with a small
+// corner return-arrow badge (same composition pattern as the avatar camera badge in
+// ProfileDetails.tsx) reads unambiguously as "returns," unlike a generic refresh icon.
+function ReturnsIcon({ size = 24 }: { size?: number }) {
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex' }}>
+      <Package size={size} />
+      <span
+        style={{
+          position: 'absolute',
+          bottom: -4,
+          right: -4,
+          width: size * 0.58,
+          height: size * 0.58,
+          borderRadius: '50%',
+          background: 'var(--layer-0)',
+          border: '1px solid var(--border-color)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CornerUpLeft size={size * 0.36} />
+      </span>
+    </span>
+  );
 }
 
 export function ReturnsList() {
@@ -48,7 +72,7 @@ export function ReturnsList() {
   if (requests.length === 0) {
     return (
       <EmptyState
-        icon={<RefreshCcw size={24} />}
+        icon={<ReturnsIcon size={24} />}
         heading="No return or replacement requests"
         subtext="Requests you submit from a delivered order will show up here."
       />
@@ -62,22 +86,16 @@ export function ReturnsList() {
         const productName = item?.products?.name || 'Item';
 
         return (
-          <article key={req.id} className={styles.card}>
+          <AccountCard key={req.id} hoverable>
             <div className={styles.cardTop}>
               <strong className={styles.orderId}>
                 {req.type === 'replace' ? 'Replacement' : 'Return'} · #{req.order_id?.slice(0, 8).toUpperCase()}
               </strong>
-              <span className={`${styles.statusBadge} ${statusBadgeClass(req.status || '')}`}>
-                {(req.status || '').replace('_', ' ')}
-              </span>
+              <StatusBadge kind="return" status={req.status || 'requested'} />
             </div>
 
             <div className={styles.itemRow} style={{ marginBottom: '0.6rem' }}>
-              <div className={styles.itemImage}>
-                {item?.products?.image_url && (
-                  <Image src={item.products.image_url} alt={productName} fill sizes="42px" style={{ objectFit: 'cover' }} />
-                )}
-              </div>
+              <AccountThumbnail src={item?.products?.image_url} alt={productName} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p className={styles.itemName}>{productName}</p>
                 <p className={styles.itemQty}>
@@ -98,7 +116,7 @@ export function ReturnsList() {
             <p className={styles.meta} style={{ marginTop: '0.4rem', marginBottom: 0 }}>
               Requested {req.created_at && new Date(req.created_at).toLocaleDateString()}
             </p>
-          </article>
+          </AccountCard>
         );
       })}
     </div>

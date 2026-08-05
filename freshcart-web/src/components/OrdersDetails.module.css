@@ -65,19 +65,7 @@
 
 .list {
   display: grid;
-  gap: 0.9rem;
-}
-
-.card {
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 0.95rem;
-  background: color-mix(in srgb, var(--layer-0) 90%, transparent);
-  transition: border-color var(--transition-base), box-shadow var(--transition-base);
-}
-
-.card:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  gap: var(--acc-card-gap, 0.9rem);
 }
 
 .cardTop {
@@ -90,32 +78,6 @@
 
 .orderId {
   color: var(--text-primary);
-}
-
-.statusBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: capitalize;
-}
-
-.statusBadgeActive {
-  background: var(--primary-light);
-  color: var(--accent);
-}
-
-.statusBadgeCancelled {
-  background: color-mix(in srgb, #B91C1C 12%, transparent);
-  color: #B91C1C;
-}
-
-.statusBadgeDelivered {
-  background: color-mix(in srgb, #16A34A 14%, transparent);
-  color: #16A34A;
 }
 
 .meta {
@@ -132,9 +94,9 @@
 
 .thumb {
   position: relative;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-sm);
+  width: var(--acc-thumbnail-size, 64px);
+  height: var(--acc-thumbnail-size, 64px);
+  border-radius: var(--acc-thumbnail-radius, 12px);
   overflow: hidden;
   border: 1px solid var(--border-color);
   flex-shrink: 0;
@@ -163,17 +125,6 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-}
-
-.itemImage {
-  position: relative;
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  flex-shrink: 0;
-  background: var(--layer-1);
 }
 
 .itemName {
@@ -210,10 +161,9 @@
 
 .footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
 }
 
 .total {
@@ -224,57 +174,9 @@
 
 .actions {
   display: flex;
+  justify-content: flex-end;
   gap: 0.5rem;
-}
-
-.ghostButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  padding: 0.4rem 0.8rem;
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: border-color var(--transition-base), color var(--transition-base);
-}
-
-.ghostButton:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.primaryButton {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  padding: 0.4rem 1rem;
-  border-radius: 4px;
-  color: var(--accent);
-  font-weight: 700;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-
-.dangerButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  padding: 0.4rem 0.8rem;
-  border-radius: var(--radius-sm);
-  color: #B91C1C;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: border-color var(--transition-base);
-}
-
-.dangerButton:hover {
-  border-color: #B91C1C;
+  flex-wrap: wrap;
 }
 
 .confirmRow {
@@ -290,27 +192,6 @@
   justify-content: center;
   gap: 1rem;
   margin-top: 1.5rem;
-}
-
-.pageButton {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  padding: 0.4rem 1rem;
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.pageButton:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.pageButton:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .pageStatus {
@@ -329,7 +210,9 @@
 .skeletonCard {
   display: grid;
   gap: 0.6rem;
-  padding: 0.95rem;
-  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
-  border-radius: var(--radius-sm);
+  padding: var(--acc-card-padding, 0.95rem);
+  border: var(--acc-card-border, 1px solid var(--border-color));
+  border-radius: var(--acc-card-radius, var(--radius-sm));
+  box-shadow: var(--acc-card-shadow, none);
+  background: var(--layer-0);
 }

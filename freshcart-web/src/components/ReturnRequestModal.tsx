@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { RETURN_REASONS, type ReturnReason, type ReturnRequest } from '@freshcart/types';
 import { createReturnRequest } from '../lib/api';
+import { AccountButton } from './AccountButton';
 import styles from './ReturnRequestModal.module.css';
 
 interface ReturnRequestModalProps {
@@ -115,12 +116,12 @@ export function ReturnRequestModal({ orderId, orderItemId, itemName, onClose, on
         {error && <p className={styles.errorText}>{error}</p>}
 
         <div className={styles.actions}>
-          <button type="button" onClick={onClose} className={styles.cancelButton} disabled={submitting}>
+          <AccountButton variant="secondary" onClick={onClose} disabled={submitting} style={{ flex: 1 }}>
             Cancel
-          </button>
-          <button type="button" onClick={handleSubmit} className={styles.submitButton} disabled={submitting}>
+          </AccountButton>
+          <AccountButton variant="primary" onClick={handleSubmit} disabled={submitting} style={{ flex: 1 }}>
             {submitting ? 'Submitting…' : `Confirm ${type === 'return' ? 'return' : 'replacement'}`}
-          </button>
+          </AccountButton>
         </div>
       </div>
     </div>
