@@ -222,7 +222,7 @@ export function ProfileDetails() {
         <div
           style={{
             height: 96,
-            background: 'var(--gradient-hero, var(--gradient-primary))',
+            background: 'var(--gradient-primary)',
           }}
           aria-hidden="true"
         />
