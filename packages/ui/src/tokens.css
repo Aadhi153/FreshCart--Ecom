@@ -33,6 +33,11 @@
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* AccountCard/AccountButton hover lift shadow — resolves against
+     whichever theme's --shadow-md is active, so it stays on-brand
+     everywhere it's referenced instead of needing a per-theme copy. */
+  --acc-card-shadow-hover: var(--shadow-md);
 }
 
 /* ─────────────────────────────────────────────────────────────────

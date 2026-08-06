@@ -216,9 +216,9 @@ export function ProfileDetails() {
     <div style={{ display: 'grid', gap: '1rem', marginBottom: '2rem' }}>
       {loadError && <p style={{ margin: 0, color: '#B91C1C', fontSize: '0.88rem', fontWeight: 700 }}>{loadError}</p>}
 
-      <div style={{ display: 'grid', gap: '1.25rem' }}>
+      <div className={styles.stagger} style={{ display: 'grid', gap: '1.25rem' }}>
       {/* Hero: cover banner + avatar + name + profile completion */}
-      <AccountCard style={{ padding: 0, overflow: 'hidden' }}>
+      <AccountCard hoverable style={{ padding: 0, overflow: 'hidden' }}>
         <div
           style={{
             height: 96,
@@ -229,11 +229,12 @@ export function ProfileDetails() {
         <div style={{ padding: '0 1.5rem 1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', marginTop: -40 }}>
             <div style={{ position: 'relative' }}>
-              <div style={{ border: '4px solid var(--layer-0)', borderRadius: '50%', background: 'var(--layer-0)' }}>
+              <div className={styles.avatarWrap} style={{ border: '4px solid var(--layer-0)', borderRadius: '50%', background: 'var(--layer-0)' }}>
                 <Avatar name={fullName} email={email} avatarUrl={avatarUrl} size={84} />
               </div>
               <label
                 title="Change profile photo"
+                className={styles.cameraBadge}
                 style={{
                   position: 'absolute',
                   bottom: -2,
@@ -296,11 +297,11 @@ export function ProfileDetails() {
       </AccountCard>
 
       {/* Info cards */}
-      <AccountCard style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.5rem 1.25rem' }}>
+      <AccountCard hoverable style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.5rem 1.25rem' }}>
         {infoCards.map((item) => {
           const Icon = item.icon;
           return (
-            <div key={item.label} style={{ minWidth: 0 }}>
+            <div key={item.label} className={styles.infoItem} style={{ minWidth: 0 }}>
               <p
                 style={{
                   display: 'flex',
@@ -359,6 +360,7 @@ export function ProfileDetails() {
         <button
           type="button"
           onClick={handleOpenVipBenefits}
+          className={styles.vipLink}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
             background: 'transparent', border: 'none', color: 'var(--accent)',

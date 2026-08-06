@@ -3,7 +3,68 @@
   transition: border-color var(--acc-transition-fast, 150ms ease-out), box-shadow var(--acc-transition-fast, 150ms ease-out);
 }
 
+.underlineField:hover {
+  border-color: var(--acc-field-border-focus, var(--primary));
+}
+
 .underlineField:focus {
   border-color: var(--acc-field-border-focus, var(--primary));
   box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Staggered entrance: each direct child (hero/info/membership/form cards)
+   fades and slides up in sequence instead of popping in all at once.
+   Keyframes are defined locally (not reused from globals.css) because
+   Turbopack's CSS Modules scope animation-name identifiers to the file,
+   so a cross-file keyframe reference silently resolves to nothing and
+   leaves elements stuck at opacity: 0. */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stagger > * {
+  opacity: 0;
+  animation: fadeInUp 0.45s ease forwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 70ms; }
+.stagger > *:nth-child(3) { animation-delay: 140ms; }
+.stagger > *:nth-child(4) { animation-delay: 210ms; }
+.stagger > *:nth-child(5) { animation-delay: 280ms; }
+
+.avatarWrap {
+  transition: transform var(--acc-transition-fast, 150ms ease-out);
+}
+.avatarWrap:hover {
+  transform: scale(1.05);
+}
+
+.cameraBadge {
+  transition: transform var(--acc-transition-fast, 150ms ease-out), filter var(--acc-transition-fast, 150ms ease-out);
+}
+.cameraBadge:hover {
+  transform: scale(1.12);
+  filter: brightness(1.08);
+}
+
+.infoItem {
+  padding: 0.5rem 0.6rem;
+  margin: -0.5rem -0.6rem;
+  border-radius: var(--radius-sm);
+  transition: background var(--acc-transition-fast, 150ms ease-out), transform var(--acc-transition-fast, 150ms ease-out);
+}
+.infoItem:hover {
+  background: var(--layer-1);
+  transform: translateY(-1px);
+}
+
+.vipLink {
+  border-radius: var(--radius-sm);
+  transition: color var(--acc-transition-fast, 150ms ease-out), text-decoration-color var(--acc-transition-fast, 150ms ease-out);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+}
+.vipLink:hover {
+  color: var(--primary-hover);
+  text-decoration-color: currentColor;
 }

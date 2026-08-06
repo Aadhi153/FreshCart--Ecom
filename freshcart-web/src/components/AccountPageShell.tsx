@@ -269,7 +269,6 @@ export function AccountPageShell({ title, description, children }: AccountPageSh
 
         <section
           style={{
-            background: 'var(--layer-0)',
             minWidth: 0,
             padding: 'var(--acc-card-padding, 1.5rem) 0',
           }}
