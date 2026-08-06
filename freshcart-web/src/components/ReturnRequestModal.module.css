@@ -98,6 +98,20 @@
   box-sizing: border-box;
 }
 
+.textarea {
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--layer-0);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
 .radioRow {
   display: flex;
   flex-direction: column;

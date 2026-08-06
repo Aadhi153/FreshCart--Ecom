@@ -92,6 +92,24 @@ export async function getMyOrders(page = 1, limit = 10, status?: string): Promis
   return { orders, total };
 }
 
+export interface OrderSummary {
+  orderCount: number;
+  totalSpent: number;
+  inTransitCount: number;
+}
+
+export const getOrderSummary = (): Promise<OrderSummary> => authFetch('/api/orders/summary');
+
+export interface RepeatItem {
+  product_id: string;
+  name: string;
+  image_url: string | null;
+  price: number;
+  orderCount: number;
+}
+
+export const getRepeatItems = (): Promise<RepeatItem[]> => authFetch('/api/orders/repeat-items');
+
 export const cancelOrder = (orderId: string): Promise<Order> =>
   authFetch(`/api/orders/${orderId}/cancel`, { method: 'PATCH' });
 
@@ -117,8 +135,12 @@ export interface PendingReview {
   image_url: string | null;
 }
 
-export const getMyReviews = (): Promise<{ reviews: MyReview[]; pending: PendingReview[] }> =>
-  authFetch('/api/reviews/mine');
+export const getMyReviews = (): Promise<{
+  reviews: MyReview[];
+  pending: PendingReview[];
+  deliveredRatedCount: number;
+  deliveredTotalCount: number;
+}> => authFetch('/api/reviews/mine');
 
 export const deleteMyAccount = (): Promise<{ success: boolean }> =>
   authFetch('/api/auth/me', { method: 'DELETE' });

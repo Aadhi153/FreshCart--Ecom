@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { AccountPageShell } from '../../components/AccountPageShell';
 import { OrdersDetails } from '../../components/OrdersDetails';
 import { ReturnsList } from '../../components/ReturnsList';
@@ -35,7 +35,13 @@ export default function OrdersPage() {
       </div>
 
       <AccountTabs activeKey={tab}>
-        {tab === 'orders' ? <OrdersDetails /> : <ReturnsList />}
+        {tab === 'orders' ? (
+          <Suspense fallback={<p style={{ margin: 0, color: 'var(--text-secondary)' }}>Loading orders...</p>}>
+            <OrdersDetails />
+          </Suspense>
+        ) : (
+          <ReturnsList />
+        )}
       </AccountTabs>
     </AccountPageShell>
   );

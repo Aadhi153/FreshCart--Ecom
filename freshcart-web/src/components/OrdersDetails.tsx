@@ -1,18 +1,32 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ChevronDown,
   Download,
   Package,
+  RotateCcw,
   Search,
   ShoppingCart,
+  Star,
   Truck,
 } from 'lucide-react';
-import { cancelOrder, getMyOrders, getMyReturnRequests } from '../lib/api';
+import {
+  cancelOrder,
+  getMyOrders,
+  getMyReturnRequests,
+  getMyReviews,
+  getOrderSummary,
+  getRepeatItems,
+  type OrderSummary,
+  type PendingReview,
+  type RepeatItem,
+} from '../lib/api';
 import { useCartStore } from '../lib/store';
-import { RETURN_WINDOW_DAYS, type Order, type ReturnRequest } from '@freshcart/types';
+import type { Order, ReturnRequest } from '@freshcart/types';
+import { isWithinReturnWindow } from '../lib/returnEligibility';
+import { formatPrice } from '../lib/formatPrice';
 import { EmptyState, Skeleton } from './Skeleton';
 import { OrderTimeline } from './OrderTimeline';
 import { ReturnRequestModal } from './ReturnRequestModal';
@@ -32,11 +46,15 @@ const LIVE_STATUSES = new Set(['placed', 'packed', 'shipped']);
 const PAGE_SIZE = 10;
 const POLL_INTERVAL_MS = 20000;
 
-function isWithinReturnWindow(order: Order) {
-  if (order.status !== 'delivered' || !order.delivered_at) return false;
-  const deadline = new Date(order.delivered_at).getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-  return Date.now() <= deadline;
-}
+// Mirrors StatusBadge.module.css's palette so the left-border accent and the
+// status pill always agree on what each status means.
+const STATUS_BORDER_COLORS: Record<string, string> = {
+  placed: '#3B82F6',
+  packed: '#F59E0B',
+  shipped: '#8B5CF6',
+  delivered: '#22C55E',
+  cancelled: '#EF4444',
+};
 
 export function OrdersDetails() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -52,10 +70,18 @@ export function OrdersDetails() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [requestedItemIds, setRequestedItemIds] = useState<Set<string>>(new Set());
   const [returnTarget, setReturnTarget] = useState<{ orderId: string; orderItemId: string; itemName: string } | null>(null);
-  const [ratedItemIds, setRatedItemIds] = useState<Set<string>>(new Set());
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [orderSummary, setOrderSummary] = useState<OrderSummary>({ orderCount: 0, totalSpent: 0, inTransitCount: 0 });
+  const [repeatItems, setRepeatItems] = useState<RepeatItem[]>([]);
+  const [reviewedProductIds, setReviewedProductIds] = useState<Set<string>>(new Set());
+  const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
+  const [deliveredRatedCount, setDeliveredRatedCount] = useState(0);
+  const [deliveredTotalCount, setDeliveredTotalCount] = useState(0);
+  const [reviewNudgeOpen, setReviewNudgeOpen] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const didJumpToOrderRef = useRef(false);
   const { showToast } = useToast();
 
   // Fetched once (not paginated with the orders list) — a customer's total return/replace
@@ -69,6 +95,72 @@ export function OrdersDetails() {
       })
       .catch(() => {});
   }, []);
+
+  // Personalized stats header (order count / lifetime spend / in-transit count).
+  useEffect(() => {
+    getOrderSummary().then(setOrderSummary).catch(() => {});
+  }, []);
+
+  // "Reorder your usual" — products bought across 2+ separate orders.
+  useEffect(() => {
+    getRepeatItems().then(setRepeatItems).catch(() => {});
+  }, []);
+
+  // Review-progress nudge, and the source of truth for "already reviewed" so a
+  // delivered item's Rate prompt doesn't keep reappearing after a page reload.
+  useEffect(() => {
+    getMyReviews()
+      .then(({ reviews, pending, deliveredRatedCount, deliveredTotalCount }) => {
+        setReviewedProductIds(new Set(reviews.map((r) => r.product_id)));
+        setPendingReviews(pending);
+        setDeliveredRatedCount(deliveredRatedCount);
+        setDeliveredTotalCount(deliveredTotalCount);
+      })
+      .catch(() => {});
+  }, []);
+
+  // A product is reviewed once, regardless of which order card (or the review
+  // nudge) it was rated from — clear it everywhere at once.
+  const handleReviewDone = (productId: string) => {
+    setReviewedProductIds((prev) => new Set(prev).add(productId));
+    setPendingReviews((prev) => prev.filter((p) => p.product_id !== productId));
+    setDeliveredRatedCount((prev) => prev + 1);
+  };
+
+  // Deep link support from the Returns page's personalized empty state
+  // ("?status=delivered&order=<id>") — preselect the filter once on mount.
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam && (FILTERS as readonly string[]).includes(statusParam)) {
+      setFilter(statusParam as (typeof FILTERS)[number]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Once the deep-linked order is loaded, expand and scroll to it — only once,
+  // so the 20s poll refresh below doesn't keep yanking scroll position back.
+  useEffect(() => {
+    const orderParam = searchParams.get('order');
+    if (!orderParam || loading || didJumpToOrderRef.current) return;
+    if (!orders.some((o) => o.id === orderParam)) return;
+    didJumpToOrderRef.current = true;
+    setExpanded((prev) => new Set(prev).add(orderParam));
+    requestAnimationFrame(() => {
+      document.getElementById(`order-${orderParam}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, [orders, loading, searchParams]);
+
+  const handleReorderItem = (item: RepeatItem) => {
+    addItem({
+      id: item.product_id,
+      productId: item.product_id,
+      name: item.name,
+      price: item.price,
+      image: item.image_url || undefined,
+      quantity: 1,
+    });
+    showToast(`Added ${item.name} to cart`, 'success');
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -200,6 +292,32 @@ export function OrdersDetails() {
 
   return (
     <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
+        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+          {orderSummary.orderCount} order{orderSummary.orderCount === 1 ? '' : 's'} · {formatPrice(orderSummary.totalSpent)} lifetime · {orderSummary.inTransitCount} in transit
+        </p>
+        {repeatItems.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 700 }}>Reorder your usual:</span>
+            {repeatItems.slice(0, 3).map((item) => (
+              <button
+                key={item.product_id}
+                type="button"
+                onClick={() => handleReorderItem(item)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                  padding: '0.3rem 0.7rem', borderRadius: 'var(--radius-full)',
+                  border: '1px solid var(--border-color)', background: 'var(--layer-0)',
+                  color: 'var(--text-primary)', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                <RotateCcw size={11} /> {item.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className={styles.header}>
         <div className={styles.searchBox}>
           <Search size={15} />
@@ -225,6 +343,32 @@ export function OrdersDetails() {
         ))}
       </div>
 
+      {deliveredTotalCount > 0 && deliveredRatedCount < deliveredTotalCount && (
+        <AccountCard hoverable style={{ marginBottom: '1rem', display: 'grid', gap: reviewNudgeOpen ? '0.75rem' : 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <p style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Star size={15} color="#F59E0B" fill="#F59E0B" />
+              You&apos;ve rated {deliveredRatedCount} of {deliveredTotalCount} delivered items
+            </p>
+            <AccountButton compact variant="secondary" onClick={() => setReviewNudgeOpen((v) => !v)}>
+              {reviewNudgeOpen ? 'Hide' : 'Leave a review'}
+            </AccountButton>
+          </div>
+          {reviewNudgeOpen && (
+            <div style={{ display: 'grid', gap: '0.6rem' }}>
+              {pendingReviews.map((item) => (
+                <RateItemPrompt
+                  key={item.product_id}
+                  productId={item.product_id}
+                  productName={item.product_name}
+                  onDone={() => handleReviewDone(item.product_id)}
+                />
+              ))}
+            </div>
+          )}
+        </AccountCard>
+      )}
+
       {loading ? (
         <div className={styles.list}>
           {[0, 1, 2].map((i) => (
@@ -246,7 +390,12 @@ export function OrdersDetails() {
             const deliveryAddress = (order as any).deliveryAddress || (order as any).delivery_address;
 
             return (
-              <AccountCard key={order.id} hoverable>
+              <AccountCard
+                key={order.id}
+                id={`order-${order.id}`}
+                hoverable
+                style={{ borderLeft: `4px solid ${STATUS_BORDER_COLORS[order.status || ''] || 'var(--border-color)'}` }}
+              >
                 <div className={styles.cardTop}>
                   <strong className={styles.orderId}>#{order.id?.slice(0, 8).toUpperCase()}</strong>
                   <StatusBadge kind="order" status={order.status || ''} />
@@ -396,16 +545,16 @@ export function OrdersDetails() {
                   </div>
                 </div>
 
-                {order.status === 'delivered' && items.some((item: any) => !item.is_gift && item.product_id && !ratedItemIds.has(item.id)) && (
+                {order.status === 'delivered' && items.some((item: any) => !item.is_gift && item.product_id && !reviewedProductIds.has(item.product_id)) && (
                   <div style={{ marginTop: '0.7rem' }}>
                     {items
-                      .filter((item: any) => !item.is_gift && item.product_id && !ratedItemIds.has(item.id))
+                      .filter((item: any) => !item.is_gift && item.product_id && !reviewedProductIds.has(item.product_id))
                       .map((item: any, i: number) => (
                         <RateItemPrompt
                           key={item.id || i}
                           productId={item.product_id}
                           productName={item.products?.name || 'this item'}
-                          onDone={() => setRatedItemIds((prev) => new Set(prev).add(item.id))}
+                          onDone={() => handleReviewDone(item.product_id)}
                         />
                       ))}
                   </div>

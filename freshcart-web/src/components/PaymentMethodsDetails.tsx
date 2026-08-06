@@ -9,6 +9,7 @@ import {
   setDefaultPaymentMethod,
   type PaymentMethod,
 } from '../lib/api';
+import { supabase } from '../lib/supabase';
 import { useToast } from './ToastProvider';
 import { AccountCard } from './AccountCard';
 import { AccountButton } from './AccountButton';
@@ -18,6 +19,15 @@ const TYPE_OPTIONS: { value: PaymentMethod['type']; label: string; icon: typeof 
   { value: 'card', label: 'Card', icon: CreditCard, placeholder: 'Visa •••• 4242' },
   { value: 'upi', label: 'UPI', icon: Smartphone, placeholder: 'yourname@upi' },
   { value: 'wallet', label: 'Wallet', icon: Wallet, placeholder: 'Paytm Wallet' },
+];
+
+// Matches VALID_PAYMENT_METHODS in checkout/page.tsx, which reads this same
+// profiles.preferred_payment column to preselect a method at checkout.
+const PREFERRED_PAYMENT_OPTIONS = [
+  { value: 'cod', label: 'Cash on Delivery' },
+  { value: 'upi', label: 'UPI' },
+  { value: 'card', label: 'Credit / Debit Card' },
+  { value: 'netbanking', label: 'Net Banking' },
 ];
 
 const fieldStyle = {
@@ -38,6 +48,10 @@ export function PaymentMethodsDetails() {
   const [value, setValue] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const [userId, setUserId] = useState<string | null>(null);
+  const [preferredPayment, setPreferredPayment] = useState('cod');
+  const [savingPreferred, setSavingPreferred] = useState(false);
+
   const load = () => {
     getPaymentMethods()
       .then(setMethods)
@@ -49,6 +63,38 @@ export function PaymentMethodsDetails() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      setUserId(data.user.id);
+      supabase
+        .from('profiles')
+        .select('preferred_payment')
+        .eq('id', data.user.id)
+        .maybeSingle()
+        .then(({ data: profile }) => {
+          if (profile?.preferred_payment) setPreferredPayment(profile.preferred_payment);
+        });
+    });
+  }, []);
+
+  const handleSavePreferred = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!userId) return;
+    setSavingPreferred(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({ id: userId, preferred_payment: preferredPayment, updated_at: new Date().toISOString() });
+      if (error) throw error;
+      showToast('Preferred payment updated.', 'success');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to update preferred payment.', 'error');
+    } finally {
+      setSavingPreferred(false);
+    }
+  };
 
   const handleAdd = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -89,6 +135,32 @@ export function PaymentMethodsDetails() {
 
   return (
     <div style={{ display: 'grid', gap: '1.25rem' }}>
+      <AccountCard style={{ display: 'grid', gap: '0.9rem' }}>
+        <form onSubmit={handleSavePreferred} style={{ display: 'grid', gap: '0.9rem' }}>
+          <h2 style={{ margin: 0, fontSize: 'var(--acc-text-section-title-size, 1.05rem)', fontWeight: 700 }}>Preferred Payment</h2>
+          <p style={{ margin: '-0.4rem 0 0', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
+            Pre-selected at checkout — you can always change it per order.
+          </p>
+
+          <label style={{ display: 'grid', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700 }}>
+            Payment method
+            <select
+              value={preferredPayment}
+              onChange={(event) => setPreferredPayment(event.target.value)}
+              style={{ ...fieldStyle, cursor: 'pointer' }}
+            >
+              {PREFERRED_PAYMENT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <AccountButton type="submit" variant="primary" disabled={savingPreferred || !userId} style={{ justifySelf: 'start' }}>
+            {savingPreferred ? 'Saving...' : 'Save preferred payment'}
+          </AccountButton>
+        </form>
+      </AccountCard>
+
       <AccountCard style={{ display: 'grid', gap: '0.9rem' }}>
         <form onSubmit={handleAdd} style={{ display: 'grid', gap: '0.9rem' }}>
           <h2 style={{ margin: 0, fontSize: 'var(--acc-text-section-title-size, 1.05rem)', fontWeight: 700 }}>Add Payment Method</h2>

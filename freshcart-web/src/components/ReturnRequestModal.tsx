@@ -19,6 +19,7 @@ export function ReturnRequestModal({ orderId, orderItemId, itemName, onClose, on
   const [type, setType] = useState<'return' | 'replace'>('return');
   const [reason, setReason] = useState<ReturnReason>(RETURN_REASONS[0]);
   const [refundMethod, setRefundMethod] = useState<'original_payment' | 'store_credit'>('original_payment');
+  const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -31,6 +32,7 @@ export function ReturnRequestModal({ orderId, orderItemId, itemName, onClose, on
         order_item_id: orderItemId,
         type,
         reason,
+        note: note.trim() || undefined,
         ...(type === 'return' ? { refund_method: refundMethod } : {}),
       });
       onSuccess(request);
@@ -112,6 +114,17 @@ export function ReturnRequestModal({ orderId, orderItemId, itemName, onClose, on
             A replacement will be sent once the original item is picked up and confirmed.
           </p>
         )}
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="return-note">Note (optional)</label>
+          <textarea
+            id="return-note"
+            className={styles.textarea}
+            placeholder="Add any extra detail for our team"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </div>
 
         {error && <p className={styles.errorText}>{error}</p>}
 

@@ -314,6 +314,7 @@ export const ReturnRequestSchema = z.object({
   type: z.enum(['return', 'replace']),
   reason: ReturnReasonSchema,
   refund_method: z.enum(['original_payment', 'store_credit']).optional().nullable(),
+  note: z.string().optional().nullable(),
   status: ReturnRequestStatusSchema.default('requested'),
   refund_amount: z.number().min(0).optional().nullable(),
   created_at: z.string().datetime().optional(),
@@ -331,6 +332,7 @@ export const CreateReturnRequestPayloadSchema = z.object({
   type: z.enum(['return', 'replace']),
   reason: ReturnReasonSchema,
   refund_method: z.enum(['original_payment', 'store_credit']).optional(),
+  note: z.string().optional(),
 }).refine(
   (data) => data.type !== 'return' || !!data.refund_method,
   { message: 'refund_method is required for a return', path: ['refund_method'] }

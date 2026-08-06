@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { Package, CornerUpLeft } from 'lucide-react';
-import type { ReturnRequest } from '@freshcart/types';
-import { getMyReturnRequests } from '../lib/api';
+import type { Order, ReturnRequest } from '@freshcart/types';
+import { getMyOrders, getMyReturnRequests } from '../lib/api';
+import { isWithinReturnWindow } from '../lib/returnEligibility';
 import { EmptyState, Skeleton } from './Skeleton';
 import { ReturnTimeline } from './ReturnTimeline';
 import { AccountCard } from './AccountCard';
@@ -43,6 +44,7 @@ export function ReturnsList() {
   const [requests, setRequests] = useState<ReturnRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [eligibleOrders, setEligibleOrders] = useState<Order[]>([]);
 
   useEffect(() => {
     getMyReturnRequests()
@@ -50,6 +52,15 @@ export function ReturnsList() {
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load return requests.'))
       .finally(() => setLoading(false));
   }, []);
+
+  // Only needed to personalize the empty state, so it's fetched lazily and only
+  // once we know the user has no requests yet — no point loading it otherwise.
+  useEffect(() => {
+    if (loading || error || requests.length > 0) return;
+    getMyOrders(1, 50, 'delivered')
+      .then(({ orders }) => setEligibleOrders(orders.filter(isWithinReturnWindow)))
+      .catch(() => {});
+  }, [loading, error, requests]);
 
   if (loading) {
     return (
@@ -70,6 +81,25 @@ export function ReturnsList() {
   }
 
   if (requests.length === 0) {
+    if (eligibleOrders.length > 0) {
+      // A single eligible order can be deep-linked and jumped to directly;
+      // with several, send the shopper to the filtered Orders tab instead —
+      // no single order is "the" one to land on.
+      const ctaHref = eligibleOrders.length === 1
+        ? `/orders?status=delivered&order=${eligibleOrders[0].id}`
+        : '/orders?status=delivered';
+
+      return (
+        <EmptyState
+          icon={<ReturnsIcon size={24} />}
+          heading={`You have ${eligibleOrders.length} delivered order${eligibleOrders.length === 1 ? '' : 's'} eligible for return`}
+          subtext="Open the order in the Orders tab to request a return or replacement."
+          ctaHref={ctaHref}
+          ctaLabel={eligibleOrders.length === 1 ? 'View this order' : 'View eligible orders'}
+        />
+      );
+    }
+
     return (
       <EmptyState
         icon={<ReturnsIcon size={24} />}
@@ -106,6 +136,12 @@ export function ReturnsList() {
             </div>
 
             <ReturnTimeline status={req.status || 'requested'} />
+
+            {req.note && (
+              <p className={styles.meta} style={{ marginTop: '0.5rem' }}>
+                Note: {req.note}
+              </p>
+            )}
 
             {req.status === 'completed' && req.type === 'return' && req.refund_amount != null && (
               <p className={styles.meta} style={{ marginTop: '0.5rem' }}>
