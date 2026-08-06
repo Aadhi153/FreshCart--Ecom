@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   ChevronDown,
   Download,
@@ -55,6 +56,11 @@ const STATUS_BORDER_COLORS: Record<string, string> = {
   delivered: '#22C55E',
   cancelled: '#EF4444',
 };
+
+function formatShortDate(value?: string | null) {
+  if (!value) return '';
+  return new Date(value).toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
+}
 
 export function OrdersDetails() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -394,171 +400,196 @@ export function OrdersDetails() {
                 key={order.id}
                 id={`order-${order.id}`}
                 hoverable
-                style={{ borderLeft: `4px solid ${STATUS_BORDER_COLORS[order.status || ''] || 'var(--border-color)'}` }}
+                style={{
+                  borderLeft: `4px solid ${STATUS_BORDER_COLORS[order.status || ''] || 'var(--border-color)'}`,
+                  padding: 0,
+                  overflow: 'hidden',
+                }}
               >
-                <div className={styles.cardTop}>
-                  <strong className={styles.orderId}>#{order.id?.slice(0, 8).toUpperCase()}</strong>
-                  <StatusBadge kind="order" status={order.status || ''} />
-                </div>
-
-                <p className={styles.meta}>
-                  {order.created_at && new Date(order.created_at).toLocaleString()}
-                </p>
-
-                {!cancelled && order.status !== 'delivered' && order.delivery_slot && (
-                  <p className={styles.meta} style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                    <Truck size={13} style={{ verticalAlign: '-2px', marginRight: '0.3rem' }} />
-                    Arriving: {order.delivery_slot}
-                  </p>
-                )}
-
-                {order.status === 'shipped' && (
-                  <p className={styles.meta} style={{ color: 'var(--accent)', fontWeight: 700 }}>
-                    Out for delivery — your order is on its way.
-                  </p>
-                )}
-
-                {!cancelled && (
-                  <OrderTimeline
-                    status={order.status || ''}
-                    timestamps={{ placed: order.created_at, delivered: order.delivered_at }}
-                  />
-                )}
-
-                <AccountButton
-                  compact
-                  variant="secondary"
+                <button
+                  type="button"
                   onClick={() => toggleExpanded(order.id || '')}
-                  style={{ marginBottom: '0.5rem' }}
-                  leftIcon={<ChevronDown size={14} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform var(--acc-transition-base, 250ms ease-out)' }} />}
+                  className={styles.summaryRow}
+                  aria-expanded={isOpen}
                 >
-                  {isOpen ? 'Hide details' : `${items.length} item${items.length === 1 ? '' : 's'}`}
-                </AccountButton>
-
-                {!isOpen && items.length > 0 && (
-                  <div className={styles.thumbRow}>
-                    {items.slice(0, 4).map((item: any, i: number) => (
-                      <AccountThumbnail key={item.id || i} src={item.products?.image_url} alt={item.products?.name || 'Item'} />
+                  <div className={styles.summaryThumbStack}>
+                    {items.slice(0, 2).map((item: any, i: number) => (
+                      <div key={item.id || i} className={styles.summaryThumbItem} style={{ zIndex: 2 - i, marginLeft: i > 0 ? -14 : 0 }}>
+                        <AccountThumbnail src={item.products?.image_url} alt={item.products?.name || 'Item'} size={40} />
+                      </div>
                     ))}
-                    {items.length > 4 && (
-                      <div className={`${styles.thumb} ${styles.thumbMore}`}>+{items.length - 4}</div>
+                    {items.length > 2 && (
+                      <div className={styles.summaryThumbMore} style={{ marginLeft: -14 }}>+{items.length - 2}</div>
                     )}
                   </div>
-                )}
 
-                {isOpen && (
-                  <>
-                    <div className={styles.itemsList}>
-                      {items.map((item: any, i: number) => {
-                        const eligible = !item.is_gift && isWithinReturnWindow(order) && !requestedItemIds.has(item.id);
-                        const alreadyRequested = !item.is_gift && isWithinReturnWindow(order) && requestedItemIds.has(item.id);
-                        return (
-                          <div key={item.id || i} className={styles.itemRow} style={{ flexWrap: 'wrap' }}>
-                            <AccountThumbnail src={item.products?.image_url} alt={item.products?.name || 'Item'} />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <p className={styles.itemName}>
-                                {item.products?.name || 'Item'}
-                                {item.is_gift && <span style={{ marginLeft: '0.4rem', color: 'var(--primary, #16a34a)', fontSize: '0.75rem', fontWeight: 600 }}>🎁 FREE GIFT</span>}
-                              </p>
-                              <p className={styles.itemQty}>Qty {item.quantity} &middot; {item.is_gift ? 'Free' : `Rs.${Number(item.price_at_time).toFixed(2)}`}</p>
-                            </div>
-                            {eligible && (
-                              <AccountButton
-                                compact
-                                variant="secondary"
-                                onClick={() =>
-                                  setReturnTarget({ orderId: order.id || '', orderItemId: item.id, itemName: item.products?.name || 'Item' })
-                                }
-                              >
-                                Return / Replace
+                  <div className={styles.summaryInfo}>
+                    <div className={styles.summaryTopLine}>
+                      <strong className={styles.orderId}>#{order.id?.slice(0, 8).toUpperCase()}</strong>
+                      <StatusBadge kind="order" status={order.status || ''} />
+                    </div>
+                    <p className={styles.summaryLine}>
+                      {items.length} item{items.length === 1 ? '' : 's'} &middot; {formatPrice(Number(order.total_amount))} &middot; {formatShortDate(order.created_at)}
+                    </p>
+                  </div>
+
+                  <ChevronDown
+                    size={18}
+                    className={styles.summaryChevron}
+                    style={{ transform: isOpen ? 'rotate(180deg)' : 'none' }}
+                  />
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      key="expanded"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22, ease: 'easeOut' }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <div className={styles.expandedBody}>
+                        <p className={styles.meta}>
+                          {order.created_at && new Date(order.created_at).toLocaleString()}
+                        </p>
+
+                        {!cancelled && order.status !== 'delivered' && order.delivery_slot && (
+                          <p className={styles.meta} style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                            <Truck size={13} style={{ verticalAlign: '-2px', marginRight: '0.3rem' }} />
+                            Arriving: {order.delivery_slot}
+                          </p>
+                        )}
+
+                        {order.status === 'shipped' && (
+                          <p className={styles.meta} style={{ color: 'var(--accent)', fontWeight: 700 }}>
+                            Out for delivery — your order is on its way.
+                          </p>
+                        )}
+
+                        {!cancelled && (
+                          <div style={{ '--acc-step-circle-size': '24px' } as React.CSSProperties}>
+                            <OrderTimeline
+                              status={order.status || ''}
+                              timestamps={{ placed: order.created_at, delivered: order.delivered_at }}
+                            />
+                          </div>
+                        )}
+
+                        <div className={styles.itemsList}>
+                          {items.map((item: any, i: number) => {
+                            const eligible = !item.is_gift && isWithinReturnWindow(order) && !requestedItemIds.has(item.id);
+                            const alreadyRequested = !item.is_gift && isWithinReturnWindow(order) && requestedItemIds.has(item.id);
+                            return (
+                              <div key={item.id || i} className={styles.itemRow} style={{ flexWrap: 'wrap' }}>
+                                <AccountThumbnail src={item.products?.image_url} alt={item.products?.name || 'Item'} size={40} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <p className={styles.itemName}>
+                                    {item.products?.name || 'Item'}
+                                    {item.is_gift && <span style={{ marginLeft: '0.4rem', color: 'var(--primary, #16a34a)', fontSize: '0.75rem', fontWeight: 600 }}>🎁 FREE GIFT</span>}
+                                  </p>
+                                  <p className={styles.itemQty}>Qty {item.quantity} &middot; {item.is_gift ? 'Free' : `Rs.${Number(item.price_at_time).toFixed(2)}`}</p>
+                                </div>
+                                {eligible && (
+                                  <AccountButton
+                                    compact
+                                    variant="secondary"
+                                    onClick={() =>
+                                      setReturnTarget({ orderId: order.id || '', orderItemId: item.id, itemName: item.products?.name || 'Item' })
+                                    }
+                                  >
+                                    Return / Replace
+                                  </AccountButton>
+                                )}
+                                {alreadyRequested && (
+                                  <StatusBadge kind="return" status="requested" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {deliveryAddress && (
+                          <div className={styles.addressBox}>
+                            Delivered to: {[deliveryAddress.fullName, deliveryAddress.line1, deliveryAddress.city, deliveryAddress.pincode]
+                              .filter(Boolean)
+                              .join(', ')}
+                          </div>
+                        )}
+                        {order.delivery_slot && (
+                          <div className={styles.addressBox}>
+                            Delivery slot: {order.delivery_slot}
+                          </div>
+                        )}
+                        {(order.discount_amount ? order.discount_amount > 0 : false) && (
+                          <div className={styles.breakdownRow}>
+                            <span>Discount</span>
+                            <span>-Rs.{Number(order.discount_amount).toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className={styles.breakdownRow}>
+                          <span>Delivery Fee</span>
+                          <span>{order.delivery_fee ? `Rs.${Number(order.delivery_fee).toFixed(2)}` : 'Free'}</span>
+                        </div>
+
+                        {cancellingId === order.id && (
+                          <div className={styles.confirmRow} style={{ marginBottom: '0.6rem' }}>
+                            <span className={styles.confirmText}>Cancel this order?</span>
+                            <AccountButton
+                              compact
+                              variant="danger-solid"
+                              disabled={processingId === order.id}
+                              onClick={() => handleCancelOrder(order.id || '')}
+                            >
+                              {processingId === order.id ? 'Cancelling...' : 'Yes, cancel'}
+                            </AccountButton>
+                            <AccountButton compact variant="secondary" onClick={() => setCancellingId(null)}>
+                              Keep order
+                            </AccountButton>
+                          </div>
+                        )}
+
+                        <div className={styles.footer}>
+                          <p className={styles.total}>Total: Rs.{Number(order.total_amount).toFixed(2)}</p>
+                          <div className={styles.actions}>
+                            {CANCELLABLE_STATUSES.has(order.status || '') && cancellingId !== order.id && (
+                              <AccountButton compact variant="danger" onClick={() => setCancellingId(order.id || '')}>
+                                Cancel order
                               </AccountButton>
                             )}
-                            {alreadyRequested && (
-                              <StatusBadge kind="return" status="requested" />
-                            )}
+                            <AccountButton
+                              compact
+                              variant="secondary"
+                              onClick={() => handleDownloadInvoice(order)}
+                              disabled={downloadingId === order.id}
+                              leftIcon={<Download size={14} />}
+                            >
+                              {downloadingId === order.id ? 'Preparing…' : 'Invoice'}
+                            </AccountButton>
+                            <AccountButton compact variant="primary" onClick={() => buyAgain(order)} leftIcon={<ShoppingCart size={14} />}>
+                              Buy again
+                            </AccountButton>
                           </div>
-                        );
-                      })}
-                    </div>
-                    {deliveryAddress && (
-                      <div className={styles.addressBox}>
-                        Delivered to: {[deliveryAddress.fullName, deliveryAddress.line1, deliveryAddress.city, deliveryAddress.pincode]
-                          .filter(Boolean)
-                          .join(', ')}
-                      </div>
-                    )}
-                    {order.delivery_slot && (
-                      <div className={styles.addressBox}>
-                        Delivery slot: {order.delivery_slot}
-                      </div>
-                    )}
-                    {(order.discount_amount ? order.discount_amount > 0 : false) && (
-                      <div className={styles.breakdownRow}>
-                        <span>Discount</span>
-                        <span>-Rs.{Number(order.discount_amount).toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className={styles.breakdownRow}>
-                      <span>Delivery Fee</span>
-                      <span>{order.delivery_fee ? `Rs.${Number(order.delivery_fee).toFixed(2)}` : 'Free'}</span>
-                    </div>
-                  </>
-                )}
+                        </div>
 
-                {cancellingId === order.id && (
-                  <div className={styles.confirmRow} style={{ marginBottom: '0.6rem' }}>
-                    <span className={styles.confirmText}>Cancel this order?</span>
-                    <AccountButton
-                      compact
-                      variant="danger-solid"
-                      disabled={processingId === order.id}
-                      onClick={() => handleCancelOrder(order.id || '')}
-                    >
-                      {processingId === order.id ? 'Cancelling...' : 'Yes, cancel'}
-                    </AccountButton>
-                    <AccountButton compact variant="secondary" onClick={() => setCancellingId(null)}>
-                      Keep order
-                    </AccountButton>
-                  </div>
-                )}
-
-                <div className={styles.footer}>
-                  <p className={styles.total}>Total: Rs.{Number(order.total_amount).toFixed(2)}</p>
-                  <div className={styles.actions}>
-                    {CANCELLABLE_STATUSES.has(order.status || '') && cancellingId !== order.id && (
-                      <AccountButton compact variant="danger" onClick={() => setCancellingId(order.id || '')}>
-                        Cancel order
-                      </AccountButton>
-                    )}
-                    <AccountButton
-                      compact
-                      variant="secondary"
-                      onClick={() => handleDownloadInvoice(order)}
-                      disabled={downloadingId === order.id}
-                      leftIcon={<Download size={14} />}
-                    >
-                      {downloadingId === order.id ? 'Preparing…' : 'Invoice'}
-                    </AccountButton>
-                    <AccountButton compact variant="primary" onClick={() => buyAgain(order)} leftIcon={<ShoppingCart size={14} />}>
-                      Buy again
-                    </AccountButton>
-                  </div>
-                </div>
-
-                {order.status === 'delivered' && items.some((item: any) => !item.is_gift && item.product_id && !reviewedProductIds.has(item.product_id)) && (
-                  <div style={{ marginTop: '0.7rem' }}>
-                    {items
-                      .filter((item: any) => !item.is_gift && item.product_id && !reviewedProductIds.has(item.product_id))
-                      .map((item: any, i: number) => (
-                        <RateItemPrompt
-                          key={item.id || i}
-                          productId={item.product_id}
-                          productName={item.products?.name || 'this item'}
-                          onDone={() => handleReviewDone(item.product_id)}
-                        />
-                      ))}
-                  </div>
-                )}
+                        {order.status === 'delivered' && items.some((item: any) => !item.is_gift && item.product_id && !reviewedProductIds.has(item.product_id)) && (
+                          <div style={{ marginTop: '0.7rem' }}>
+                            {items
+                              .filter((item: any) => !item.is_gift && item.product_id && !reviewedProductIds.has(item.product_id))
+                              .map((item: any, i: number) => (
+                                <RateItemPrompt
+                                  key={item.id || i}
+                                  productId={item.product_id}
+                                  productName={item.products?.name || 'this item'}
+                                  onDone={() => handleReviewDone(item.product_id)}
+                                />
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </AccountCard>
             );
           })}

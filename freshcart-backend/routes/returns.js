@@ -38,7 +38,7 @@ router.post('/', requireAuth, async (req, res) => {
     if (!validationResult.success) {
       return res.status(400).json({ error: 'Validation failed', details: validationResult.error.issues });
     }
-    const { order_id, order_item_id, type, reason, refund_method } = validationResult.data;
+    const { order_id, order_item_id, type, reason, refund_method, note } = validationResult.data;
 
     const { data: order, error: orderErr } = await supabaseAdmin
       .from('orders')
@@ -95,6 +95,7 @@ router.post('/', requireAuth, async (req, res) => {
         type,
         reason,
         refund_method: type === 'return' ? refund_method : null,
+        note: note?.trim() || null,
         status: 'requested',
       }])
       .select(RETURN_REQUEST_SELECT)

@@ -56,7 +56,7 @@ export function RateItemPrompt({ productId, productName, onDone }: RateItemPromp
               onClick={() => setRating(n)}
               aria-label={`${n} star${n === 1 ? '' : 's'}`}
             >
-              <Star size={18} fill={n <= displayRating ? 'currentColor' : 'none'} />
+              <Star size={15} fill={n <= displayRating ? 'currentColor' : 'none'} />
             </button>
           ))}
         </div>

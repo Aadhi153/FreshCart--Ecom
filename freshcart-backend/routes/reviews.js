@@ -25,11 +25,19 @@ router.get('/mine', requireAuth, async (req, res) => {
 
     const reviewedProductIds = new Set((reviews || []).map((r) => r.product_id));
     const seenProductIds = new Set();
+    // Distinct delivered products already reviewed — dedup separately from
+    // reviewedProductIds, since a review could exist for a product this user
+    // never actually had delivered (e.g. a since-cancelled order).
+    const reviewedDeliveredProductIds = new Set();
     const pending = [];
     for (const order of orders || []) {
       for (const item of order.order_items || []) {
         if (item.is_gift || !item.product_id) continue;
-        if (reviewedProductIds.has(item.product_id) || seenProductIds.has(item.product_id)) continue;
+        if (reviewedProductIds.has(item.product_id)) {
+          reviewedDeliveredProductIds.add(item.product_id);
+          continue;
+        }
+        if (seenProductIds.has(item.product_id)) continue;
         seenProductIds.add(item.product_id);
         pending.push({
           order_item_id: item.id,
@@ -40,7 +48,13 @@ router.get('/mine', requireAuth, async (req, res) => {
       }
     }
 
-    res.json({ reviews: reviews || [], pending });
+    res.json({
+      reviews: reviews || [],
+      pending,
+      // "Rated X of Y delivered items" — powers the review-progress nudge on Orders.
+      deliveredRatedCount: reviewedDeliveredProductIds.size,
+      deliveredTotalCount: reviewedDeliveredProductIds.size + pending.length,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

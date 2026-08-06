@@ -47,6 +47,72 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/orders/summary — order count + total spent for the current user,
+// excluding cancelled orders (never charged/kept). Must be registered before
+// the /:id route below or Express would match "summary" as an order id.
+router.get('/summary', requireAuth, async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('orders')
+      .select('total_amount, status')
+      .eq('user_id', req.user.id)
+      .neq('status', 'cancelled');
+    if (error) throw error;
+
+    const orderCount = data.length;
+    const totalSpent = data.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+    // Every non-cancelled order that isn't delivered yet is still in transit
+    // (placed/packed/shipped).
+    const inTransitCount = data.filter((order) => order.status !== 'delivered').length;
+    res.json({ orderCount, totalSpent, inTransitCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/orders/repeat-items — products bought in 2+ separate (non-cancelled)
+// orders, most-repeated first. Powers the "Reorder your usual" quick action.
+// Must also be registered before /:id.
+router.get('/repeat-items', requireAuth, async (req, res) => {
+  try {
+    const { data: orders, error } = await supabaseAdmin
+      .from('orders')
+      .select('id, order_items(product_id, is_gift, products(name, image_url, price))')
+      .eq('user_id', req.user.id)
+      .neq('status', 'cancelled');
+    if (error) throw error;
+
+    const byProduct = new Map();
+    for (const order of orders || []) {
+      for (const item of order.order_items || []) {
+        if (item.is_gift || !item.product_id || !item.products) continue;
+        let entry = byProduct.get(item.product_id);
+        if (!entry) {
+          entry = {
+            product_id: item.product_id,
+            name: item.products.name,
+            image_url: item.products.image_url,
+            price: Number(item.products.price),
+            orderIds: new Set(),
+          };
+          byProduct.set(item.product_id, entry);
+        }
+        entry.orderIds.add(order.id);
+      }
+    }
+
+    const repeatItems = [...byProduct.values()]
+      .filter((entry) => entry.orderIds.size >= 2)
+      .sort((a, b) => b.orderIds.size - a.orderIds.size)
+      .slice(0, 5)
+      .map(({ orderIds, ...rest }) => ({ ...rest, orderCount: orderIds.size }));
+
+    res.json(repeatItems);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/orders/:id — owner or admin only
 router.get('/:id', requireAuth, async (req, res) => {
   try {
