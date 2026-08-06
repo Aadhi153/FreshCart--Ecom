@@ -1,8 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
+import { Heart, ShoppingCart, Trash2, X } from 'lucide-react';
+import type { ActivePromotion } from '@freshcart/types';
 import { useCartStore, useWishlistStore } from '../lib/store';
+import { getActivePromotions, getServerWishlist } from '../lib/api';
+import { findBestProductMatch } from '../lib/promotionMath';
+import { formatPrice } from '../lib/formatPrice';
+import { timeAgo } from '../lib/timeAgo';
 import { useToast } from './ToastProvider';
 import { EmptyState, ProductCardSkeleton } from './Skeleton';
 import { ProductImage } from './ProductImage';
@@ -28,19 +33,41 @@ export function WishlistDetails() {
   const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]['value']>('recent');
   // Wishlisted items only carry the price/stock snapshot from whenever they were added,
   // which can go stale — fetch current stock live so "move all to cart" only grabs what's
-  // actually purchasable right now, not a months-old cached flag.
+  // actually purchasable right now, not a months-old cached flag. category_id rides along
+  // on the same query since it's only needed here, to match items against active promotions.
   const [stockById, setStockById] = useState<Record<string, boolean>>({});
+  const [categoryIdById, setCategoryIdById] = useState<Record<string, string | null>>({});
+  const [activePromotions, setActivePromotions] = useState<ActivePromotion[]>([]);
+  const [addedAtById, setAddedAtById] = useState<Record<string, string>>({});
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   useEffect(() => {
     if (wishlistItems.length === 0) return;
     supabase
       .from('products')
-      .select('id, in_stock')
+      .select('id, in_stock, category_id')
       .in('id', wishlistItems.map((item) => String(item.id)))
       .then(({ data }) => {
         if (!data) return;
         setStockById(Object.fromEntries(data.map((p) => [p.id, p.in_stock])));
+        setCategoryIdById(Object.fromEntries(data.map((p) => [p.id, p.category_id])));
       });
+  }, [wishlistItems]);
+
+  useEffect(() => {
+    getActivePromotions().then(setActivePromotions);
+  }, []);
+
+  // Best-effort — guests (no session) have no server-side wishlist, so the "Added
+  // X ago" line just doesn't render for their (local-only) items.
+  useEffect(() => {
+    getServerWishlist()
+      .then((rows) => {
+        setAddedAtById(
+          Object.fromEntries(rows.filter((r) => r.products).map((r) => [r.products!.id, r.created_at]))
+        );
+      })
+      .catch(() => {});
   }, [wishlistItems]);
 
   const sortedItems = useMemo(() => {
@@ -69,6 +96,7 @@ export function WishlistDetails() {
 
   const clearAll = () => {
     clearWishlist();
+    setConfirmingClear(false);
     showToast('Wishlist cleared', 'success');
   };
 
@@ -107,27 +135,62 @@ export function WishlistDetails() {
           <AccountButton compact variant="primary" onClick={addAllToCart} leftIcon={<ShoppingCart size={14} />}>
             Move all to cart
           </AccountButton>
-          <AccountButton compact variant="danger" onClick={clearAll} leftIcon={<Trash2 size={14} />}>
-            Clear all
-          </AccountButton>
+          {confirmingClear ? (
+            <div className={styles.clearConfirm}>
+              <span className={styles.clearConfirmText}>Clear all {wishlistItems.length} items?</span>
+              <AccountButton compact variant="secondary" onClick={() => setConfirmingClear(false)}>
+                Cancel
+              </AccountButton>
+              <AccountButton compact variant="danger-solid" onClick={clearAll}>
+                Clear
+              </AccountButton>
+            </div>
+          ) : (
+            <AccountButton compact variant="danger" onClick={() => setConfirmingClear(true)} leftIcon={<Trash2 size={14} />}>
+              Clear all
+            </AccountButton>
+          )}
         </div>
       </div>
 
       <div className={styles.grid}>
         {sortedItems.map((item) => {
           const outOfStock = stockById[String(item.id)] === false;
+          const onSale = activePromotions.length > 0 && Boolean(
+            findBestProductMatch({ id: String(item.id), categoryId: categoryIdById[String(item.id)] ?? null }, activePromotions)
+          );
+          const addedAt = addedAtById[String(item.id)];
+
           return (
-            <AccountCard key={item.id} hoverable style={{ display: 'grid', gap: '0.55rem' }}>
-              <div style={{ position: 'relative', width: '100%', height: 110, borderRadius: 'var(--acc-thumbnail-radius, var(--radius-sm))', overflow: 'hidden' }}>
-                <ProductImage src={item.image} alt={item.name} sizes="190px" imageStyle={{ objectFit: 'cover' }} />
+            <AccountCard key={item.id} hoverable className={styles.card}>
+              <div className={styles.thumb}>
+                <ProductImage src={item.image} alt={item.name} sizes="56px" imageStyle={{ objectFit: 'cover' }} />
+                {onSale && <span className={styles.saleBadge}>Sale</span>}
               </div>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 700 }}>{item.category || 'Product'}</p>
-              <h2 style={{ margin: 0, fontSize: '1rem' }}>{item.name}</h2>
-              <p style={{ margin: 0, color: 'var(--accent)', fontWeight: 900 }}>Rs.{item.price.toFixed(2)}</p>
-              {outOfStock && (
-                <p style={{ margin: 0, color: '#B91C1C', fontWeight: 700, fontSize: '0.78rem' }}>Out of stock</p>
-              )}
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+
+              <div className={styles.body}>
+                <div className={styles.titleRow}>
+                  <div style={{ minWidth: 0 }}>
+                    <p className={styles.category}>{item.category || 'Product'}</p>
+                    <p className={styles.name}>{item.name}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      removeWishlistItem(item.id);
+                      showToast('Removed from wishlist', 'success');
+                    }}
+                    aria-label={`Remove ${item.name} from wishlist`}
+                    className={styles.removeButton}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+
+                <p className={styles.price}>{formatPrice(item.price)}</p>
+
+                {addedAt && <p className={styles.addedAt}>Added {timeAgo(addedAt)}</p>}
+
                 <AccountButton
                   compact
                   variant="primary"
@@ -136,19 +199,10 @@ export function WishlistDetails() {
                     addCartItem({ id: item.id, productId: String(item.id), name: item.name, price: item.price, image: item.image, category: item.category });
                     showToast(`${item.name} added to cart`, 'success');
                   }}
-                  leftIcon={<ShoppingCart size={15} />}
+                  leftIcon={outOfStock ? undefined : <ShoppingCart size={13} />}
+                  style={{ width: '100%' }}
                 >
-                  Add
-                </AccountButton>
-                <AccountButton
-                  compact
-                  variant="danger"
-                  onClick={() => {
-                    removeWishlistItem(item.id);
-                    showToast('Removed from wishlist', 'success');
-                  }}
-                >
-                  Remove
+                  {outOfStock ? 'Out of stock' : 'Add to cart'}
                 </AccountButton>
               </div>
             </AccountCard>

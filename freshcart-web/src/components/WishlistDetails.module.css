@@ -31,8 +31,125 @@
   cursor: pointer;
 }
 
+.clearConfirm {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-sm);
+  background: var(--layer-1);
+  border: 1px solid var(--border-color);
+}
+
+.clearConfirmText {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.card {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.thumb {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: var(--acc-thumbnail-radius, 12px);
+  overflow: hidden;
+  background: var(--layer-1);
+}
+
+.saleBadge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1px 0;
+  text-align: center;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--primary);
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.category {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.name {
+  margin: 0.1rem 0 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.removeButton {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm, 8px);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--acc-transition-fast, 150ms ease-out), color var(--acc-transition-fast, 150ms ease-out);
+}
+
+.removeButton:hover {
+  background: var(--layer-1);
+  color: #B91C1C;
+}
+
+.price {
+  margin: 0;
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.92rem;
+}
+
+.addedAt {
+  margin: 0;
+  color: var(--text-muted, var(--text-secondary));
+  font-size: 0.7rem;
 }
