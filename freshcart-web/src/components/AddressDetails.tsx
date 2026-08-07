@@ -157,7 +157,6 @@ export function AddressDetails() {
           <AccountButton compact variant="secondary" onClick={handleUseLocation} disabled={locating} leftIcon={<LocateFixed size={15} />}>
             {locating ? 'Locating…' : 'Use my current location'}
           </AccountButton>
-          {editing.latitude != null && <p className={styles.attributionText}>Location data &copy; OpenStreetMap contributors</p>}
         </div>
         {locationError && <p className={styles.errorText}>{locationError}</p>}
 
@@ -174,34 +173,54 @@ export function AddressDetails() {
             </button>
           ))}
         </div>
+        {editing.latitude != null && <p className={styles.attributionText}>Location data &copy; OpenStreetMap contributors</p>}
 
         <div className={styles.grid2}>
-          <input value={editing.label} onChange={(event) => setEditing({ ...editing, label: event.target.value })} placeholder="Address label (e.g. Mom's house)" className={styles.field} />
-          <input value={editing.fullName} onChange={(event) => setEditing({ ...editing, fullName: event.target.value })} placeholder="Full name" className={styles.field} />
-          <div>
+          <label className={styles.fieldLabel}>
+            Address label
+            <input value={editing.label} onChange={(event) => setEditing({ ...editing, label: event.target.value })} placeholder="e.g. Mom's house" className={styles.input} />
+          </label>
+          <label className={styles.fieldLabel}>
+            Full name
+            <input value={editing.fullName} onChange={(event) => setEditing({ ...editing, fullName: event.target.value })} placeholder="Full name" className={styles.input} />
+          </label>
+          <label className={styles.fieldLabel}>
+            Phone number
             <input
               value={editing.phone}
               onChange={(event) => setEditing({ ...editing, phone: event.target.value })}
-              placeholder="Phone number"
+              placeholder="e.g. 9876543210"
               inputMode="numeric"
-              className={`${styles.field} ${errors.phone ? styles.fieldError : ''}`}
+              className={`${styles.input} ${errors.phone ? styles.fieldError : ''}`}
             />
-          </div>
+          </label>
         </div>
         {errors.phone && <p className={styles.errorText}>{errors.phone}</p>}
 
-        <input value={editing.line1} onChange={(event) => updateEditingField({ line1: event.target.value })} placeholder="House number, street, area" className={styles.field} />
+        <label className={styles.fieldLabel}>
+          Address line
+          <input value={editing.line1} onChange={(event) => updateEditingField({ line1: event.target.value })} placeholder="House number, street, area" className={styles.input} />
+        </label>
 
         <div className={styles.grid3}>
-          <input value={editing.city} onChange={(event) => updateEditingField({ city: event.target.value })} placeholder="City" className={styles.field} />
-          <input value={editing.state} onChange={(event) => updateEditingField({ state: event.target.value })} placeholder="State" className={styles.field} />
-          <input
-            value={editing.pincode}
-            onChange={(event) => updateEditingField({ pincode: event.target.value })}
-            placeholder="PIN code"
-            inputMode="numeric"
-            className={`${styles.field} ${errors.pincode ? styles.fieldError : ''}`}
-          />
+          <label className={styles.fieldLabel}>
+            City
+            <input value={editing.city} onChange={(event) => updateEditingField({ city: event.target.value })} placeholder="City" className={styles.input} />
+          </label>
+          <label className={styles.fieldLabel}>
+            State
+            <input value={editing.state} onChange={(event) => updateEditingField({ state: event.target.value })} placeholder="State" className={styles.input} />
+          </label>
+          <label className={styles.fieldLabel}>
+            Pincode
+            <input
+              value={editing.pincode}
+              onChange={(event) => updateEditingField({ pincode: event.target.value })}
+              placeholder="6-digit PIN"
+              inputMode="numeric"
+              className={`${styles.input} ${errors.pincode ? styles.fieldError : ''}`}
+            />
+          </label>
         </div>
         {errors.pincode && <p className={styles.errorText}>{errors.pincode}</p>}
 
@@ -232,7 +251,7 @@ export function AddressDetails() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
           >
-            <XCircle size={16} /> Sorry, we don&apos;t deliver to this address yet
+            <XCircle size={16} /> We don&apos;t currently deliver here — you&apos;ll be notified when we do
           </motion.div>
         )}
 
@@ -248,7 +267,7 @@ export function AddressDetails() {
         {message && <p className={styles.message}>{message}</p>}
 
         <AccountButton type="submit" variant="primary" style={{ justifySelf: 'start' }}>
-          Save Address
+          {zoneStatus === 'fail' ? 'Save Address Anyway' : 'Save Address'}
         </AccountButton>
       </form>
 

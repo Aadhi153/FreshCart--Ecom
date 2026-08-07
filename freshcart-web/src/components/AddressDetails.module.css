@@ -35,7 +35,15 @@
   gap: 0.8rem;
 }
 
-.field {
+.fieldLabel {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.input {
   width: 100%;
   padding: 0.68rem 0.8rem;
   border: 1px solid var(--acc-field-border, var(--border-color));
@@ -43,11 +51,12 @@
   background: var(--layer-0);
   color: var(--text-primary);
   font-size: 0.92rem;
+  font-weight: 400;
   outline: none;
   transition: border-color var(--acc-transition-fast, 150ms ease-out), box-shadow var(--acc-transition-fast, 150ms ease-out);
 }
 
-.field:focus {
+.input:focus {
   border-color: var(--acc-field-border-focus, var(--primary));
   box-shadow: 0 0 0 3px var(--primary-light);
 }
