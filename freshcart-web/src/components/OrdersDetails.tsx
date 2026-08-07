@@ -20,6 +20,7 @@ import {
   getMyReviews,
   getOrderSummary,
   getRepeatItems,
+  type MyReview,
   type OrderSummary,
   type PendingReview,
   type RepeatItem,
@@ -127,9 +128,9 @@ export function OrdersDetails() {
 
   // A product is reviewed once, regardless of which order card (or the review
   // nudge) it was rated from — clear it everywhere at once.
-  const handleReviewDone = (productId: string) => {
-    setReviewedProductIds((prev) => new Set(prev).add(productId));
-    setPendingReviews((prev) => prev.filter((p) => p.product_id !== productId));
+  const handleReviewDone = (review: MyReview) => {
+    setReviewedProductIds((prev) => new Set(prev).add(review.product_id));
+    setPendingReviews((prev) => prev.filter((p) => p.product_id !== review.product_id));
     setDeliveredRatedCount((prev) => prev + 1);
   };
 
@@ -350,7 +351,7 @@ export function OrdersDetails() {
       </div>
 
       {deliveredTotalCount > 0 && deliveredRatedCount < deliveredTotalCount && (
-        <AccountCard hoverable style={{ marginBottom: '1rem', display: 'grid', gap: reviewNudgeOpen ? '0.75rem' : 0 }}>
+        <AccountCard id="review-nudge" hoverable style={{ marginBottom: '1rem', display: 'grid', gap: reviewNudgeOpen ? '0.75rem' : 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
             <p style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <Star size={15} color="#F59E0B" fill="#F59E0B" />
@@ -367,7 +368,7 @@ export function OrdersDetails() {
                   key={item.product_id}
                   productId={item.product_id}
                   productName={item.product_name}
-                  onDone={() => handleReviewDone(item.product_id)}
+                  onDone={handleReviewDone}
                 />
               ))}
             </div>
@@ -581,7 +582,7 @@ export function OrdersDetails() {
                                   key={item.id || i}
                                   productId={item.product_id}
                                   productName={item.products?.name || 'this item'}
-                                  onDone={() => handleReviewDone(item.product_id)}
+                                  onDone={handleReviewDone}
                                 />
                               ))}
                           </div>

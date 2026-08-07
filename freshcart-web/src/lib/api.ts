@@ -126,7 +126,16 @@ export interface MyReview {
   comment: string | null;
   created_at: string;
   products?: { name: string; image_url: string | null };
+  // First delivered order that contained this product — null if none could be
+  // traced (e.g. the order that earned this review was later cancelled).
+  order_id?: string | null;
 }
+
+export const updateReview = (reviewId: string, rating: number, comment: string): Promise<MyReview> =>
+  authFetch(`/api/reviews/${reviewId}`, { method: 'PATCH', body: JSON.stringify({ rating, comment }) });
+
+export const deleteReview = (reviewId: string): Promise<{ success: boolean }> =>
+  authFetch(`/api/reviews/${reviewId}`, { method: 'DELETE' });
 
 export interface PendingReview {
   order_item_id: string;

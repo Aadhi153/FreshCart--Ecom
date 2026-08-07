@@ -40,8 +40,11 @@ app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json({ limit: '10mb' }));
 
-// Global rate limiter (100 req/15min per IP)
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true });
+// Global rate limiter (per IP). Raised from 100 to 400 per window — the account
+// section (Orders/Wishlist/Reviews) now does several personalized background
+// fetches per page (stats, repeat-items, promotions, reviews) plus a 20s order-
+// status poll, which was blowing through 100/15min during ordinary browsing.
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 400, standardHeaders: true });
 app.use('/api/', limiter);
 
 // ── Routes ───────────────────────────────────────────────────────────────────

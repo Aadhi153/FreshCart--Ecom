@@ -2,20 +2,24 @@
 
 import { useState } from 'react';
 import { Star } from 'lucide-react';
-import { submitReview } from '../lib/api';
+import { submitReview, updateReview, type MyReview } from '../lib/api';
 import { AccountButton } from './AccountButton';
 import styles from './RateItemPrompt.module.css';
 
 interface RateItemPromptProps {
   productId: string;
   productName: string;
-  onDone: () => void;
+  // Present when editing an already-submitted review — pre-fills the form and
+  // switches the submit action from create (POST) to edit (PATCH).
+  existingReview?: { id: string; rating: number; comment: string | null } | null;
+  onDone: (review: MyReview) => void;
+  onCancel?: () => void;
 }
 
-export function RateItemPrompt({ productId, productName, onDone }: RateItemPromptProps) {
-  const [rating, setRating] = useState(0);
+export function RateItemPrompt({ productId, productName, existingReview, onDone, onCancel }: RateItemPromptProps) {
+  const [rating, setRating] = useState(existingReview?.rating ?? 0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState(existingReview?.comment ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,28 +28,26 @@ export function RateItemPrompt({ productId, productName, onDone }: RateItemPromp
     setSubmitting(true);
     setError('');
     try {
-      await submitReview(productId, rating, comment.trim());
-      onDone();
+      const review = existingReview
+        ? await updateReview(existingReview.id, rating, comment.trim())
+        : await submitReview(productId, rating, comment.trim());
+      onDone(review);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to submit rating.';
-      // The backend returns this exact message for a duplicate (product_id, user_id)
-      // review — treat it as "already handled" rather than a failure to retry.
-      if (message.includes('already reviewed')) {
-        onDone();
-        return;
-      }
-      setError(message);
+      setError(err instanceof Error ? err.message : 'Failed to submit rating.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const displayRating = hoverRating || rating;
+  // For a fresh rating, the comment box only appears once a star is picked;
+  // editing an existing review already has a rating, so show it immediately.
+  const showForm = rating > 0;
 
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
-        <p className={styles.label}>Rate {productName}</p>
+        <p className={styles.label}>{existingReview ? `Your rating for ${productName}` : `Rate ${productName}`}</p>
         <div className={styles.stars} onMouseLeave={() => setHoverRating(0)}>
           {[1, 2, 3, 4, 5].map((n) => (
             <button
@@ -62,7 +64,7 @@ export function RateItemPrompt({ productId, productName, onDone }: RateItemPromp
         </div>
       </div>
 
-      {rating > 0 && (
+      {showForm && (
         <>
           <textarea
             className={styles.textarea}
@@ -71,8 +73,13 @@ export function RateItemPrompt({ productId, productName, onDone }: RateItemPromp
             onChange={(e) => setComment(e.target.value)}
           />
           <div className={styles.footer}>
+            {onCancel && (
+              <AccountButton compact variant="secondary" onClick={onCancel} disabled={submitting}>
+                Cancel
+              </AccountButton>
+            )}
             <AccountButton compact variant="primary" onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Submitting…' : 'Submit rating'}
+              {submitting ? 'Saving…' : existingReview ? 'Save changes' : 'Submit rating'}
             </AccountButton>
           </div>
         </>

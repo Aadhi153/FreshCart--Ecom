@@ -171,6 +171,12 @@ export const ReviewSchema = z.object({
 });
 export type Review = z.infer<typeof ReviewSchema>;
 
+export const UpdateReviewPayloadSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().optional().nullable(),
+});
+export type UpdateReviewPayload = z.infer<typeof UpdateReviewPayloadSchema>;
+
 export const ProductSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().min(1, "Name is required"),
