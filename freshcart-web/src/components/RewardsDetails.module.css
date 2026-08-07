@@ -1,0 +1,258 @@
+/* Referral banner — solid brand-green, flat (no gradient) */
+
+.banner {
+  display: grid;
+  gap: 1rem;
+  padding: var(--acc-card-padding, 1.5rem);
+  border-radius: var(--acc-card-radius, var(--radius-lg));
+  background: var(--primary);
+  color: #fff;
+}
+
+.bannerIncentiveRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.bannerIncentive {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.bannerSubtext {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.bannerCodeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.9rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.bannerCode {
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-size: 1.1rem;
+}
+
+.bannerActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.bannerActionBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--acc-button-radius, 10px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 150ms ease-out;
+}
+
+.bannerActionBtn:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.bannerStatsRow {
+  display: flex;
+  gap: 1.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.9rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.statValue {
+  display: block;
+  font-weight: 800;
+  font-size: 1.15rem;
+  line-height: 1.1;
+}
+
+.statLabel {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bannerProgress {
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.progressLabelRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.progressTrack {
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: #fff;
+  transition: width 300ms ease-out;
+}
+
+/* Offers section */
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+  font-size: var(--acc-text-section-title-size, 1.05rem);
+  font-weight: 700;
+}
+
+.offersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.9rem;
+}
+
+.offerCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: var(--acc-card-radius, var(--radius-lg));
+  border: var(--acc-card-border, 1px solid var(--border-color));
+  background: var(--layer-0);
+}
+
+.offerHeadline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.98rem;
+}
+
+.offerName {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+}
+
+.offerConditions {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.offerCodeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1.5px dashed color-mix(in srgb, var(--primary) 40%, transparent);
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--primary);
+}
+
+.offerCopyBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.offerApplyLink {
+  align-self: flex-start;
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Dashed teaser cards — scheduled/recently-expired offers */
+
+.teaserCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: var(--acc-card-radius, var(--radius-lg));
+  border: 1.5px dashed color-mix(in srgb, var(--primary) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+.teaserTop {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.teaserName {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+}
+
+.teaserStatus {
+  align-self: flex-start;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+}

@@ -90,6 +90,44 @@ router.get('/promotions/offers', async (_req, res) => {
   }
 });
 
+// How many days past valid_until a promotion still counts as "recently expired" for
+// the teaser grid below — long enough to still be relevant marketing ("that flash
+// sale just ended"), short enough that it doesn't clutter the page with stale offers.
+const RECENTLY_EXPIRED_DAYS = 14;
+
+// GET /api/promotions/teasers — public promotions that are scheduled to start soon
+// (valid_from in the future) or ended within the last RECENTLY_EXPIRED_DAYS days.
+// Feeds the dashed "teaser" cards on the account "Coupons & Rewards" page. No auth
+// required and not personalized, same rationale as /promotions/offers above — this
+// is a static marketing listing, not something that auto-applies to a cart.
+router.get('/promotions/teasers', async (_req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('promotions')
+      .select('id, name, description, discount_type, valid_from, valid_until')
+      .eq('is_active', true)
+      .or('requires_code.eq.false,is_public.eq.true');
+    if (error) throw error;
+
+    const now = Date.now();
+    const recentCutoff = now - RECENTLY_EXPIRED_DAYS * 24 * 60 * 60 * 1000;
+
+    const teasers = (data || [])
+      .map((p) => {
+        const from = new Date(p.valid_from).getTime();
+        const until = p.valid_until ? new Date(p.valid_until).getTime() : null;
+        if (from > now) return { ...p, status: 'upcoming' };
+        if (until != null && until < now && until >= recentCutoff) return { ...p, status: 'expired' };
+        return null;
+      })
+      .filter(Boolean);
+
+    res.json(teasers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/coupons/validate — server-side single source of truth for coupon
 // validity. Never trust a client-calculated discount.
 router.post('/coupons/validate', requireAuth, async (req, res) => {

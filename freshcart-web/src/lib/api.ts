@@ -154,12 +154,48 @@ export const getMyReviews = (): Promise<{
 export const deleteMyAccount = (): Promise<{ success: boolean }> =>
   authFetch('/api/auth/me', { method: 'DELETE' });
 
+export interface ReferralRewardTier {
+  referral_count: number;
+  label: string;
+}
+
+export interface ReferralRewardConfig {
+  referrerRewardAmount: number;
+  referredRewardAmount: number;
+  currency: string;
+  tiers: ReferralRewardTier[];
+}
+
 export interface ReferralSummary {
   count: number;
   referrals: { full_name: string | null; created_at: string }[];
+  totalEarned: number;
+  config: ReferralRewardConfig | null;
 }
 
 export const getMyReferrals = (): Promise<ReferralSummary> => authFetch('/api/auth/me/referrals');
+
+export interface PromotionTeaser {
+  id: string;
+  name: string;
+  description: string | null;
+  discount_type: string;
+  valid_from: string;
+  valid_until: string | null;
+  status: 'upcoming' | 'expired';
+}
+
+// Feeds the dashed "coming soon" / "recently ended" teaser cards on the Coupons &
+// Rewards page. No auth required — see GET /api/promotions/teasers.
+export async function getPromotionTeasers(): Promise<PromotionTeaser[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/promotions/teasers`);
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
 
 export interface PaymentMethod {
   id: string;

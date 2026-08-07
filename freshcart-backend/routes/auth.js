@@ -117,18 +117,44 @@ router.delete('/me', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/auth/me/referrals — count + light list of profiles this user referred.
-// Needs supabaseAdmin: a customer's own RLS policy only lets them read their own
-// profile row, not other customers' rows filtered by referred_by.
+// GET /api/auth/me/referrals — count + light list of profiles this user referred,
+// plus the current referral-reward config and this user's actual total earned from
+// the referral_reward_ledger (see 00034_referral_rewards.sql). Needs supabaseAdmin:
+// a customer's own RLS policy only lets them read their own profile row, not other
+// customers' rows filtered by referred_by, nor other users' ledger rows.
+//
+// NOTE: referral_rewards_config currently has no admin UI to set non-zero amounts,
+// and nothing yet inserts rows into referral_reward_ledger — see that migration's
+// header comment. Until that's built this honestly returns zero amounts/tiers
+// rather than fabricating numbers.
 router.get('/me/referrals', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .select('full_name, created_at')
-      .eq('referred_by', req.user.id)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    res.json({ count: data.length, referrals: data });
+    const [referralsResult, configResult, ledgerResult] = await Promise.all([
+      supabaseAdmin
+        .from('profiles')
+        .select('full_name, created_at')
+        .eq('referred_by', req.user.id)
+        .order('created_at', { ascending: false }),
+      supabaseAdmin.from('referral_rewards_config').select('*').eq('id', 1).maybeSingle(),
+      supabaseAdmin.from('referral_reward_ledger').select('amount').eq('user_id', req.user.id),
+    ]);
+    if (referralsResult.error) throw referralsResult.error;
+    if (configResult.error) throw configResult.error;
+    if (ledgerResult.error) throw ledgerResult.error;
+
+    const totalEarned = (ledgerResult.data || []).reduce((sum, row) => sum + Number(row.amount), 0);
+
+    res.json({
+      count: referralsResult.data.length,
+      referrals: referralsResult.data,
+      totalEarned,
+      config: configResult.data && {
+        referrerRewardAmount: Number(configResult.data.referrer_reward_amount),
+        referredRewardAmount: Number(configResult.data.referred_reward_amount),
+        currency: configResult.data.currency,
+        tiers: configResult.data.tiers || [],
+      },
+    });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
