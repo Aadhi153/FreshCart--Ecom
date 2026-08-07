@@ -27,7 +27,7 @@ router.get('/', requireAuth, async (req, res) => {
 // POST /api/payment-methods — add a saved method (masked value only, never a raw card number)
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { type, masked_display_value, is_default } = req.body;
+    const { type, masked_display_value, provider, is_default } = req.body;
     if (!['card', 'upi', 'wallet'].includes(type)) {
       return res.status(400).json({ error: 'Invalid payment method type.' });
     }
@@ -36,6 +36,9 @@ router.post('/', requireAuth, async (req, res) => {
     }
     if (LOOKS_LIKE_FULL_CARD_NUMBER.test(masked_display_value)) {
       return res.status(400).json({ error: 'Enter only the last 4 digits, not a full card number.' });
+    }
+    if (provider !== undefined && provider !== null && typeof provider !== 'string') {
+      return res.status(400).json({ error: 'Invalid provider.' });
     }
 
     if (is_default) {
@@ -48,12 +51,53 @@ router.post('/', requireAuth, async (req, res) => {
         user_id: req.user.id,
         type,
         masked_display_value: masked_display_value.trim(),
+        provider: provider ? provider.trim() : null,
         is_default: Boolean(is_default),
       }])
       .select()
       .single();
     if (error) throw error;
     res.status(201).json(data);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// PATCH /api/payment-methods/:id — edit the display label and/or provider of a saved method
+router.patch('/:id', requireAuth, async (req, res) => {
+  try {
+    const { masked_display_value, provider } = req.body;
+    const updates = {};
+
+    if (masked_display_value !== undefined) {
+      if (typeof masked_display_value !== 'string' || !masked_display_value.trim()) {
+        return res.status(400).json({ error: 'A display label is required.' });
+      }
+      if (LOOKS_LIKE_FULL_CARD_NUMBER.test(masked_display_value)) {
+        return res.status(400).json({ error: 'Enter only the last 4 digits, not a full card number.' });
+      }
+      updates.masked_display_value = masked_display_value.trim();
+    }
+    if (provider !== undefined) {
+      if (provider !== null && typeof provider !== 'string') {
+        return res.status(400).json({ error: 'Invalid provider.' });
+      }
+      updates.provider = provider ? provider.trim() : null;
+    }
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'Nothing to update.' });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('payment_methods')
+      .update(updates)
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .select()
+      .single();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Payment method not found' });
+    res.json(data);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

@@ -1,0 +1,307 @@
+/* Preferred-payment / wallet-provider tile grid */
+
+.tileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 0.6rem;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.85rem 0.6rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--layer-0);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--transition-fast, 150ms ease-out),
+    background var(--transition-fast, 150ms ease-out),
+    color var(--transition-fast, 150ms ease-out);
+}
+
+.tile:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border-color));
+  color: var(--primary);
+}
+
+.tile:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.tileSelected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.tileIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  color: inherit;
+}
+
+.tileCheck {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Add-method type pill toggle */
+
+.pillRow {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color var(--transition-fast, 150ms ease-out),
+    background var(--transition-fast, 150ms ease-out),
+    color var(--transition-fast, 150ms ease-out);
+}
+
+.pill:hover {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+}
+
+.pillActive,
+.pillActive:hover {
+  border-color: var(--accent);
+  background: var(--primary-light);
+  color: var(--accent);
+}
+
+/* Form fields */
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.input {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--acc-field-border, var(--border-color));
+  border-radius: var(--radius-sm);
+  background: var(--layer-0);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color var(--transition-fast, 150ms ease-out), box-shadow var(--transition-fast, 150ms ease-out);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.inputRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.inputRow .input {
+  flex: 1;
+}
+
+/* Card brand reference/selector chips */
+
+.brandRow {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.brandChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--layer-0);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--transition-fast, 150ms ease-out), background var(--transition-fast, 150ms ease-out), color var(--transition-fast, 150ms ease-out);
+}
+
+.brandChip:hover {
+  border-color: color-mix(in srgb, var(--brand-color, var(--primary)) 50%, var(--border-color));
+}
+
+.brandChipActive {
+  border-color: var(--brand-color, var(--primary));
+  background: color-mix(in srgb, var(--brand-color, var(--primary)) 12%, transparent);
+  color: var(--brand-color, var(--primary));
+}
+
+.brandDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-color, var(--primary));
+  flex-shrink: 0;
+}
+
+/* Trust microcopy */
+
+.trustRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+/* Saved payment method card */
+
+.savedRow {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.savedIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-light);
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.savedBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.savedLabel {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.savedMeta {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.defaultBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+  background: var(--primary-light);
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.savedActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--transition-fast, 150ms ease-out), border-color var(--transition-fast, 150ms ease-out), background var(--transition-fast, 150ms ease-out);
+}
+
+.iconBtn:hover {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border-color));
+  background: var(--primary-light);
+}
+
+.iconBtnDanger:hover {
+  color: #EF4444;
+  border-color: color-mix(in srgb, #EF4444 45%, var(--border-color));
+  background: color-mix(in srgb, #EF4444 8%, transparent);
+}
+
+.editRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .pill,
+  .brandChip,
+  .iconBtn,
+  .input {
+    transition: none;
+  }
+}

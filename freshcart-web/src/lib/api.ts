@@ -165,14 +165,18 @@ export interface PaymentMethod {
   id: string;
   type: 'card' | 'upi' | 'wallet';
   masked_display_value: string;
+  provider: string | null;
   is_default: boolean;
   created_at: string;
 }
 
 export const getPaymentMethods = (): Promise<PaymentMethod[]> => authFetch('/api/payment-methods');
 
-export const addPaymentMethod = (payload: { type: PaymentMethod['type']; masked_display_value: string; is_default?: boolean }): Promise<PaymentMethod> =>
+export const addPaymentMethod = (payload: { type: PaymentMethod['type']; masked_display_value: string; provider?: string | null; is_default?: boolean }): Promise<PaymentMethod> =>
   authFetch('/api/payment-methods', { method: 'POST', body: JSON.stringify(payload) });
+
+export const updatePaymentMethod = (id: string, payload: { masked_display_value?: string; provider?: string | null }): Promise<PaymentMethod> =>
+  authFetch(`/api/payment-methods/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
 
 export const setDefaultPaymentMethod = (id: string): Promise<PaymentMethod> =>
   authFetch(`/api/payment-methods/${id}/default`, { method: 'PATCH' });
