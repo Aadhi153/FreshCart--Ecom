@@ -109,7 +109,7 @@ export function Footer() {
               type="email"
               placeholder="your@email.com"
               style={{
-                padding: '0.65rem 0.9rem',
+                padding: '0.3rem 0.7rem',
                 borderRadius: 'var(--radius-md)',
                 border: '1.5px solid var(--border-color)',
                 backgroundColor: 'var(--layer-0)',
@@ -125,7 +125,7 @@ export function Footer() {
               color: '#fff',
               border: 'none',
               borderRadius: 'var(--radius-md)',
-              padding: '0.65rem 1rem',
+              padding: '0.3rem 0.8rem',
               fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
@@ -134,7 +134,7 @@ export function Footer() {
               gap: '0.3rem',
               whiteSpace: 'nowrap',
               fontSize: '0.85rem',
-              flex: '1 0 auto',
+              flex: '0 0 auto',
             }}>
               <Mail size={14} /> Subscribe
             </button>

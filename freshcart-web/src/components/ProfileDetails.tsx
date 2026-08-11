@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
-import { Calendar, Camera, CheckCircle2, Crown, Heart, Mail, Package, ShieldCheck, Sparkles, Wallet, X, XCircle } from 'lucide-react';
+import { Calendar, Camera, CheckCircle2, Crown, Heart, Mail, Package, Phone, ShieldCheck, Sparkles, Wallet, X, XCircle } from 'lucide-react';
 import type { PublicOffer } from '@freshcart/types';
 import { supabase } from '../lib/supabase';
 import { uploadAvatarImage, getPublicOffers, getOrderSummary, type OrderSummary } from '../lib/api';
@@ -17,6 +18,7 @@ import styles from './ProfileDetails.module.css';
 interface ProfileRow {
   email: string | null;
   full_name: string | null;
+  phone: string | null;
   role: string;
   created_at: string;
   avatar_url: string | null;
@@ -94,7 +96,7 @@ export function ProfileDetails() {
 
       const { data, error: profileError } = await supabase
         .from('profiles')
-        .select('email, full_name, role, created_at, avatar_url, is_vip')
+        .select('email, full_name, phone, role, created_at, avatar_url, is_vip')
         .eq('id', userData.user.id)
         .maybeSingle();
 
@@ -167,7 +169,7 @@ export function ProfileDetails() {
         full_name: fullName.trim() || null,
         updated_at: new Date().toISOString(),
       })
-      .select('email, full_name, role, created_at, avatar_url, is_vip')
+      .select('email, full_name, phone, role, created_at, avatar_url, is_vip')
       .single();
 
     if (updateError) {
@@ -207,6 +209,7 @@ export function ProfileDetails() {
   const accountDetailItems = [
     { label: 'Role', value: profile?.role || 'customer', icon: ShieldCheck },
     { label: 'Email Status', value: emailVerified ? 'Verified' : 'Not verified', icon: emailVerified ? CheckCircle2 : XCircle },
+    { label: 'Phone', value: profile?.phone || 'Not linked', icon: Phone },
     { label: 'Member Since', value: memberSince, icon: Calendar },
   ];
 
@@ -382,6 +385,10 @@ export function ProfileDetails() {
               );
             })}
           </div>
+          <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            Email and phone are your sign-in identities — verify or change them from{' '}
+            <Link href="/security" style={{ color: 'var(--primary)', fontWeight: 700 }}>Security</Link>.
+          </p>
         </AccountCard>
 
         {showVipBenefits && (
