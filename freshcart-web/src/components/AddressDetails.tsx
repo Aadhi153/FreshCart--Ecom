@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Briefcase, CheckCircle2, Home, LocateFixed, MapPin, Star, XCircle } from 'lucide-react';
-import { useAddressStore, type AddressType, type SavedAddress } from '../lib/store';
-import { EmptyState } from './Skeleton';
+import { addAddress, getAddresses, removeAddress, setDefaultAddress, updateAddress, type Address, type AddressType } from '../lib/api';
+import { EmptyState, Skeleton } from './Skeleton';
 import { ToggleSwitch } from './ToggleSwitch';
 import { AccountCard } from './AccountCard';
 import { AccountButton } from './AccountButton';
@@ -12,17 +12,32 @@ import { useToast } from './ToastProvider';
 import { getCurrentPosition, reverseGeocode, geocodeAddress, isWithinDeliveryZone } from '../lib/serviceability';
 import styles from './AddressDetails.module.css';
 
-const emptyAddress: SavedAddress = {
+interface EditableAddress {
+  id: string;
+  label: string;
+  type: AddressType;
+  full_name: string;
+  phone: string;
+  line1: string;
+  city: string;
+  state: string;
+  pincode: string;
+  is_default: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+const emptyAddress: EditableAddress = {
   id: '',
   label: '',
   type: 'home',
-  fullName: '',
+  full_name: '',
   phone: '',
   line1: '',
   city: '',
   state: '',
   pincode: '',
-  isDefault: false,
+  is_default: false,
 };
 
 type ZoneStatus = 'unknown' | 'checking' | 'ok' | 'fail';
@@ -37,10 +52,14 @@ const TYPE_OPTIONS: { value: AddressType; label: string; icon: typeof Home }[] =
 ];
 
 export function AddressDetails() {
-  const { addresses, upsertAddress, removeAddress, setDefaultAddress } = useAddressStore();
   const { showToast } = useToast();
   const reduceMotion = useReducedMotion();
-  const [editing, setEditing] = useState<SavedAddress>(addresses[0] || emptyAddress);
+
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [editing, setEditing] = useState<EditableAddress>(emptyAddress);
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState<{ phone?: string; pincode?: string }>({});
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -48,7 +67,19 @@ export function AddressDetails() {
   const [locationError, setLocationError] = useState('');
   const [zoneStatus, setZoneStatus] = useState<ZoneStatus>('unknown');
 
-  const updateEditingField = (patch: Partial<SavedAddress>) => {
+  const load = () => {
+    getAddresses()
+      .then(setAddresses)
+      .catch((err) => showToast(err instanceof Error ? err.message : 'Failed to load addresses.', 'error'))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const updateEditingField = (patch: Partial<EditableAddress>) => {
     setEditing((prev) => ({ ...prev, ...patch }));
     setZoneStatus('unknown');
   };
@@ -81,7 +112,8 @@ export function AddressDetails() {
     setZoneStatus('checking');
     setLocationError('');
     try {
-      let { latitude: lat, longitude: lng } = editing;
+      let lat = editing.latitude;
+      let lng = editing.longitude;
       if (!lat || !lng) {
         const query = [editing.line1, editing.city, editing.state, editing.pincode].filter(Boolean).join(', ');
         const geo = await geocodeAddress(query);
@@ -100,7 +132,7 @@ export function AddressDetails() {
     }
   };
 
-  const saveAddress = (event: React.FormEvent<HTMLFormElement>) => {
+  const saveAddress = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const phone = editing.phone.trim();
@@ -119,13 +151,52 @@ export function AddressDetails() {
     }
 
     setErrors({});
-    upsertAddress({ ...editing, phone, pincode, id: editing.id || crypto.randomUUID() });
-    setMessage('Address saved.');
-    showToast('Address saved.', 'success');
+    setSaving(true);
+    try {
+      const payload = {
+        label: editing.label,
+        type: editing.type,
+        full_name: editing.full_name,
+        phone,
+        line1: editing.line1,
+        city: editing.city,
+        state: editing.state,
+        pincode,
+        latitude: editing.latitude ?? null,
+        longitude: editing.longitude ?? null,
+        is_default: editing.is_default,
+      };
+      if (editing.id) {
+        await updateAddress(editing.id, payload);
+      } else {
+        await addAddress(payload);
+      }
+      setMessage('Address saved.');
+      showToast('Address saved.', 'success');
+      setEditing(emptyAddress);
+      load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to save address.', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const startEdit = (address: SavedAddress) => {
-    setEditing(address);
+  const startEdit = (address: Address) => {
+    setEditing({
+      id: address.id,
+      label: address.label || '',
+      type: address.type,
+      full_name: address.full_name,
+      phone: address.phone,
+      line1: address.line1,
+      city: address.city,
+      state: address.state,
+      pincode: address.pincode,
+      is_default: address.is_default,
+      latitude: address.latitude,
+      longitude: address.longitude,
+    });
     setMessage('');
     setErrors({});
     setConfirmingId(null);
@@ -139,6 +210,27 @@ export function AddressDetails() {
     setErrors({});
     setZoneStatus('unknown');
     setLocationError('');
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      await setDefaultAddress(id);
+      load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to set default.', 'error');
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    try {
+      await removeAddress(id);
+      setConfirmingId(null);
+      if (editing.id === id) setEditing(emptyAddress);
+      showToast('Address removed.', 'success');
+      load();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to remove address.', 'error');
+    }
   };
 
   return (
@@ -182,7 +274,7 @@ export function AddressDetails() {
           </label>
           <label className={styles.fieldLabel}>
             Full name
-            <input value={editing.fullName} onChange={(event) => setEditing({ ...editing, fullName: event.target.value })} placeholder="Full name" className={styles.input} />
+            <input value={editing.full_name} onChange={(event) => setEditing({ ...editing, full_name: event.target.value })} placeholder="Full name" className={styles.input} />
           </label>
           <label className={styles.fieldLabel}>
             Phone number
@@ -258,20 +350,28 @@ export function AddressDetails() {
         <div className={styles.defaultToggleRow}>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>Set as default address</span>
           <ToggleSwitch
-            checked={Boolean(editing.isDefault)}
-            onChange={(checked) => setEditing({ ...editing, isDefault: checked })}
+            checked={Boolean(editing.is_default)}
+            onChange={(checked) => setEditing({ ...editing, is_default: checked })}
             label="Toggle default address"
           />
         </div>
 
         {message && <p className={styles.message}>{message}</p>}
 
-        <AccountButton type="submit" variant="primary" style={{ justifySelf: 'start' }}>
-          {zoneStatus === 'fail' ? 'Save Address Anyway' : 'Save Address'}
+        <AccountButton type="submit" variant="primary" disabled={saving} style={{ justifySelf: 'start' }}>
+          {saving ? 'Saving…' : zoneStatus === 'fail' ? 'Save Address Anyway' : 'Save Address'}
         </AccountButton>
       </form>
 
-      {addresses.length === 0 ? (
+      {loading ? (
+        <div style={{ display: 'grid', gap: '0.7rem' }}>
+          {[0, 1].map((i) => (
+            <div key={i} style={{ padding: '0.95rem', border: 'var(--acc-card-border, 1px solid var(--border-color))', borderRadius: 'var(--acc-card-radius, var(--radius-sm))' }}>
+              <Skeleton style={{ width: '40%', height: '1rem' }} />
+            </div>
+          ))}
+        </div>
+      ) : addresses.length === 0 ? (
         <EmptyState
           icon={<MapPin size={24} />}
           heading="No saved address yet"
@@ -287,28 +387,28 @@ export function AddressDetails() {
               <AccountCard
                 key={address.id}
                 hoverable
-                accent={address.isDefault ? 'default-highlight' : 'default'}
-                className={`${styles.addressCard} ${address.isDefault ? styles.cardDefault : ''}`}
+                accent={address.is_default ? 'default-highlight' : 'default'}
+                className={`${styles.addressCard} ${address.is_default ? styles.cardDefault : ''}`}
               >
                 <div className={styles.cardTop}>
                   <div className={styles.typeIcon}>
                     <TypeIcon size={16} />
                   </div>
                   <strong className={styles.cardLabel}>{address.label || address.type || 'Address'}</strong>
-                  {address.isDefault && (
+                  {address.is_default && (
                     <span className={styles.defaultBadge}>
                       <Star size={11} fill="currentColor" />
                       Default
                     </span>
                   )}
                 </div>
-                <p className={styles.cardText}>{address.fullName} &middot; {address.phone}</p>
+                <p className={styles.cardText}>{address.full_name} &middot; {address.phone}</p>
                 <p className={styles.cardText}>{address.line1}, {address.city}, {address.state} {address.pincode}</p>
 
                 {isConfirming ? (
                   <div className={styles.confirmRow}>
                     <span className={styles.confirmText}>Remove this address?</span>
-                    <AccountButton compact variant="danger-solid" onClick={() => { removeAddress(address.id); setConfirmingId(null); }}>
+                    <AccountButton compact variant="danger-solid" onClick={() => handleRemove(address.id)}>
                       Yes, remove
                     </AccountButton>
                     <AccountButton compact variant="secondary" onClick={() => setConfirmingId(null)}>
@@ -317,8 +417,8 @@ export function AddressDetails() {
                   </div>
                 ) : (
                   <div className={styles.cardActions}>
-                    {!address.isDefault && (
-                      <AccountButton compact variant="secondary" onClick={() => setDefaultAddress(address.id)}>
+                    {!address.is_default && (
+                      <AccountButton compact variant="secondary" onClick={() => handleSetDefault(address.id)}>
                         Set default
                       </AccountButton>
                     )}

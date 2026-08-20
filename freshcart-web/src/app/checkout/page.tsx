@@ -17,9 +17,9 @@ import {
   Tag,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { placeOrder as placeOrderApi, getDeliverySlots, type DeliverySlotDay } from '../../lib/api';
+import { placeOrder as placeOrderApi, getDeliverySlots, getAddresses, addAddress, type DeliverySlotDay, type Address, type AddressType } from '../../lib/api';
 import type { Session } from '@supabase/supabase-js';
-import { useAddressStore, useCartStore, type AddressType, type SavedAddress } from '../../lib/store';
+import { useCartStore } from '../../lib/store';
 import { usePromotion } from '../../lib/usePromotion';
 import { formatDiscountAttribution, nearestThresholdNudge } from '../../lib/promotionMath';
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../../lib/constants';
@@ -40,11 +40,21 @@ const UPI_APPS = ['GPay', 'PhonePe', 'Paytm'];
 const BANKS = ['SBI', 'HDFC', 'ICICI', 'Axis'];
 const VALID_PAYMENT_METHODS = ['cod', 'card', 'upi', 'netbanking'];
 
-const emptyAddress = (): SavedAddress => ({
-  id: crypto.randomUUID(),
+interface AddressDraft {
+  label: string;
+  type: AddressType;
+  full_name: string;
+  phone: string;
+  line1: string;
+  city: string;
+  state: string;
+  pincode: string;
+}
+
+const emptyAddress = (): AddressDraft => ({
   label: '',
   type: 'home',
-  fullName: '',
+  full_name: '',
   phone: '',
   line1: '',
   city: '',
@@ -152,9 +162,8 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const { items, clearCart } = useCartStore();
-  const addresses = useAddressStore((state) => state.addresses);
-  const addressHasHydrated = useAddressStore((state) => state.hasHydrated);
-  const upsertAddress = useAddressStore((state) => state.upsertAddress);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addressesLoaded, setAddressesLoaded] = useState(false);
 
   const [session, setSession] = useState<Session | null>(null);
   const [placing, setPlacing] = useState(false);
@@ -202,12 +211,21 @@ export default function CheckoutPage() {
       });
   }, [session]);
 
+  useEffect(() => {
+    if (!session) return;
+    getAddresses()
+      .then(setAddresses)
+      .catch(() => {})
+      .finally(() => setAddressesLoaded(true));
+  }, [session]);
+
   // ── Address ───────────────────────────────────────────────────────────
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [showAddressForm, setShowAddressForm] = useState(false);
-  const [newAddress, setNewAddress] = useState<SavedAddress>(emptyAddress());
+  const [newAddress, setNewAddress] = useState<AddressDraft>(emptyAddress());
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
   const [shakeForm, setShakeForm] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
   const pincodeLookupRef = useRef('');
 
   // ── Delivery slot ─────────────────────────────────────────────────────
@@ -237,16 +255,16 @@ export default function CheckoutPage() {
     .find((day) => day.date === selectedDate)
     ?.windows.find((w) => w.id === selectedWindow)?.label;
 
-  // Address store hydrates from localStorage asynchronously after first render, so the
+  // Addresses load from the server asynchronously after login, so the
   // saved-address-vs-new-address-form decision has to wait for that flag instead of the
   // (still-empty) addresses array available on mount.
   useEffect(() => {
-    if (!addressHasHydrated) return;
-    const defaultAddress = addresses.find((a) => a.isDefault) || addresses[0];
+    if (!addressesLoaded) return;
+    const defaultAddress = addresses.find((a) => a.is_default) || addresses[0];
     setSelectedAddressId(defaultAddress?.id || '');
     setShowAddressForm(addresses.length === 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addressHasHydrated]);
+  }, [addressesLoaded]);
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
@@ -308,7 +326,7 @@ export default function CheckoutPage() {
 
   const validateNewAddress = () => {
     const errs: Record<string, string> = {};
-    if (!newAddress.fullName.trim()) errs.fullName = 'Name is required.';
+    if (!newAddress.full_name.trim()) errs.fullName = 'Name is required.';
     if (!/^\d{10}$/.test(newAddress.phone.trim())) errs.phone = 'Enter a valid 10-digit number.';
     if (!newAddress.line1.trim()) errs.line1 = 'Address is required.';
     if (!/^\d{6}$/.test(newAddress.pincode.trim())) errs.pincode = 'Enter a valid 6-digit PIN code.';
@@ -317,7 +335,7 @@ export default function CheckoutPage() {
     return errs;
   };
 
-  const handleDeliverHere = () => {
+  const handleDeliverHere = async () => {
     if (showAddressForm) {
       const errs = validateNewAddress();
       if (Object.keys(errs).length > 0) {
@@ -331,12 +349,20 @@ export default function CheckoutPage() {
         return;
       }
       setAddressErrors({});
-      upsertAddress(newAddress);
-      setSelectedAddressId(newAddress.id);
-      setShowAddressForm(false);
-      setError('');
-      setActiveStep(3);
-      showToast('Delivery address saved.', 'success');
+      setSavingAddress(true);
+      try {
+        const created = await addAddress({ ...newAddress, is_default: addresses.length === 0 });
+        setAddresses((prev) => [created, ...prev]);
+        setSelectedAddressId(created.id);
+        setShowAddressForm(false);
+        setError('');
+        setActiveStep(3);
+        showToast('Delivery address saved.', 'success');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to save address.');
+      } finally {
+        setSavingAddress(false);
+      }
       return;
     }
 
@@ -439,10 +465,25 @@ export default function CheckoutPage() {
     setError('');
     setPlacing(true);
     try {
+      // Snapshotted onto the order in the historical camelCase shape (fullName/isDefault)
+      // that OrdersDetails.tsx and invoice.ts already read from past orders' delivery_address.
       const order = await placeOrderApi({
         items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity, price: item.price })),
         total_amount: total,
-        delivery_address: selectedAddress,
+        delivery_address: {
+          id: selectedAddress.id,
+          label: selectedAddress.label,
+          type: selectedAddress.type,
+          fullName: selectedAddress.full_name,
+          phone: selectedAddress.phone,
+          line1: selectedAddress.line1,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          pincode: selectedAddress.pincode,
+          isDefault: selectedAddress.is_default,
+          latitude: selectedAddress.latitude,
+          longitude: selectedAddress.longitude,
+        },
         delivery_slot: { date: selectedDate, window: selectedWindow },
         payment_method: paymentMethod,
         coupon_code: appliedPromotion?.code ?? undefined,
@@ -488,7 +529,7 @@ export default function CheckoutPage() {
             activeStep={activeStep}
             title="DELIVERY ADDRESS"
             isCompleted={activeStep > 2}
-            summary={selectedAddress ? `${selectedAddress.fullName}, ${selectedAddress.line1}, ${selectedAddress.city} - ${selectedAddress.pincode}${selectedWindowLabel ? ` · ${selectedWindowLabel}` : ''}` : ''}
+            summary={selectedAddress ? `${selectedAddress.full_name}, ${selectedAddress.line1}, ${selectedAddress.city} - ${selectedAddress.pincode}${selectedWindowLabel ? ` · ${selectedWindowLabel}` : ''}` : ''}
             onEdit={() => setActiveStep(2)}
           >
             {!showAddressForm && (
@@ -507,9 +548,9 @@ export default function CheckoutPage() {
                         <div className={styles.addressCardTop}>
                           <span className={styles.addressTypeBadge}><TypeIcon size={13} /></span>
                           <span className={styles.addressLabel}>{addr.label || addr.type || 'Address'}</span>
-                          {addr.isDefault && <span className={styles.defaultTag}>Default</span>}
+                          {addr.is_default && <span className={styles.defaultTag}>Default</span>}
                         </div>
-                        <p className={styles.addressText}>{addr.fullName} &middot; {addr.phone}</p>
+                        <p className={styles.addressText}>{addr.full_name} &middot; {addr.phone}</p>
                         <p className={styles.addressText}>{addr.line1}, {addr.city}, {addr.state} {addr.pincode}</p>
                       </div>
                     );
@@ -557,7 +598,7 @@ export default function CheckoutPage() {
 
                 <div className={styles.fieldRow}>
                   <div className={styles.floatingField}>
-                    <input placeholder=" " value={newAddress.fullName} onChange={(e) => setNewAddress({ ...newAddress, fullName: e.target.value })} className={addressErrors.fullName ? styles.fieldErrorInput : ''} />
+                    <input placeholder=" " value={newAddress.full_name} onChange={(e) => setNewAddress({ ...newAddress, full_name: e.target.value })} className={addressErrors.fullName ? styles.fieldErrorInput : ''} />
                     <label>Full Name</label>
                   </div>
                   <div className={styles.floatingField}>
@@ -601,8 +642,8 @@ export default function CheckoutPage() {
                 {slotPicker}
                 {error && activeStep === 2 && <p className={styles.fieldErrorText}>{error}</p>}
 
-                <button type="submit" className={styles.deliverButton}>
-                  DELIVER HERE
+                <button type="submit" className={styles.deliverButton} disabled={savingAddress}>
+                  {savingAddress ? 'SAVING…' : 'DELIVER HERE'}
                 </button>
               </form>
             )}
