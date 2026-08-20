@@ -222,6 +222,44 @@ export const removePaymentMethod = (id: string): Promise<{ success: boolean }> =
 
 export const getMyReturnRequests = (): Promise<ReturnRequest[]> => authFetch('/api/returns');
 
+export type AddressType = 'home' | 'work' | 'other';
+
+export interface Address {
+  id: string;
+  label: string | null;
+  type: AddressType;
+  full_name: string;
+  phone: string;
+  line1: string;
+  city: string;
+  state: string;
+  pincode: string;
+  latitude: number | null;
+  longitude: number | null;
+  is_default: boolean;
+  created_at: string;
+}
+
+export type AddressInput = Omit<Address, 'id' | 'is_default' | 'created_at' | 'latitude' | 'longitude'> & {
+  is_default?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+export const getAddresses = (): Promise<Address[]> => authFetch('/api/addresses');
+
+export const addAddress = (payload: AddressInput): Promise<Address> =>
+  authFetch('/api/addresses', { method: 'POST', body: JSON.stringify(payload) });
+
+export const updateAddress = (id: string, payload: Partial<AddressInput>): Promise<Address> =>
+  authFetch(`/api/addresses/${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+
+export const setDefaultAddress = (id: string): Promise<Address> =>
+  authFetch(`/api/addresses/${id}/default`, { method: 'PATCH' });
+
+export const removeAddress = (id: string): Promise<{ success: boolean }> =>
+  authFetch(`/api/addresses/${id}`, { method: 'DELETE' });
+
 export const createReturnRequest = (payload: CreateReturnRequestPayload): Promise<ReturnRequest> =>
   authFetch('/api/returns', { method: 'POST', body: JSON.stringify(payload) });
 

@@ -153,73 +153,10 @@ export const useWishlistStore = create<WishlistState>()(
   )
 );
 
-export type AddressType = 'home' | 'work' | 'other';
-
-export interface SavedAddress {
-  id: string;
-  label: string;
-  type?: AddressType;
-  fullName: string;
-  phone: string;
-  line1: string;
-  city: string;
-  state: string;
-  pincode: string;
-  isDefault?: boolean;
-  latitude?: number;
-  longitude?: number;
-}
-
-interface AddressState {
-  addresses: SavedAddress[];
-  hasHydrated: boolean;
-  setHasHydrated: (value: boolean) => void;
-  upsertAddress: (address: SavedAddress) => void;
-  removeAddress: (id: string) => void;
-  setDefaultAddress: (id: string) => void;
-}
-
-export const useAddressStore = create<AddressState>()(
-  persist(
-    (set) => ({
-      addresses: [],
-      hasHydrated: false,
-      setHasHydrated: (value) => set({ hasHydrated: value }),
-      upsertAddress: (address) => set((state) => {
-        const exists = state.addresses.some((item) => item.id === address.id);
-        const isFirst = state.addresses.length === 0;
-        const next = { ...address, isDefault: isFirst ? true : address.isDefault };
-        const clearOthers = (list: SavedAddress[]) =>
-          next.isDefault ? list.map((item) => ({ ...item, isDefault: false })) : list;
-
-        if (!exists) {
-          return { addresses: [...clearOthers(state.addresses), next] };
-        }
-
-        return {
-          addresses: clearOthers(state.addresses).map((item) => item.id === next.id ? next : item),
-        };
-      }),
-      removeAddress: (id) => set((state) => {
-        const wasDefault = state.addresses.find((item) => item.id === id)?.isDefault;
-        const remaining = state.addresses.filter((item) => item.id !== id);
-        if (wasDefault && remaining.length > 0 && !remaining.some((item) => item.isDefault)) {
-          remaining[0] = { ...remaining[0], isDefault: true };
-        }
-        return { addresses: remaining };
-      }),
-      setDefaultAddress: (id) => set((state) => ({
-        addresses: state.addresses.map((item) => ({ ...item, isDefault: item.id === id })),
-      })),
-    }),
-    {
-      name: 'freshcart-address-storage',
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-      },
-    }
-  )
-);
+// Saved addresses used to live here as a zustand `persist` store (localStorage
+// only, no account sync — see 00035_addresses.sql). They're now backed by the
+// addresses table via lib/api.ts (getAddresses/addAddress/updateAddress/
+// removeAddress/setDefaultAddress); AddressType/Address types live in api.ts.
 
 export interface AppliedPromotion {
   id: string;

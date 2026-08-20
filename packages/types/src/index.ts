@@ -78,7 +78,7 @@ export const PromotionSchema = z.object({
   first_order_only: z.boolean().default(false),
   // Which customers this promotion is offered to; see getUserEligibilityContext in
   // freshcart-backend/lib/promotions.js for how each segment is resolved.
-  target_segment: z.enum(['all', 'vip', 'referral', 'inactive_30_days']).default('all'),
+  target_segment: z.enum(['all', 'vip', 'referral', 'inactive_30_days', 'birthday']).default('all'),
   tiers: z.array(PromotionTierSchema).optional().nullable(),
   recurrence: PromotionRecurrenceSchema.optional().nullable(),
   // Required iff discount_type === 'gift_with_purchase'; the product auto-added to the
@@ -156,7 +156,7 @@ export const PublicOfferSchema = z.object({
   valid_until: z.string().nullable().optional(),
   gift_product: GiftProductSchema.nullable().optional(),
   tiers: z.array(PromotionTierSchema).nullable().optional(),
-  target_segment: z.enum(['all', 'vip', 'referral', 'inactive_30_days']).optional(),
+  target_segment: z.enum(['all', 'vip', 'referral', 'inactive_30_days', 'birthday']).optional(),
 });
 export type PublicOffer = z.infer<typeof PublicOfferSchema>;
 
@@ -355,6 +355,7 @@ export const ProfileSchema = z.object({
   address: z.string().optional().nullable(),
   role: z.string().optional(),
   is_vip: z.boolean().optional(),
+  date_of_birth: z.string().optional().nullable(),
   referral_code: z.string().optional().nullable(),
   referred_by: z.string().uuid().optional().nullable(),
   created_at: z.string().datetime().optional(),
