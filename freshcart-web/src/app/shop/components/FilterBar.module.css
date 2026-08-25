@@ -1,7 +1,10 @@
 .filterBar {
+  /* Height is pinned so FilterSidebar/CartSidebar (which stick just below this
+     bar) can reserve the right amount of space — see their `top`/`max-height`. */
   position: sticky;
   top: 64px;
   z-index: 50;
+  min-height: 64px;
   margin-bottom: 1.5rem;
   padding: 0.7rem 1rem;
   border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
