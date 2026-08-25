@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -46,6 +47,34 @@ const pageTransition = {
   transition: { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const },
 };
 
+// A slim top-of-viewport bar that sweeps across on every route change —
+// a lightweight "navigation happened" cue (Vercel/Linear-style) on top of
+// the per-page fade transition below.
+function RouteProgressBar() {
+  const location = useLocation();
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    setActive(true);
+    const timeout = setTimeout(() => setActive(false), 380);
+    return () => clearTimeout(timeout);
+  }, [location.pathname]);
+
+  return (
+    <AnimatePresence>
+      {active && (
+        <motion.div
+          className="admin-route-progress"
+          initial={{ width: '0%', opacity: 1 }}
+          animate={{ width: '100%' }}
+          exit={{ opacity: 0 }}
+          transition={{ width: { duration: 0.32, ease: [0.4, 0, 0.2, 1] }, opacity: { duration: 0.15 } }}
+        />
+      )}
+    </AnimatePresence>
+  );
+}
+
 // Shared shell for every authenticated admin route: persistent sidebar +
 // a main column that child routes render into via <Outlet/>. Standard pages
 // additionally get the generic Topbar (see StandardPage below); full-page
@@ -83,6 +112,7 @@ function AdminShell() {
     <div className="admin-layout">
       <Sidebar />
       <main className="admin-main">
+        <RouteProgressBar />
         <AnimatePresence mode="wait">
           {isAnimatedFullPage ? (
             <motion.div
@@ -112,7 +142,17 @@ function StandardPage() {
     <>
       <Topbar title={title} />
       <div className="admin-content">
-        <Outlet />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </div>
     </>
   );

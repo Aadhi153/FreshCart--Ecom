@@ -1,8 +1,38 @@
 import { useState, useEffect } from 'react';
 import type { CSSProperties, ElementType } from 'react';
+import { motion, useMotionValue, animate } from 'framer-motion';
 import { TrendingUp, ShoppingBag, Users, AlertTriangle, RefreshCw } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar } from 'recharts';
 import { getAnalyticsSummary } from '../lib/api';
+
+// Counts up from 0 to `value` whenever it changes, instead of the number
+// just popping in — reads much less "static spreadsheet" on a KPI row.
+function AnimatedNumber({ value, prefix = '', decimals = 0 }: { value: number; prefix?: string; decimals?: number }) {
+  const motionValue = useMotionValue(0);
+  const [display, setDisplay] = useState('0');
+
+  useEffect(() => {
+    const controls = animate(motionValue, value, {
+      duration: 0.9,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (v) => setDisplay(v.toLocaleString('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })),
+    });
+    return controls.stop;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return <>{prefix}{display}</>;
+}
+
+const kpiContainerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06 } },
+};
+
+const kpiItemVariants = {
+  hidden: { opacity: 0, y: 14, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.35, ease: [0.4, 0, 0.2, 1] as const } },
+};
 
 const statusStyle: Record<string, CSSProperties> = {
   delivered:  { background: 'var(--success-tint)', color: 'var(--success)' },
@@ -15,7 +45,9 @@ const statusStyle: Record<string, CSSProperties> = {
 
 interface KPI {
   label: string;
-  value: string;
+  value: number;
+  prefix?: string;
+  decimals?: number;
   change: string;
   icon: ElementType;
   color: string;
@@ -45,12 +77,12 @@ export default function Dashboard() {
       const { kpis, recentOrders, outOfStockItems, weeklyRevenueChart, topProducts } = data;
 
       setKpiCards([
-        { label: 'Total Revenue',   value: `₹${kpis.totalRevenue}`, change: 'All-time', icon: TrendingUp,    color: 'var(--success)' },
-        { label: 'Total Orders',    value: String(kpis.totalOrders ?? 0), change: 'All-time', icon: ShoppingBag, color: 'var(--accent)' },
-        { label: 'Revenue Today',   value: `₹${kpis.todayRevenue}`, change: 'Live',    icon: TrendingUp,    color: 'var(--success)' },
-        { label: 'Orders Today',    value: String(kpis.todayOrders ?? 0),       change: 'Live',    icon: ShoppingBag,   color: 'var(--accent)' },
-        { label: 'Total Customers', value: String(kpis.totalCustomers ?? 0),    change: 'Total',   icon: Users,         color: 'var(--info)' },
-        { label: 'Low Stock Items', value: String(kpis.outOfStockCount ?? 0), change: 'Alert',  icon: AlertTriangle, color: 'var(--danger)' },
+        { label: 'Total Revenue',   value: Number(kpis.totalRevenue) || 0, prefix: '₹', decimals: 2, change: 'All-time', icon: TrendingUp,    color: 'var(--success)' },
+        { label: 'Total Orders',    value: Number(kpis.totalOrders) || 0,  change: 'All-time', icon: ShoppingBag, color: 'var(--accent)' },
+        { label: 'Revenue Today',   value: Number(kpis.todayRevenue) || 0, prefix: '₹', decimals: 2, change: 'Live', icon: TrendingUp,    color: 'var(--success)' },
+        { label: 'Orders Today',    value: Number(kpis.todayOrders) || 0,       change: 'Live',    icon: ShoppingBag,   color: 'var(--accent)' },
+        { label: 'Total Customers', value: Number(kpis.totalCustomers) || 0,    change: 'Total',   icon: Users,         color: 'var(--info)' },
+        { label: 'Low Stock Items', value: Number(kpis.outOfStockCount) || 0, change: 'Alert',  icon: AlertTriangle, color: 'var(--danger)' },
       ]);
 
       setLowStockItems(outOfStockItems || []);
@@ -69,16 +101,23 @@ export default function Dashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+      >
         <div>
           <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800 }}>Dashboard</h1>
           <p style={{ margin: '0.3rem 0 0', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
             Live data from your Supabase database.
           </p>
         </div>
-        <button
+        <motion.button
           onClick={fetchDashboardData}
           disabled={loading}
+          whileHover={{ y: -1, boxShadow: '0 6px 16px rgba(99,102,241,0.32)' }}
+          whileTap={{ scale: 0.96 }}
           style={{
             padding: '0.5rem 1.1rem',
             background: 'var(--gradient-primary)',
@@ -95,11 +134,11 @@ export default function Dashboard() {
           }}
         >
           <RefreshCw size={15} className={loading ? 'spin' : ''} /> Refresh
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* KPI Grid */}
-      <div className="kpi-grid">
+      <motion.div className="kpi-grid" variants={kpiContainerVariants} initial="hidden" animate="visible">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="kpi-card spatial-card" style={{ opacity: 0.5 }}>
@@ -107,25 +146,31 @@ export default function Dashboard() {
             </div>
           ))
         ) : (
-          kpiCards.map(({ label, value, change, icon: Icon, color }) => (
-            <div key={label} className="kpi-card spatial-card">
+          kpiCards.map(({ label, value, prefix, decimals, change, icon: Icon, color }) => (
+            <motion.div key={label} className="kpi-card spatial-card" variants={kpiItemVariants}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
                 <p className="kpi-title">{label}</p>
-                <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', background: `color-mix(in srgb, ${color} 16%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="kpi-icon-badge" style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', background: `color-mix(in srgb, ${color} 16%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon size={14} style={{ color }} />
                 </div>
               </div>
-              <h3 className="kpi-value">{value}</h3>
+              <h3 className="kpi-value"><AnimatedNumber value={value} prefix={prefix} decimals={decimals ?? 0} /></h3>
               <p style={{ margin: '0.35rem 0 0', fontSize: '0.7rem', fontWeight: 600, color: change === 'Alert' ? 'var(--danger)' : change === 'Live' ? 'var(--success)' : 'var(--text-secondary)' }}>
                 {change === 'Live' ? '🟢 Live' : change === 'Alert' && (lowStockItems.length > 0) ? '⚠️ Needs attention' : change}
               </p>
-            </div>
+            </motion.div>
           ))
         )}
-      </div>
+      </motion.div>
 
       {/* Revenue Chart */}
-      <div className="spatial-card" style={{ padding: '1.25rem' }}>
+      <motion.div
+        className="spatial-card"
+        style={{ padding: '1.25rem' }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.15 }}
+      >
         <h3 style={{ margin: '0 0 1rem', fontSize: '0.9rem', fontWeight: 700 }}>Revenue — Last 7 Days</h3>
         <div style={{ height: 240 }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -148,12 +193,18 @@ export default function Dashboard() {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </motion.div>
 
       {/* Grid for Recent Orders and Top Products */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         {/* Recent Orders */}
-        <div className="spatial-card" style={{ padding: '1.25rem' }}>
+        <motion.div
+          className="spatial-card"
+          style={{ padding: '1.25rem' }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.22 }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700 }}>Recent Orders</h3>
             <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer' }}>View all →</span>
@@ -192,10 +243,16 @@ export default function Dashboard() {
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
 
         {/* Top Selling Products */}
-        <div className="spatial-card" style={{ padding: '1.25rem' }}>
+        <motion.div
+          className="spatial-card"
+          style={{ padding: '1.25rem' }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.28 }}
+        >
           <h3 style={{ margin: '0 0 1rem', fontSize: '0.9rem', fontWeight: 700 }}>Top Selling Products</h3>
           <div style={{ height: 240 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -211,26 +268,36 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Low Stock Alert */}
       {lowStockItems.length > 0 && (
-        <div className="spatial-card" style={{ padding: '1.25rem', border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)' }}>
+        <motion.div
+          className="spatial-card"
+          style={{ padding: '1.25rem', border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)' }}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.34 }}
+        >
           <h3 style={{ margin: '0 0 0.75rem', fontSize: '0.9rem', fontWeight: 700, color: 'var(--danger)' }}>
             ⚠️ Low Stock Alerts
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {lowStockItems.map(item => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--danger-tint)', borderRadius: 'var(--radius-sm)' }}>
+              <motion.div
+                key={item.id}
+                whileHover={{ x: 4 }}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--danger-tint)', borderRadius: 'var(--radius-sm)' }}
+              >
                 <span style={{ fontWeight: 500 }}>{item.name}</span>
                 <span style={{ color: 'var(--danger)', fontWeight: 700, fontSize: '0.85rem' }}>
                   {!item.in_stock || !item.stock_quantity ? 'Out of stock' : `${item.stock_quantity} left`}
                 </span>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
