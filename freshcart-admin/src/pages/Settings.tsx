@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties, ElementType } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Store, Bell, CreditCard, Truck } from 'lucide-react';
 import { useToast } from '../components/ToastProvider';
 
@@ -161,27 +162,47 @@ export default function Settings() {
       {/* Tab Navigation */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         {tabs.map(({ key, label, icon: Icon }) => (
-          <button
+          <motion.button
             key={key}
             onClick={() => setActiveTab(key)}
+            whileTap={{ scale: 0.96 }}
             style={{
+              position: 'relative',
               display: 'flex', alignItems: 'center', gap: '0.5rem',
               padding: '0.6rem 1.25rem', borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-color)', cursor: 'pointer',
-              backgroundColor: activeTab === key ? 'var(--primary)' : 'var(--layer-1)',
+              backgroundColor: activeTab === key ? 'transparent' : 'var(--layer-1)',
               color: activeTab === key ? '#fff' : 'var(--text-secondary)',
               fontWeight: activeTab === key ? 600 : 400,
-              transition: 'all 0.2s',
+              overflow: 'hidden',
+              transition: 'color 0.2s, border-color 0.2s',
             }}
           >
-            <Icon size={16} />
-            {label}
-          </button>
+            {activeTab === key && (
+              <motion.span
+                layoutId="settings-tab-active"
+                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                style={{ position: 'absolute', inset: 0, background: 'var(--gradient-primary, var(--primary))', zIndex: 0 }}
+              />
+            )}
+            <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Icon size={16} />
+              {label}
+            </span>
+          </motion.button>
         ))}
       </div>
 
       {/* Tab Content */}
-      <div className="spatial-card" style={{ padding: '2rem' }}>
+      <div className="spatial-card" style={{ padding: '2rem', overflow: 'hidden' }}>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+        >
         {activeTab === 'store' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: 600 }}>
             <h2 style={{ marginTop: 0, marginBottom: '0.5rem' }}>Store Information</h2>
@@ -295,6 +316,8 @@ export default function Settings() {
             </div>
           </div>
         )}
+        </motion.div>
+      </AnimatePresence>
       </div>
     </div>
   );

@@ -327,6 +327,7 @@ body {
 .admin-table td {
   padding: 0.6rem 0.75rem;
   text-align: left;
+  vertical-align: middle;
   transition: background-color var(--transition-base), transform var(--transition-base);
   border-bottom: 1px solid var(--border-subtle);
   font-size: 0.82rem;

@@ -5,6 +5,7 @@ import { Plus, RefreshCw, Search, Package, Layers, IndianRupee, Download } from 
 import { Button, Card, EmptyState, Skeleton, Table, Thead, Tbody, Tr, Th, Td } from '@freshcart/ui';
 import { exportToCsv } from '../lib/csv';
 import { useProducts, useCategories, useProductSoldQuantities } from '../lib/queries/products';
+import { ProductThumb } from '../components/ProductThumb';
 
 export default function Products() {
   const navigate = useNavigate();
@@ -145,11 +146,7 @@ export default function Products() {
               filteredProducts.map(p => (
                 <Tr key={p.id} onClick={() => navigate(`/products/${p.id}`)} style={{ cursor: 'pointer' }}>
                   <Td>
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />
-                    ) : (
-                      <div style={{ width: 34, height: 34, backgroundColor: 'var(--layer-0)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🛒</div>
-                    )}
+                    <ProductThumb src={p.image_url} alt={p.name} size={34} />
                   </Td>
                   <Td style={{ maxWidth: 180 }}>
                     <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>

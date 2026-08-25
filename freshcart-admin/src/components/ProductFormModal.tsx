@@ -4,6 +4,7 @@ import { createProduct, updateProduct, createCategory, uploadProductImage } from
 import type { Product, Category } from '@freshcart/types';
 import { UploadCloud, Trash2 } from 'lucide-react';
 import { useToast } from './ToastProvider';
+import { ProductThumb } from './ProductThumb';
 
 const NEW_CATEGORY_VALUE = '__new__';
 
@@ -152,11 +153,7 @@ export default function ProductFormModal({ isOpen, editingProduct, categories, o
         <div className="form-group">
           <label>Product Image</label>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            {formData.image_url ? (
-              <img src={formData.image_url} alt="Preview" style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', flexShrink: 0 }} />
-            ) : (
-              <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-color)', flexShrink: 0 }} />
-            )}
+            <ProductThumb src={formData.image_url} alt="Preview" size={44} />
             <input
               type="url"
               className="form-input"
@@ -250,11 +247,7 @@ export default function ProductFormModal({ isOpen, editingProduct, categories, o
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
-              {v.image_url ? (
-                <img src={v.image_url} alt="Variant preview" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', flexShrink: 0 }} />
-              ) : (
-                <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-color)', flexShrink: 0 }} />
-              )}
+              <ProductThumb src={v.image_url} alt="Variant preview" size={32} />
               <input
                 type="url"
                 className="form-input"

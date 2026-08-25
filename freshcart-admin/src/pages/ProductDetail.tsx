@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import ProductFormModal from '../components/ProductFormModal';
+import { ProductThumb } from '../components/ProductThumb';
 import { getProduct, getCategories, getProductSoldQuantities, deleteProduct } from '../lib/api';
 import type { Product, Category } from '@freshcart/types';
 import { ArrowLeft, Edit2, Trash2, Package, Layers, ShoppingBag } from 'lucide-react';
@@ -89,11 +90,7 @@ export default function ProductDetail() {
       <div className="spatial-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: '1.25rem' }}>
-            {product.image_url ? (
-              <img src={product.image_url} alt={product.name} style={{ width: 110, height: 110, objectFit: 'cover', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', flexShrink: 0 }} />
-            ) : (
-              <div style={{ width: 110, height: 110, borderRadius: 'var(--radius-md)', background: 'var(--layer-0)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', flexShrink: 0 }}>🛒</div>
-            )}
+            <ProductThumb src={product.image_url} alt={product.name} size={110} style={{ borderRadius: 'var(--radius-md)' }} />
             <div>
               <h1 style={{ margin: 0 }}>{product.name}</h1>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
@@ -157,11 +154,7 @@ export default function ProductDetail() {
                 {product.variants.map((v, idx) => (
                   <tr key={v.id ?? idx}>
                     <td>
-                      {v.image_url ? (
-                        <img src={v.image_url} alt={v.name} style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />
-                      ) : (
-                        <div style={{ width: 34, height: 34, backgroundColor: 'var(--layer-0)', borderRadius: 'var(--radius-sm)' }} />
-                      )}
+                      <ProductThumb src={v.image_url} alt={v.name} size={34} />
                     </td>
                     <td>{v.name}</td>
                     <td>₹{v.price_adjustment.toFixed(2)}</td>

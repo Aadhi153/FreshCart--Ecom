@@ -3,6 +3,7 @@ import { getReviews, deleteReview } from '../lib/api';
 import type { AdminReview } from '../lib/api';
 import { Trash2, RefreshCw, Search, Star } from 'lucide-react';
 import { useToast } from '../components/ToastProvider';
+import { ProductThumb } from '../components/ProductThumb';
 
 export default function Reviews() {
   const { showToast } = useToast();
@@ -109,11 +110,7 @@ export default function Reviews() {
                   <tr key={r.id}>
                     <td style={{ maxWidth: 180 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {r.products?.image_url ? (
-                          <img src={r.products.image_url} alt={r.products.name} style={{ width: 28, height: 28, objectFit: 'cover', borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
-                        ) : (
-                          <div style={{ width: 28, height: 28, backgroundColor: 'var(--layer-0)', borderRadius: 'var(--radius-sm)', flexShrink: 0 }} />
-                        )}
+                        <ProductThumb src={r.products?.image_url} alt={r.products?.name || 'Deleted product'} size={28} />
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.products?.name || 'Deleted product'}</span>
                       </div>
                     </td>
