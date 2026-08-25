@@ -6,6 +6,7 @@ const SEGMENT_OPTIONS = [
   { value: 'vip', label: 'VIP customers' },
   { value: 'referral', label: 'Referred customers' },
   { value: 'inactive_30_days', label: 'Inactive 30+ days (win-back)' },
+  { value: 'birthday', label: "Birthday month" },
 ];
 
 interface UsageLimitsCardProps {

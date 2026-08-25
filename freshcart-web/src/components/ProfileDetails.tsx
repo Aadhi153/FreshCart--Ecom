@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
-import { Calendar, Camera, CheckCircle2, Crown, Heart, Mail, Package, Phone, ShieldCheck, Sparkles, Wallet, X, XCircle } from 'lucide-react';
+import { Cake, Calendar, Camera, CheckCircle2, Crown, Gift, Heart, Mail, Package, Phone, ShieldCheck, Sparkles, Wallet, X, XCircle } from 'lucide-react';
 import type { PublicOffer } from '@freshcart/types';
 import { supabase } from '../lib/supabase';
 import { uploadAvatarImage, getPublicOffers, getOrderSummary, type OrderSummary } from '../lib/api';
@@ -23,6 +23,18 @@ interface ProfileRow {
   created_at: string;
   avatar_url: string | null;
   is_vip: boolean | null;
+  date_of_birth: string | null;
+}
+
+// Mirrors the month-only comparison isBirthdayMonth in freshcart-backend/lib/promotions.js
+// uses for target_segment='birthday' eligibility — kept in sync deliberately since this is
+// purely a display hint (the backend is still the source of truth for whether a birthday
+// offer actually auto-applies).
+function isBirthdayMonth(dateOfBirth: string | null): boolean {
+  if (!dateOfBirth) return false;
+  const dobMonth = Number(dateOfBirth.slice(5, 7));
+  const nowMonth = new Date().getMonth() + 1;
+  return dobMonth === nowMonth;
 }
 
 // Flat, theme-independent brand green for the identity card — deliberately not
@@ -50,6 +62,7 @@ export function ProfileDetails() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [fullName, setFullName] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -57,6 +70,7 @@ export function ProfileDetails() {
   const [loadError, setLoadError] = useState('');
   const [showVipBenefits, setShowVipBenefits] = useState(false);
   const [vipOffers, setVipOffers] = useState<PublicOffer[] | null>(null);
+  const [birthdayOffers, setBirthdayOffers] = useState<PublicOffer[] | null>(null);
   const [orderSummary, setOrderSummary] = useState<OrderSummary>({ orderCount: 0, totalSpent: 0, inTransitCount: 0 });
 
   const handleOpenVipBenefits = async () => {
@@ -96,7 +110,7 @@ export function ProfileDetails() {
 
       const { data, error: profileError } = await supabase
         .from('profiles')
-        .select('email, full_name, phone, role, created_at, avatar_url, is_vip')
+        .select('email, full_name, phone, role, created_at, avatar_url, is_vip, date_of_birth')
         .eq('id', userData.user.id)
         .maybeSingle();
 
@@ -106,6 +120,7 @@ export function ProfileDetails() {
 
       setProfile(data);
       setFullName(data?.full_name || String(userData.user.user_metadata?.full_name || ''));
+      setDateOfBirth(data?.date_of_birth || '');
       setAvatarUrl(data?.avatar_url || null);
       setProfileSummary({
         fullName: data?.full_name || String(userData.user.user_metadata?.full_name || ''),
@@ -130,6 +145,28 @@ export function ProfileDetails() {
       cancelled = true;
     };
   }, []);
+
+  // Only fetches once we know the customer is actually in their birthday month — no
+  // point round-tripping for the banner otherwise. This is a display hint only; the
+  // offer still only auto-applies at checkout if the backend's own eligibility check
+  // (matchesTargetSegment) agrees.
+  useEffect(() => {
+    if (!isBirthdayMonth(dateOfBirth)) {
+      setBirthdayOffers(null);
+      return;
+    }
+    let cancelled = false;
+    getPublicOffers()
+      .then((offers) => {
+        if (!cancelled) setBirthdayOffers(offers.filter((o) => o.target_segment === 'birthday'));
+      })
+      .catch(() => {
+        if (!cancelled) setBirthdayOffers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dateOfBirth]);
 
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -167,9 +204,10 @@ export function ProfileDetails() {
         id: user.id,
         email: user.email || null,
         full_name: fullName.trim() || null,
+        date_of_birth: dateOfBirth || null,
         updated_at: new Date().toISOString(),
       })
-      .select('email, full_name, phone, role, created_at, avatar_url, is_vip')
+      .select('email, full_name, phone, role, created_at, avatar_url, is_vip, date_of_birth')
       .single();
 
     if (updateError) {
@@ -351,10 +389,43 @@ export function ProfileDetails() {
             />
           </label>
 
+          <label style={{ display: 'grid', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 700 }}>
+            Date of Birth
+            <input
+              type="date"
+              value={dateOfBirth}
+              onChange={(event) => setDateOfBirth(event.target.value)}
+              max={new Date().toISOString().slice(0, 10)}
+              className={styles.underlineField}
+              style={fieldStyle}
+            />
+            <span style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 400 }}>
+              Add this to unlock a special offer during your birthday month.
+            </span>
+          </label>
+
           <AccountButton type="submit" variant="primary" disabled={saving} style={{ justifySelf: 'start' }}>
             {saving ? 'Saving...' : 'Save changes'}
           </AccountButton>
         </form>
+
+        {/* Birthday banner — only rendered when the customer is in their birthday month
+            and there's a live 'birthday' segment offer to show; a quiet no-op otherwise. */}
+        {birthdayOffers != null && birthdayOffers.length > 0 && (
+          <AccountCard hoverable style={{ padding: '1.25rem 1.5rem', background: 'linear-gradient(135deg, #EC4899, #F97316)', display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Cake size={20} color="#fff" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Gift size={14} /> Happy Birthday Month from FreshCart!
+              </p>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: 'rgba(255,255,255,0.9)' }}>
+                {describeOffer(birthdayOffers[0])} — applies automatically at checkout.
+              </p>
+            </div>
+          </AccountCard>
+        )}
 
         {/* Account Details — read-only reference info, visually distinct from the editable card above */}
         <AccountCard hoverable accent="default-highlight" style={{ display: 'grid', gap: '1rem' }}>

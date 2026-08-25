@@ -159,7 +159,7 @@ function selectBestPromotion({ coupon, autoOffers, cartItems, cartSubtotal }) {
 // a returning customer, not fulfillment status.
 async function getUserEligibilityContext(userId) {
   const [{ data: profile }, { data: recentOrders }] = await Promise.all([
-    supabaseAdmin.from('profiles').select('is_vip, referred_by').eq('id', userId).maybeSingle(),
+    supabaseAdmin.from('profiles').select('is_vip, referred_by, date_of_birth').eq('id', userId).maybeSingle(),
     supabaseAdmin
       .from('orders')
       .select('created_at')
@@ -174,6 +174,7 @@ async function getUserEligibilityContext(userId) {
     referredBy: profile?.referred_by ?? null,
     hasOrderedBefore: !!lastOrder,
     lastOrderAt: lastOrder?.created_at ?? null,
+    dateOfBirth: profile?.date_of_birth ?? null,
   };
 }
 
@@ -183,6 +184,18 @@ function meetsFirstOrderRequirement(promotion, context) {
 
 const INACTIVE_SEGMENT_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000;
 
+// A customer is in their "birthday month" when today's calendar month (in India local
+// time, same RECURRENCE_TIMEZONE used for recurrence.day_of_week below) matches the
+// month of their self-reported date_of_birth. Month-wide rather than exact-day so a
+// customer doesn't lose the offer just for not opening the app on the exact date; the
+// year of date_of_birth is irrelevant, only the month is compared.
+function isBirthdayMonth(dateOfBirth, now = new Date()) {
+  if (!dateOfBirth) return false;
+  const dobMonth = Number(String(dateOfBirth).slice(5, 7));
+  const nowMonth = Number(new Intl.DateTimeFormat('en-US', { timeZone: RECURRENCE_TIMEZONE, month: 'numeric' }).format(now));
+  return dobMonth === nowMonth;
+}
+
 function matchesTargetSegment(promotion, context, now = new Date()) {
   switch (promotion.target_segment) {
     case 'vip':
@@ -191,6 +204,8 @@ function matchesTargetSegment(promotion, context, now = new Date()) {
       return context.referredBy != null;
     case 'inactive_30_days':
       return !context.lastOrderAt || now - new Date(context.lastOrderAt) > INACTIVE_SEGMENT_THRESHOLD_MS;
+    case 'birthday':
+      return isBirthdayMonth(context.dateOfBirth, now);
     case 'all':
     default:
       return true;

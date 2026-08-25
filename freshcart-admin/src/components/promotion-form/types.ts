@@ -23,7 +23,7 @@ export interface PromotionFormData {
   is_active: boolean;
   // Eligible only for customers with zero prior non-cancelled orders.
   first_order_only: boolean;
-  target_segment: 'all' | 'vip' | 'referral' | 'inactive_30_days';
+  target_segment: 'all' | 'vip' | 'referral' | 'inactive_30_days' | 'birthday';
   // When is_tiered, tiers[] drives the discount instead of discount_type/discount_value/
   // min_order_value above — a UI-only mode switch, not a server field.
   is_tiered: boolean;
